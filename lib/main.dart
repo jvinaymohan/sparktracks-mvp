@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'utils/app_config.dart';
 import 'utils/app_theme.dart';
@@ -10,6 +9,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
+import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
@@ -18,6 +18,9 @@ import 'screens/dashboard/child_dashboard_screen.dart';
 import 'screens/dashboard/coach_dashboard_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/settings/notification_settings_screen.dart';
+import 'screens/calendar/calendar_screen.dart';
+import 'screens/feedback/feedback_screen.dart';
+import 'screens/tasks/create_task_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +53,6 @@ class SparktracksMVP extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
         routerConfig: _buildRouter(),
-        home: const SplashScreen(),
       ),
     );
   }
@@ -86,7 +88,7 @@ class SparktracksMVP extends StatelessWidget {
         filled: true,
         fillColor: AppTheme.neutral50,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
@@ -138,6 +140,18 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/notification-settings',
           builder: (context, state) => const NotificationSettingsScreen(),
+        ),
+        GoRoute(
+          path: '/calendar',
+          builder: (context, state) => const CalendarScreen(),
+        ),
+        GoRoute(
+          path: '/feedback',
+          builder: (context, state) => const FeedbackScreen(),
+        ),
+        GoRoute(
+          path: '/create-task',
+          builder: (context, state) => const CreateTaskScreen(),
         ),
       ],
       redirect: (context, state) {

@@ -1,0 +1,883 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import '../../providers/auth_provider.dart';
+import '../../models/class_model.dart';
+import '../../models/student_model.dart';
+import '../../models/attendance_model.dart';
+import '../../models/payment_model.dart';
+import '../../utils/app_theme.dart';
+
+class CoachDashboardScreen extends StatefulWidget {
+  const CoachDashboardScreen({super.key});
+
+  @override
+  State<CoachDashboardScreen> createState() => _CoachDashboardScreenState();
+}
+
+class _CoachDashboardScreenState extends State<CoachDashboardScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
+  
+  // Mock data for coach dashboard
+  final List<Class> _myClasses = [
+    Class(
+      id: '1',
+      title: 'Soccer Training',
+      description: 'Weekly soccer practice for beginners',
+      coachId: 'coach1',
+      type: ClassType.weekly,
+      locationType: LocationType.inPerson,
+      location: 'Community Field',
+      startTime: DateTime.now().add(const Duration(hours: 2)),
+      endTime: DateTime.now().add(const Duration(hours: 3)),
+      durationMinutes: 60,
+      price: 25.0,
+      currency: Currency.usd,
+      maxStudents: 15,
+      enrolledStudentIds: ['child1', 'child2', 'child3'],
+      createdAt: DateTime.now().subtract(const Duration(days: 7)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 7)),
+    ),
+    Class(
+      id: '2',
+      title: 'Advanced Soccer',
+      description: 'Advanced soccer training for experienced players',
+      coachId: 'coach1',
+      type: ClassType.weekly,
+      locationType: LocationType.inPerson,
+      location: 'Stadium Field',
+      startTime: DateTime.now().add(const Duration(days: 1, hours: 4)),
+      endTime: DateTime.now().add(const Duration(days: 1, hours: 5)),
+      durationMinutes: 60,
+      price: 35.0,
+      currency: Currency.usd,
+      maxStudents: 10,
+      enrolledStudentIds: ['child4', 'child5'],
+      createdAt: DateTime.now().subtract(const Duration(days: 14)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 14)),
+    ),
+  ];
+
+  final List<Student> _myStudents = [
+    Student(
+      id: '1',
+      userId: 'child1',
+      parentId: 'parent1',
+      coachId: 'coach1',
+      name: 'Emma Johnson',
+      email: 'emma@example.com',
+      dateOfBirth: DateTime(2015, 3, 15),
+      enrolledAt: DateTime.now().subtract(const Duration(days: 30)),
+      colorCode: '#FF6B6B',
+    ),
+    Student(
+      id: '2',
+      userId: 'child2',
+      parentId: 'parent1',
+      coachId: 'coach1',
+      name: 'Liam Johnson',
+      email: 'liam@example.com',
+      dateOfBirth: DateTime(2013, 7, 22),
+      enrolledAt: DateTime.now().subtract(const Duration(days: 45)),
+      colorCode: '#4ECDC4',
+    ),
+    Student(
+      id: '3',
+      userId: 'child3',
+      parentId: 'parent2',
+      coachId: 'coach1',
+      name: 'Sophia Chen',
+      email: 'sophia@example.com',
+      dateOfBirth: DateTime(2014, 11, 8),
+      enrolledAt: DateTime.now().subtract(const Duration(days: 20)),
+      colorCode: '#45B7D1',
+    ),
+  ];
+
+  final List<Attendance> _todayAttendance = [
+    Attendance(
+      id: '1',
+      classId: '1',
+      studentId: 'child1',
+      classDate: DateTime.now(),
+      status: AttendanceStatus.present,
+      markedAt: DateTime.now().subtract(const Duration(hours: 1)),
+      markedBy: 'coach1',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    Attendance(
+      id: '2',
+      classId: '1',
+      studentId: 'child2',
+      classDate: DateTime.now(),
+      status: AttendanceStatus.absent,
+      markedAt: DateTime.now().subtract(const Duration(hours: 1)),
+      markedBy: 'coach1',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+    Attendance(
+      id: '3',
+      classId: '1',
+      studentId: 'child3',
+      classDate: DateTime.now(),
+      status: AttendanceStatus.unmarked,
+      markedBy: 'coach1',
+      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
+    ),
+  ];
+
+  final List<Payment> _recentPayments = [
+    Payment(
+      id: '1',
+      userId: 'child1',
+      classId: '1',
+      amount: 25.0,
+      currency: 'USD',
+      type: PaymentType.classFee,
+      status: PaymentStatus.completed,
+      method: PaymentMethod.cash,
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
+      completedAt: DateTime.now().subtract(const Duration(days: 1)),
+    ),
+    Payment(
+      id: '2',
+      userId: 'child2',
+      classId: '1',
+      amount: 25.0,
+      currency: 'USD',
+      type: PaymentType.classFee,
+      status: PaymentStatus.pending,
+      method: PaymentMethod.cash,
+      createdAt: DateTime.now().subtract(const Duration(days: 2)),
+      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Coach Dashboard'),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
+            Tab(icon: Icon(Icons.school), text: 'Classes'),
+            Tab(icon: Icon(Icons.people), text: 'Students'),
+            Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
+          ],
+        ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: () => context.go('/calendar'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.feedback),
+            onPressed: () => context.go('/feedback'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () => context.go('/notification-settings'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              await authProvider.logout();
+              if (context.mounted) {
+                context.go('/login');
+              }
+            },
+          ),
+        ],
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildOverviewTab(),
+          _buildClassesTab(),
+          _buildStudentsTab(),
+          _buildAnalyticsTab(),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          _showCreateClassDialog();
+        },
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildOverviewTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTheme.spacingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Welcome Section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppTheme.spacingL),
+            decoration: BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome back, Coach Smith!',
+                  style: AppTheme.headline4.copyWith(color: Colors.white),
+                ),
+                const SizedBox(height: AppTheme.spacingS),
+                Text(
+                  'Ready to inspire your athletes today? 🏆',
+                  style: AppTheme.bodyLarge.copyWith(color: Colors.white.withOpacity(0.9)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Quick Stats
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Total Students',
+                  _myStudents.length.toString(),
+                  Icons.people,
+                  AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: _buildStatCard(
+                  'Active Classes',
+                  _myClasses.length.toString(),
+                  Icons.school,
+                  AppTheme.successColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          Row(
+            children: [
+              Expanded(
+                child: _buildStatCard(
+                  'Today\'s Attendance',
+                  '${_todayAttendance.where((a) => a.status == AttendanceStatus.present).length}/${_todayAttendance.length}',
+                  Icons.check_circle,
+                  AppTheme.warningColor,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: _buildStatCard(
+                  'Pending Payments',
+                  _recentPayments.where((p) => p.status == PaymentStatus.pending).length.toString(),
+                  Icons.payment,
+                  AppTheme.infoColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Today's Classes
+          Text(
+            'Today\'s Classes',
+            style: AppTheme.headline6,
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          ..._myClasses.where((c) => _isToday(c.startTime)).map((classItem) => _buildClassCard(classItem)),
+          
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Attendance Overview
+          Text(
+            'Attendance Overview',
+            style: AppTheme.headline6,
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          ..._todayAttendance.map((attendance) => _buildAttendanceCard(attendance)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassesTab() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppTheme.spacingL),
+      itemCount: _myClasses.length,
+      itemBuilder: (context, index) {
+        final classItem = _myClasses[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: AppTheme.primaryColor,
+              child: const Icon(Icons.school, color: Colors.white),
+            ),
+            title: Text(classItem.title),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(classItem.description),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.location_on, size: 16, color: AppTheme.neutral600),
+                    Text(classItem.location ?? 'Online'),
+                    const SizedBox(width: 16),
+                    Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
+                    Text(_formatTime(classItem.startTime)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.attach_money, size: 16, color: AppTheme.successColor),
+                    Text('\$${classItem.price.toStringAsFixed(2)}'),
+                    const SizedBox(width: 16),
+                    Icon(Icons.people, size: 16, color: AppTheme.neutral600),
+                    Text('${classItem.enrolledStudentIds.length}/${classItem.maxStudents} students'),
+                  ],
+                ),
+              ],
+            ),
+            trailing: PopupMenuButton(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'edit',
+                  child: Text('Edit Class'),
+                ),
+                const PopupMenuItem(
+                  value: 'attendance',
+                  child: Text('Mark Attendance'),
+                ),
+                const PopupMenuItem(
+                  value: 'students',
+                  child: Text('View Students'),
+                ),
+                const PopupMenuItem(
+                  value: 'cancel',
+                  child: Text('Cancel Class'),
+                ),
+              ],
+              onSelected: (value) {
+                _handleClassAction(value, classItem);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStudentsTab() {
+    return ListView.builder(
+      padding: const EdgeInsets.all(AppTheme.spacingL),
+      itemCount: _myStudents.length,
+      itemBuilder: (context, index) {
+        final student = _myStudents[index];
+        return Card(
+          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+          child: ListTile(
+            leading: CircleAvatar(
+              backgroundColor: Color(int.parse(student.colorCode!.replaceFirst('#', '0xFF'))),
+              child: Text(
+                student.name[0],
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            title: Text(student.name),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(student.email),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(Icons.cake, size: 16, color: AppTheme.neutral600),
+                    Text('Age: ${_calculateAge(student.dateOfBirth)}'),
+                    const SizedBox(width: 16),
+                    Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
+                    Text('Enrolled: ${_formatDate(student.enrolledAt)}'),
+                  ],
+                ),
+              ],
+            ),
+            trailing: PopupMenuButton(
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'profile',
+                  child: Text('View Profile'),
+                ),
+                const PopupMenuItem(
+                  value: 'attendance',
+                  child: Text('Attendance History'),
+                ),
+                const PopupMenuItem(
+                  value: 'payments',
+                  child: Text('Payment History'),
+                ),
+                const PopupMenuItem(
+                  value: 'remove',
+                  child: Text('Remove from Class'),
+                ),
+              ],
+              onSelected: (value) {
+                _handleStudentAction(value, student);
+              },
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildAnalyticsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppTheme.spacingL),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Revenue Analytics
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Revenue Analytics',
+                    style: AppTheme.headline6,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Total Revenue',
+                          '\$${(_myClasses.length * 25.0).toStringAsFixed(2)}',
+                          Icons.attach_money,
+                          AppTheme.successColor,
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Pending Payments',
+                          '\$${_recentPayments.where((p) => p.status == PaymentStatus.pending).fold(0.0, (sum, p) => sum + p.amount).toStringAsFixed(2)}',
+                          Icons.pending,
+                          AppTheme.warningColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+          
+          // Attendance Analytics
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Attendance Analytics',
+                    style: AppTheme.headline6,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Today\'s Attendance',
+                          '${_todayAttendance.where((a) => a.status == AttendanceStatus.present).length}/${_todayAttendance.length}',
+                          Icons.check_circle,
+                          AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Average Attendance',
+                          '85%',
+                          Icons.trending_up,
+                          AppTheme.infoColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingL),
+          
+          // Student Analytics
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Student Analytics',
+                    style: AppTheme.headline6,
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Total Students',
+                          _myStudents.length.toString(),
+                          Icons.people,
+                          AppTheme.primaryColor,
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: _buildAnalyticsCard(
+                          'Active Students',
+                          _myStudents.length.toString(),
+                          Icons.person,
+                          AppTheme.successColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spacingL),
+        child: Column(
+          children: [
+            Icon(icon, size: 32, color: color),
+            const SizedBox(height: AppTheme.spacingS),
+            Text(
+              value,
+              style: AppTheme.headline4.copyWith(color: color),
+            ),
+            Text(
+              title,
+              style: AppTheme.bodySmall,
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildClassCard(Class classItem) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppTheme.primaryColor,
+          child: const Icon(Icons.school, color: Colors.white),
+        ),
+        title: Text(classItem.title),
+        subtitle: Text('${classItem.enrolledStudentIds.length} students enrolled'),
+        trailing: Text(_formatTime(classItem.startTime)),
+      ),
+    );
+  }
+
+  Widget _buildAttendanceCard(Attendance attendance) {
+    final student = _myStudents.firstWhere((s) => s.id == attendance.studentId);
+    return Card(
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: _getAttendanceColor(attendance.status),
+          child: Icon(
+            _getAttendanceIcon(attendance.status),
+            color: Colors.white,
+          ),
+        ),
+        title: Text(student.name),
+        subtitle: Text('${attendance.status.name} - ${_formatTime(attendance.markedAt ?? DateTime.now())}'),
+        trailing: attendance.status == AttendanceStatus.unmarked
+            ? ElevatedButton(
+                onPressed: () => _markAttendance(attendance),
+                child: const Text('Mark'),
+              )
+            : null,
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(AppTheme.spacingM),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 24, color: color),
+          const SizedBox(height: AppTheme.spacingS),
+          Text(
+            value,
+            style: AppTheme.headline6.copyWith(color: color),
+          ),
+          Text(
+            title,
+            style: AppTheme.bodySmall,
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getAttendanceColor(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return AppTheme.successColor;
+      case AttendanceStatus.absent:
+        return AppTheme.errorColor;
+      case AttendanceStatus.late:
+        return AppTheme.warningColor;
+      case AttendanceStatus.excused:
+        return AppTheme.infoColor;
+      case AttendanceStatus.unmarked:
+        return AppTheme.neutral400;
+    }
+  }
+
+  IconData _getAttendanceIcon(AttendanceStatus status) {
+    switch (status) {
+      case AttendanceStatus.present:
+        return Icons.check;
+      case AttendanceStatus.absent:
+        return Icons.close;
+      case AttendanceStatus.late:
+        return Icons.schedule;
+      case AttendanceStatus.excused:
+        return Icons.info;
+      case AttendanceStatus.unmarked:
+        return Icons.help;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.month}/${date.day}/${date.year}';
+  }
+
+  String _formatTime(DateTime date) {
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  int _calculateAge(DateTime birthDate) {
+    final now = DateTime.now();
+    int age = now.year - birthDate.year;
+    if (now.month < birthDate.month || (now.month == birthDate.month && now.day < birthDate.day)) {
+      age--;
+    }
+    return age;
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  void _handleClassAction(String action, Class classItem) {
+    switch (action) {
+      case 'edit':
+        // TODO: Navigate to edit class
+        break;
+      case 'attendance':
+        // TODO: Navigate to attendance marking
+        break;
+      case 'students':
+        // TODO: Navigate to students list
+        break;
+      case 'cancel':
+        _showCancelClassDialog(classItem);
+        break;
+    }
+  }
+
+  void _handleStudentAction(String action, Student student) {
+    switch (action) {
+      case 'profile':
+        // TODO: Navigate to student profile
+        break;
+      case 'attendance':
+        // TODO: Navigate to attendance history
+        break;
+      case 'payments':
+        // TODO: Navigate to payment history
+        break;
+      case 'remove':
+        _showRemoveStudentDialog(student);
+        break;
+    }
+  }
+
+  void _markAttendance(Attendance attendance) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark Attendance'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text('Mark attendance for ${_myStudents.firstWhere((s) => s.id == attendance.studentId).name}'),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      final index = _todayAttendance.indexWhere((a) => a.id == attendance.id);
+                      if (index != -1) {
+                        _todayAttendance[index] = attendance.copyWith(
+                          status: AttendanceStatus.present,
+                          markedAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        );
+                      }
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.successColor),
+                  child: const Text('Present'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      final index = _todayAttendance.indexWhere((a) => a.id == attendance.id);
+                      if (index != -1) {
+                        _todayAttendance[index] = attendance.copyWith(
+                          status: AttendanceStatus.absent,
+                          markedAt: DateTime.now(),
+                          updatedAt: DateTime.now(),
+                        );
+                      }
+                    });
+                  },
+                  style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+                  child: const Text('Absent'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showCreateClassDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create New Class'),
+        content: const Text('Class creation form would go here'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Create class
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showCancelClassDialog(Class classItem) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cancel Class'),
+        content: Text('Are you sure you want to cancel "${classItem.title}"? Students will be notified.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Cancel class and notify students
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemoveStudentDialog(Student student) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Student'),
+        content: Text('Are you sure you want to remove ${student.name} from the class?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Remove student from class
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
+            child: const Text('Yes, Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+}
