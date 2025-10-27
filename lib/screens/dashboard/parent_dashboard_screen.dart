@@ -117,6 +117,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.stars),
+            tooltip: 'Points Settings',
+            onPressed: () => context.push('/points-settings'),
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => context.go('/calendar'),
           ),
@@ -209,6 +214,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
+          // Financial Ledger Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/financial-ledger?userType=parent'),
+              icon: const Icon(Icons.receipt_long),
+              label: const Text('View Financial Ledger'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacingXL),
+          
           // Recent Activity
           Text(
             'Recent Activity',
@@ -222,45 +241,87 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildChildrenTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      itemCount: _children.length,
-      itemBuilder: (context, index) {
-        final child = _children[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: Color(int.parse(child.colorCode!.replaceFirst('#', '0xFF'))),
-              child: Text(
-                child.name[0],
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+    return Column(
+      children: [
+        // Add Child Button
+        Container(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => context.push('/add-child'),
+              icon: const Icon(Icons.add),
+              label: const Text('Add Child'),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
               ),
             ),
-            title: Text(child.name),
-            subtitle: Text(child.email),
-            trailing: PopupMenuButton(
-              itemBuilder: (context) => [
-                const PopupMenuItem(
-                  value: 'view',
-                  child: Text('View Profile'),
-                ),
-                const PopupMenuItem(
-                  value: 'tasks',
-                  child: Text('View Tasks'),
-                ),
-                const PopupMenuItem(
-                  value: 'classes',
-                  child: Text('View Classes'),
-                ),
-              ],
-              onSelected: (value) {
-                // TODO: Handle menu selection
-              },
-            ),
           ),
-        );
-      },
+        ),
+        // Children List
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
+            itemCount: _children.length,
+            itemBuilder: (context, index) {
+              final child = _children[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Color(int.parse(child.colorCode!.replaceFirst('#', '0xFF'))),
+                    child: Text(
+                      child.name[0],
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(child.name),
+                  subtitle: Text(child.email ?? 'No email'),
+                  trailing: PopupMenuButton(
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'edit',
+                        child: Row(
+                          children: [
+                            Icon(Icons.edit, size: 20),
+                            SizedBox(width: 8),
+                            Text('Edit Profile'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'tasks',
+                        child: Row(
+                          children: [
+                            Icon(Icons.assignment, size: 20),
+                            SizedBox(width: 8),
+                            Text('View Tasks'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'classes',
+                        child: Row(
+                          children: [
+                            Icon(Icons.school, size: 20),
+                            SizedBox(width: 8),
+                            Text('View Classes'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'edit') {
+                        context.push('/edit-child');
+                      }
+                    },
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -288,8 +349,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.attach_money, size: 16, color: AppTheme.successColor),
-                    Text('\$${task.rewardAmount.toStringAsFixed(2)}'),
+                    const Icon(Icons.stars, size: 16, color: AppTheme.warningColor),
+                    Text('${task.rewardAmount.toInt()} points'),
                     const SizedBox(width: 16),
                     Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
                     Text(_formatDate(task.dueDate)),

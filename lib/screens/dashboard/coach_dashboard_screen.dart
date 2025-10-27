@@ -180,7 +180,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
             Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
             Tab(icon: Icon(Icons.school), text: 'Classes'),
             Tab(icon: Icon(Icons.people), text: 'Students'),
-            Tab(icon: Icon(Icons.analytics), text: 'Analytics'),
+            Tab(icon: Icon(Icons.account_balance_wallet), text: 'Finance'),
           ],
         ),
         actions: [
@@ -214,7 +214,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           _buildOverviewTab(),
           _buildClassesTab(),
           _buildStudentsTab(),
-          _buildAnalyticsTab(),
+          _buildFinanceTab(),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -456,13 +456,20 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
     );
   }
 
-  Widget _buildAnalyticsTab() {
+  Widget _buildFinanceTab() {
+    final totalRevenue = _recentPayments
+        .where((p) => p.status == PaymentStatus.completed && p.type == PaymentType.classFee)
+        .fold(0.0, (sum, p) => sum + p.amount);
+    final pendingPayments = _recentPayments
+        .where((p) => p.status == PaymentStatus.pending)
+        .fold(0.0, (sum, p) => sum + p.amount);
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Revenue Analytics
+          // Financial Summary
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -470,7 +477,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Revenue Analytics',
+                    'Financial Overview',
                     style: AppTheme.headline6,
                   ),
                   const SizedBox(height: AppTheme.spacingM),
@@ -479,16 +486,16 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
                       Expanded(
                         child: _buildAnalyticsCard(
                           'Total Revenue',
-                          '\$${(_myClasses.length * 25.0).toStringAsFixed(2)}',
-                          Icons.attach_money,
+                          '\$${totalRevenue.toStringAsFixed(2)}',
+                          Icons.trending_up,
                           AppTheme.successColor,
                         ),
                       ),
                       const SizedBox(width: AppTheme.spacingM),
                       Expanded(
                         child: _buildAnalyticsCard(
-                          'Pending Payments',
-                          '\$${_recentPayments.where((p) => p.status == PaymentStatus.pending).fold(0.0, (sum, p) => sum + p.amount).toStringAsFixed(2)}',
+                          'Pending',
+                          '\$${pendingPayments.toStringAsFixed(2)}',
                           Icons.pending,
                           AppTheme.warningColor,
                         ),
@@ -501,46 +508,71 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ),
           const SizedBox(height: AppTheme.spacingL),
           
-          // Attendance Analytics
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spacingL),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Attendance Analytics',
-                    style: AppTheme.headline6,
-                  ),
-                  const SizedBox(height: AppTheme.spacingM),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildAnalyticsCard(
-                          'Today\'s Attendance',
-                          '${_todayAttendance.where((a) => a.status == AttendanceStatus.present).length}/${_todayAttendance.length}',
-                          Icons.check_circle,
-                          AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingM),
-                      Expanded(
-                        child: _buildAnalyticsCard(
-                          'Average Attendance',
-                          '85%',
-                          Icons.trending_up,
-                          AppTheme.infoColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+          // View Full Ledger Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/financial-ledger?userType=coach'),
+              icon: const Icon(Icons.receipt_long),
+              label: const Text('View Full Financial Ledger'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
               ),
             ),
           ),
-          const SizedBox(height: AppTheme.spacingL),
+          const SizedBox(height: AppTheme.spacingXL),
           
-          // Student Analytics
+          // Recent Payments
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent Transactions',
+                style: AppTheme.headline6,
+              ),
+              TextButton(
+                onPressed: () => context.push('/financial-ledger?userType=coach'),
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          
+          // Payment List
+          ..._recentPayments.take(5).map((payment) {
+            return Card(
+              margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: payment.status == PaymentStatus.completed
+                      ? AppTheme.successColor
+                      : AppTheme.warningColor,
+                  child: Icon(
+                    payment.status == PaymentStatus.completed
+                        ? Icons.check_circle
+                        : Icons.pending,
+                    color: Colors.white,
+                  ),
+                ),
+                title: Text(payment.notes ?? 'Payment'),
+                subtitle: Text(
+                  '${_getPaymentStatusLabel(payment.status)} • ${_formatDate(payment.createdAt)}',
+                ),
+                trailing: Text(
+                  '\$${payment.amount.toStringAsFixed(2)}',
+                  style: AppTheme.headline6.copyWith(
+                    color: payment.status == PaymentStatus.completed
+                        ? AppTheme.successColor
+                        : AppTheme.neutral800,
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+          
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Payment Management Actions
           Card(
             child: Padding(
               padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -548,30 +580,30 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Student Analytics',
+                    'Payment Actions',
                     style: AppTheme.headline6,
                   ),
                   const SizedBox(height: AppTheme.spacingM),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildAnalyticsCard(
-                          'Total Students',
-                          _myStudents.length.toString(),
-                          Icons.people,
-                          AppTheme.primaryColor,
-                        ),
-                      ),
-                      const SizedBox(width: AppTheme.spacingM),
-                      Expanded(
-                        child: _buildAnalyticsCard(
-                          'Active Students',
-                          _myStudents.length.toString(),
-                          Icons.person,
-                          AppTheme.successColor,
-                        ),
-                      ),
-                    ],
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      _showRecordPaymentDialog();
+                    },
+                    icon: const Icon(Icons.add),
+                    label: const Text('Record Payment'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
+                  ),
+                  const SizedBox(height: AppTheme.spacingM),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      _showPaymentReminderDialog();
+                    },
+                    icon: const Icon(Icons.notifications),
+                    label: const Text('Send Payment Reminder'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 45),
+                    ),
                   ),
                 ],
               ),
@@ -580,6 +612,107 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
         ],
       ),
     );
+  }
+
+  void _showRecordPaymentDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Record Payment'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Select student and enter payment details'),
+            const SizedBox(height: 16),
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Student',
+                border: OutlineInputBorder(),
+              ),
+              items: _myStudents.map((student) {
+                return DropdownMenuItem(
+                  value: student.id,
+                  child: Text(student.name),
+                );
+              }).toList(),
+              onChanged: (value) {},
+            ),
+            const SizedBox(height: 12),
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Amount',
+                border: OutlineInputBorder(),
+                prefixText: '\$',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Payment recorded successfully!')),
+              );
+            },
+            child: const Text('Record'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPaymentReminderDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Send Payment Reminder'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('Send payment reminder to students with outstanding balances'),
+            const SizedBox(height: 16),
+            Text(
+              '${_recentPayments.where((p) => p.status == PaymentStatus.pending).length} pending payments',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Reminders sent successfully!')),
+              );
+            },
+            child: const Text('Send'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _getPaymentStatusLabel(PaymentStatus status) {
+    switch (status) {
+      case PaymentStatus.completed:
+        return 'Completed';
+      case PaymentStatus.pending:
+        return 'Pending';
+      case PaymentStatus.failed:
+        return 'Failed';
+      case PaymentStatus.refunded:
+        return 'Refunded';
+    }
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {

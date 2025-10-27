@@ -206,9 +206,9 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
             children: [
               Expanded(
                 child: _buildStatCard(
-                  'Total Earnings',
-                  '\$${_totalEarnings.toStringAsFixed(2)}',
-                  Icons.attach_money,
+                  'Total Points',
+                  '${_totalEarnings.toInt()} pts',
+                  Icons.stars,
                   AppTheme.successColor,
                 ),
               ),
@@ -216,7 +216,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               Expanded(
                 child: _buildStatCard(
                   'Pending',
-                  '\$${_pendingEarnings.toStringAsFixed(2)}',
+                  '${_pendingEarnings.toInt()} pts',
                   Icons.pending,
                   AppTheme.warningColor,
                 ),
@@ -244,6 +244,20 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Financial Ledger Button
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/financial-ledger?userType=child'),
+              icon: const Icon(Icons.receipt_long),
+              label: const Text('View Financial Ledger'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+              ),
+            ),
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
@@ -283,8 +297,8 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(Icons.attach_money, size: 16, color: AppTheme.successColor),
-                    Text('\$${task.rewardAmount.toStringAsFixed(2)}'),
+                    const Icon(Icons.stars, size: 16, color: AppTheme.warningColor),
+                    Text('${task.rewardAmount.toInt()} pts'),
                     const SizedBox(width: 16),
                     Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
                     Text(_formatDate(task.dueDate)),

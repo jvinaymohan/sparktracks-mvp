@@ -21,6 +21,9 @@ import 'screens/settings/notification_settings_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
 import 'screens/feedback/feedback_screen.dart';
 import 'screens/tasks/create_task_screen.dart';
+import 'screens/children/add_edit_child_screen.dart';
+import 'screens/settings/points_settings_screen.dart';
+import 'screens/ledger/financial_ledger_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -152,6 +155,25 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/create-task',
           builder: (context, state) => const CreateTaskScreen(),
+        ),
+        GoRoute(
+          path: '/add-child',
+          builder: (context, state) => const AddEditChildScreen(),
+        ),
+        GoRoute(
+          path: '/edit-child',
+          builder: (context, state) => const AddEditChildScreen(), // Pass child data via state.extra
+        ),
+        GoRoute(
+          path: '/points-settings',
+          builder: (context, state) => const PointsSettingsScreen(),
+        ),
+        GoRoute(
+          path: '/financial-ledger',
+          builder: (context, state) {
+            final userType = state.uri.queryParameters['userType'] ?? 'parent';
+            return FinancialLedgerScreen(userType: userType);
+          },
         ),
       ],
       redirect: (context, state) {

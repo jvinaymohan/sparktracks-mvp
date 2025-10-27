@@ -23,6 +23,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedDueTime = TimeOfDay.now();
   bool _isSubmitting = false;
+  bool _isRecurring = false;
+  String _recurringPattern = 'daily';
 
   // Mock children data
   final List<Student> _children = [
@@ -73,7 +75,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         title: const Text('Create Task'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/parent-dashboard');
+            }
+          },
         ),
       ),
       body: SingleChildScrollView(
@@ -282,7 +290,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               ),
               const SizedBox(height: AppTheme.spacingL),
               
-              // Reward Amount
+              // Reward Points
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -290,7 +298,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Reward Amount',
+                        'Reward Points',
                         style: AppTheme.headline6,
                       ),
                       const SizedBox(height: AppTheme.spacingM),
@@ -298,22 +306,86 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                         controller: _rewardController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          hintText: '0.00',
-                          prefixIcon: Icon(Icons.attach_money),
-                          suffixText: 'USD',
+                          hintText: '100',
+                          prefixIcon: Icon(Icons.stars),
+                          suffixText: 'Points',
+                          helperText: 'Points can be converted to money in parent settings',
                         ),
                         keyboardType: TextInputType.number,
                         validator: (value) {
                           if (value == null || value.isEmpty) {
-                            return 'Please enter a reward amount';
+                            return 'Please enter reward points';
                           }
-                          final amount = double.tryParse(value);
+                          final amount = int.tryParse(value);
                           if (amount == null || amount <= 0) {
-                            return 'Please enter a valid amount';
+                            return 'Please enter valid points (whole numbers only)';
                           }
                           return null;
                         },
                       ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingL),
+              
+              // Recurring Options
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Recurring Task',
+                              style: AppTheme.headline6,
+                            ),
+                          ),
+                          Switch(
+                            value: _isRecurring,
+                            onChanged: (value) {
+                              setState(() {
+                                _isRecurring = value;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                      if (_isRecurring) ...[
+                        const SizedBox(height: AppTheme.spacingM),
+                        const Text('This task will automatically repeat'),
+                        const SizedBox(height: AppTheme.spacingM),
+                        DropdownButtonFormField<String>(
+                          value: _recurringPattern,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.repeat),
+                            labelText: 'Repeat Pattern',
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'daily',
+                              child: Text('Daily'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'weekly',
+                              child: Text('Weekly'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'monthly',
+                              child: Text('Monthly'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            setState(() {
+                              _recurringPattern = value ?? 'daily';
+                            });
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -401,8 +473,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           parentId: 'parent1', // Get from auth
           childId: _selectedChildId!,
           status: TaskStatus.pending,
-          rewardAmount: double.parse(_rewardController.text),
+          rewardAmount: double.parse(_rewardController.text), // Now represents points
           dueDate: dueDateTime,
+          isRecurring: _isRecurring,
+          recurringPattern: _isRecurring ? _recurringPattern : null,
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
