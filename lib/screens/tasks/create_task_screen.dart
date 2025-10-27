@@ -203,7 +203,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                                   width: 12,
                                   height: 12,
                                   decoration: BoxDecoration(
-                                    color: Color(int.parse(child.colorCode.replaceFirst('#', '0xFF'))),
+                                    color: Color(int.parse(child.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50')),
                                     shape: BoxShape.circle,
                                   ),
                                 ),
