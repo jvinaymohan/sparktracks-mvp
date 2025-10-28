@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/children_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
@@ -26,36 +27,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   bool _isRecurring = false;
   String _recurringPattern = 'daily';
 
-  // Mock children data
-  final List<Student> _children = [
-    Student(
-      id: 'child1',
-      userId: 'user_child1',
-      parentId: 'parent1',
-      name: 'Emma Johnson',
-      email: 'emma@example.com',
-      dateOfBirth: DateTime(2010, 5, 15),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 90)),
-      colorCode: '#4CAF50',
-    ),
-    Student(
-      id: 'child2',
-      userId: 'user_child2',
-      parentId: 'parent1',
-      name: 'Oliver Johnson',
-      email: 'oliver@example.com',
-      dateOfBirth: DateTime(2012, 8, 22),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 60)),
-      colorCode: '#2196F3',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
-    if (_children.isNotEmpty) {
-      _selectedChildId = _children[0].id;
-    }
+    // We'll get children from provider in build
   }
 
   @override
@@ -69,6 +44,13 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
+    final childrenProvider = Provider.of<ChildrenProvider>(context);
+    final children = childrenProvider.children;
+    
+    // Set default selected child if not set
+    if (_selectedChildId == null && children.isNotEmpty) {
+      _selectedChildId = children[0].id;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -202,7 +184,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                           border: OutlineInputBorder(),
                           prefixIcon: Icon(Icons.child_care),
                         ),
-                        items: _children.map((child) {
+                        items: children.map((child) {
                           return DropdownMenuItem(
                             value: child.id,
                             child: Row(
