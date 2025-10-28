@@ -10,8 +10,21 @@ class LandingScreen extends StatefulWidget {
   State<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends State<LandingScreen> {
+class _LandingScreenState extends State<LandingScreen> with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  late TabController _tabController;
+  
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+  
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
   
   Future<Map<String, int>> _getStats() async {
     try {
@@ -27,7 +40,6 @@ class _LandingScreenState extends State<LandingScreen> {
         'classes': classesSnapshot.size,
       };
     } catch (e) {
-      // Return placeholder values if Firebase isn't set up yet
       return {
         'users': 0,
         'children': 0,
@@ -39,28 +51,53 @@ class _LandingScreenState extends State<LandingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            _buildHeroSection(context),
-            _buildAboutSection(context),
-            _buildFeaturesSection(context),
-            _buildMarketplacePreview(context),
-            _buildWhatsNewSection(context),
-            _buildCTASection(context),
-            _buildFooter(context),
-          ],
-        ),
+      body: Column(
+        children: [
+          // Hero Section (Fixed, no scrolling)
+          _buildHeroSection(context, isMobile),
+          
+          // Tab Bar
+          Container(
+            color: Colors.white,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: AppTheme.primaryColor,
+              unselectedLabelColor: AppTheme.neutral600,
+              indicatorColor: AppTheme.primaryColor,
+              indicatorWeight: 3,
+              tabs: const [
+                Tab(icon: Icon(Icons.info_outline), text: 'About'),
+                Tab(icon: Icon(Icons.store), text: 'Marketplace'),
+                Tab(icon: Icon(Icons.new_releases), text: 'What\'s New'),
+              ],
+            ),
+          ),
+          
+          // Tab Views
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildAboutTab(context, isMobile),
+                _buildMarketplaceTab(context, isMobile),
+                _buildWhatsNewTab(context, isMobile),
+              ],
+            ),
+          ),
+          
+          // Footer CTA
+          _buildFooterCTA(context, isMobile),
+        ],
       ),
     );
   }
 
-  // Hero Section
-  Widget _buildHeroSection(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
+  Widget _buildHeroSection(BuildContext context, bool isMobile) {
     return Container(
-      height: screenHeight < 800 ? screenHeight * 0.95 : 700,
+      padding: EdgeInsets.all(isMobile ? 24 : 40),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -72,309 +109,102 @@ class _LandingScreenState extends State<LandingScreen> {
           ],
         ),
       ),
-      child: Stack(
-        children: [
-          // Animated circles background
-          Positioned(
-            top: -50,
-            right: -50,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.1),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -80,
-            left: -80,
-            child: Container(
-              width: 250,
-              height: 250,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.white.withOpacity(0.08),
-              ),
-            ),
-          ),
-          
-          // Content
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL, vertical: AppTheme.spacingL),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Logo
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.2),
-                          blurRadius: 20,
-                          spreadRadius: 5,
-                        ),
-                      ],
-                    ),
-                    child: const Text('⭐', style: TextStyle(fontSize: 60)),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Main Heading
-                  Text(
-                    'SparkTracks',
-                    style: TextStyle(
-                      fontSize: 56,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white,
-                      letterSpacing: 1,
-                      shadows: [
-                        Shadow(
-                          blurRadius: 15,
-                          color: Colors.black.withOpacity(0.2),
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Subtitle
-                  const Text(
-                    '🎯 Learn • Earn • Grow 🚀',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'The all-in-one platform for parents, kids, and coaches',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.w400,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Role cards
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      _buildRoleCard(context, 'Parents', '👨‍👩‍👧', 'Manage & Track', const Color(0xFF3B82F6)),
-                      _buildRoleCard(context, 'Kids', '🧒', 'Learn & Earn', const Color(0xFF10B981)),
-                      _buildRoleCard(context, 'Coaches', '👨‍🏫', 'Teach & Grow', const Color(0xFFF59E0B)),
-                    ],
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // CTA
-                  ElevatedButton(
-                    onPressed: () => context.go('/register'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF6366F1),
-                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                      elevation: 8,
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('Get Started Free', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_forward, size: 24),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // About Section
-  Widget _buildAboutSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      color: Colors.white,
       child: Column(
         children: [
+          // Logo
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 15,
+                  spreadRadius: 3,
+                ),
+              ],
+            ),
+            child: const Text('⭐', style: TextStyle(fontSize: 40)),
+          ),
+          const SizedBox(height: 16),
+          
+          // Title
           Text(
-            '💡 What is SparkTracks?',
+            'SparkTracks',
             style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.neutral800,
+              fontSize: isMobile ? 36 : 48,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 8),
+          
+          // Subtitle
+          Text(
+            '🎯 Learn • Earn • Grow 🚀',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 20,
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'For parents, kids, and coaches',
+            style: TextStyle(
+              fontSize: isMobile ? 14 : 16,
+              color: Colors.white.withOpacity(0.9),
             ),
           ),
           const SizedBox(height: 24),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Text(
-              'SparkTracks is a comprehensive learning management platform that connects parents, children, and coaches. '
-              'Track tasks, manage rewards, organize classes, and monitor progress—all in one beautiful, easy-to-use platform.',
-              style: TextStyle(
-                fontSize: 18,
-                color: AppTheme.neutral600,
-                height: 1.6,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 40),
-          FutureBuilder<Map<String, int>>(
-            future: _getStats(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              }
-              
-              final stats = snapshot.data ?? {'users': 0, 'children': 0, 'tasks': 0, 'classes': 0};
-              final userCount = stats['users'] ?? 0;
-              final classCount = stats['classes'] ?? 0;
-              final taskCount = stats['tasks'] ?? 0;
-              
-              return Wrap(
-                spacing: 40,
-                runSpacing: 40,
-                alignment: WrapAlignment.center,
-                children: [
-                  _buildStatCard(
-                    userCount > 0 ? '$userCount' : 'New!',
-                    'Active Users',
-                    Icons.people,
-                  ),
-                  _buildStatCard(
-                    classCount > 0 ? '$classCount' : 'New!',
-                    'Classes',
-                    Icons.school,
-                  ),
-                  _buildStatCard(
-                    taskCount > 0 ? '$taskCount' : 'New!',
-                    'Tasks Completed',
-                    Icons.check_circle,
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String number, String label, IconData icon) {
-    return Container(
-      width: 200,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 40, color: const Color(0xFF6366F1)),
-          const SizedBox(height: 12),
-          Text(
-            number,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF6366F1),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 16,
-              color: AppTheme.neutral600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Features Section
-  Widget _buildFeaturesSection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      color: Colors.grey[50],
-      child: Column(
-        children: [
-          Text(
-            '✨ Powerful Features',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.neutral800,
-            ),
-          ),
-          const SizedBox(height: 48),
+          
+          // CTA Buttons
           Wrap(
-            spacing: 32,
-            runSpacing: 32,
+            spacing: 12,
+            runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
-              _buildFeatureCard(
-                '📝 Smart Task Management',
-                'Create, assign, and track tasks with rewards. Support for recurring tasks and priorities.',
-                const Color(0xFF3B82F6),
-                Icons.assignment,
+              ElevatedButton.icon(
+                onPressed: () => context.go('/register'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF6366F1),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 20 : 32,
+                    vertical: isMobile ? 12 : 16,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                  elevation: 8,
+                ),
+                icon: const Icon(Icons.rocket_launch),
+                label: Text(
+                  'Get Started Free',
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              _buildFeatureCard(
-                '⭐ Points & Rewards System',
-                'Motivate kids with a flexible points system. Convert points to real rewards.',
-                const Color(0xFFF59E0B),
-                Icons.stars,
-              ),
-              _buildFeatureCard(
-                '📊 Progress Tracking',
-                'Monitor learning progress, task completion, and achievement milestones.',
-                const Color(0xFF10B981),
-                Icons.trending_up,
-              ),
-              _buildFeatureCard(
-                '🎓 Class Management',
-                'Schedule classes, track attendance, and manage enrollments effortlessly.',
-                const Color(0xFFEC4899),
-                Icons.school,
-              ),
-              _buildFeatureCard(
-                '💰 Financial Dashboard',
-                'Track payments, generate invoices, and manage family finances.',
-                const Color(0xFF8B5CF6),
-                Icons.account_balance_wallet,
-              ),
-              _buildFeatureCard(
-                '🏆 Achievements & Badges',
-                'Celebrate success with achievements, badges, and leaderboards.',
-                const Color(0xFF6366F1),
-                Icons.emoji_events,
+              OutlinedButton.icon(
+                onPressed: () => context.go('/login'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white, width: 2),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isMobile ? 20 : 32,
+                    vertical: isMobile ? 12 : 16,
+                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                ),
+                icon: const Icon(Icons.login),
+                label: Text(
+                  'Sign In',
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),
@@ -383,42 +213,100 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  Widget _buildFeatureCard(String title, String description, Color color, IconData icon) {
-    return Container(
-      width: 320,
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: color.withOpacity(0.1),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
+  // About Tab
+  Widget _buildAboutTab(BuildContext context, bool isMobile) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 20 : 40),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 48, color: color),
-          const SizedBox(height: 16),
           Text(
-            title,
+            '💡 What is SparkTracks?',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: isMobile ? 24 : 32,
               fontWeight: FontWeight.bold,
-              color: color,
+              color: AppTheme.neutral800,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Text(
+              'A comprehensive platform connecting parents, children, and coaches. '
+              'Track tasks, manage rewards, organize classes, and monitor progress.',
+              style: TextStyle(
+                fontSize: isMobile ? 16 : 18,
+                color: AppTheme.neutral600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 32),
+          
+          // Dynamic Stats
+          FutureBuilder<Map<String, int>>(
+            future: _getStats(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              }
+              
+              final stats = snapshot.data ?? {'users': 0, 'tasks': 0, 'classes': 0};
+              
+              return Wrap(
+                spacing: 20,
+                runSpacing: 20,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildStatCard(
+                    stats['users']! > 0 ? '${stats['users']}' : 'New!',
+                    'Users',
+                    Icons.people,
+                    isMobile,
+                  ),
+                  _buildStatCard(
+                    stats['classes']! > 0 ? '${stats['classes']}' : 'New!',
+                    'Classes',
+                    Icons.school,
+                    isMobile,
+                  ),
+                  _buildStatCard(
+                    stats['tasks']! > 0 ? '${stats['tasks']}' : 'New!',
+                    'Tasks',
+                    Icons.check_circle,
+                    isMobile,
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+          
+          // Key Features
           Text(
-            description,
+            '✨ Key Features',
             style: TextStyle(
-              fontSize: 15,
-              color: AppTheme.neutral600,
-              height: 1.5,
+              fontSize: isMobile ? 22 : 28,
+              fontWeight: FontWeight.bold,
+              color: AppTheme.neutral800,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 800),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildFeatureChip('📝 Task Management', const Color(0xFF3B82F6), isMobile),
+                _buildFeatureChip('⭐ Points System', const Color(0xFFF59E0B), isMobile),
+                _buildFeatureChip('📊 Progress Tracking', const Color(0xFF10B981), isMobile),
+                _buildFeatureChip('💰 Financial Reports', const Color(0xFF8B5CF6), isMobile),
+                _buildFeatureChip('🎓 Class Management', const Color(0xFFEC4899), isMobile),
+                _buildFeatureChip('🏆 Achievements', const Color(0xFF6366F1), isMobile),
+              ],
             ),
           ),
         ],
@@ -426,31 +314,21 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // Marketplace Preview Section
-  Widget _buildMarketplacePreview(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white,
-            Colors.grey[100]!,
-          ],
-        ),
-      ),
+  // Marketplace Tab
+  Widget _buildMarketplaceTab(BuildContext context, bool isMobile) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 20 : 40),
       child: Column(
         children: [
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🛍️', style: TextStyle(fontSize: 40)),
-              SizedBox(width: 16),
+              Text('🛍️', style: TextStyle(fontSize: 32)),
+              SizedBox(width: 12),
               Text(
                 'Coach Marketplace',
                 style: TextStyle(
-                  fontSize: 36,
+                  fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF1F2937),
                 ),
@@ -459,75 +337,271 @@ class _LandingScreenState extends State<LandingScreen> {
           ),
           const SizedBox(height: 16),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+            constraints: const BoxConstraints(maxWidth: 600),
             child: Text(
-              'Browse hundreds of classes from certified coaches. From sports to music, academics to arts—find the perfect learning experience for your child.',
+              'Browse classes from certified coaches. Sports, music, academics, arts—find the perfect fit!',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: isMobile ? 16 : 18,
                 color: AppTheme.neutral600,
-                height: 1.6,
+                height: 1.5,
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 48),
+          const SizedBox(height: 32),
           
-          // Sample marketplace classes
+          // Sample Classes
           Wrap(
-            spacing: 24,
-            runSpacing: 24,
+            spacing: 20,
+            runSpacing: 20,
             alignment: WrapAlignment.center,
             children: [
               _buildMarketplaceCard(
                 'Soccer Training ⚽',
-                'Coach Mike Johnson',
-                '\$25/class',
-                '15 spots left',
+                'Coach Mike',
+                '\$25',
+                '15 spots',
                 const Color(0xFF10B981),
+                isMobile,
               ),
               _buildMarketplaceCard(
                 'Piano Lessons 🎹',
-                'Coach Sarah Lee',
-                '\$40/class',
-                '8 spots left',
+                'Coach Sarah',
+                '\$40',
+                '8 spots',
                 const Color(0xFFEC4899),
+                isMobile,
               ),
               _buildMarketplaceCard(
                 'Math Tutoring 📐',
-                'Coach David Chen',
-                '\$30/class',
-                '12 spots left',
+                'Coach David',
+                '\$30',
+                '12 spots',
                 const Color(0xFF3B82F6),
+                isMobile,
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () => context.go('/login'),
+            onPressed: () => context.go('/register'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF59E0B),
               foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 24 : 32,
+                vertical: isMobile ? 12 : 16,
+              ),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             icon: const Icon(Icons.explore),
-            label: const Text('Explore Marketplace', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            label: const Text(
+              'Explore Marketplace',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMarketplaceCard(String title, String coach, String price, String spots, Color color) {
+  // What's New Tab
+  Widget _buildWhatsNewTab(BuildContext context, bool isMobile) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? 20 : 40),
+      child: Column(
+        children: [
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text('🆕', style: TextStyle(fontSize: 32)),
+              SizedBox(width: 12),
+              Text(
+                'What\'s New',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Latest features and updates',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 18,
+              color: AppTheme.neutral600,
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 700),
+            child: Column(
+              children: [
+                _buildUpdateCard(
+                  '🔥 Firebase Integration',
+                  'Jan 2025',
+                  'Real authentication & persistent data storage.',
+                  true,
+                  isMobile,
+                ),
+                const SizedBox(height: 12),
+                _buildUpdateCard(
+                  '⭐ Points System',
+                  'Jan 2025',
+                  'Flexible rewards with custom conversion rates.',
+                  true,
+                  isMobile,
+                ),
+                const SizedBox(height: 12),
+                _buildUpdateCard(
+                  '📊 Enhanced Dashboards',
+                  'Jan 2025',
+                  'Beautiful dashboards with real-time updates.',
+                  false,
+                  isMobile,
+                ),
+                const SizedBox(height: 12),
+                _buildUpdateCard(
+                  '🔄 Recurring Tasks',
+                  'Jan 2025',
+                  'Daily, weekly, monthly task scheduling.',
+                  false,
+                  isMobile,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Footer CTA
+  Widget _buildFooterCTA(BuildContext context, bool isMobile) {
     return Container(
-      width: 280,
+      padding: EdgeInsets.all(isMobile ? 20 : 32),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: AppTheme.neutral800,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 10,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(
+            '© 2025 SparkTracks • Made with ❤️',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.7),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 16,
+            runSpacing: 8,
+            alignment: WrapAlignment.center,
+            children: [
+              TextButton(
+                onPressed: () => context.go('/login'),
+                child: Text('Login', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              ),
+              TextButton(
+                onPressed: () => context.go('/register'),
+                child: Text('Sign Up', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String number, String label, IconData icon, bool isMobile) {
+    return Container(
+      width: isMobile ? 120 : 160,
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: isMobile ? 28 : 36, color: const Color(0xFF6366F1)),
+          const SizedBox(height: 8),
+          Text(
+            number,
+            style: TextStyle(
+              fontSize: isMobile ? 24 : 28,
+              fontWeight: FontWeight.bold,
+              color: const Color(0xFF6366F1),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: isMobile ? 12 : 14,
+              color: AppTheme.neutral600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureChip(String label, Color color, bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 12 : 16,
+        vertical: isMobile ? 8 : 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: isMobile ? 13 : 15,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMarketplaceCard(
+    String title,
+    String coach,
+    String price,
+    String spots,
+    Color color,
+    bool isMobile,
+  ) {
+    return Container(
+      width: isMobile ? 200 : 240,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 8,
             spreadRadius: 2,
           ),
         ],
@@ -536,66 +610,59 @@ class _LandingScreenState extends State<LandingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            height: 140,
+            height: isMobile ? 100 : 120,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [color.withOpacity(0.7), color],
               ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
             ),
             child: Center(
               child: Text(
                 title.split(' ').last,
-                style: const TextStyle(fontSize: 60),
+                style: const TextStyle(fontSize: 48),
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  title.split(' ').first + ' ' + title.split(' ')[1],
-                  style: const TextStyle(
-                    fontSize: 20,
+                  title.replaceAll(RegExp(r'[^\w\s]'), '').trim(),
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(height: 8),
-                Row(
-                  children: [
-                    const Icon(Icons.person, size: 16, color: Color(0xFF6B7280)),
-                    const SizedBox(width: 4),
-                    Text(
-                      coach,
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
-                    ),
-                  ],
+                const SizedBox(height: 4),
+                Text(
+                  coach,
+                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                       price,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: color,
                       ),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         spots,
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           fontWeight: FontWeight.bold,
                           color: color,
                         ),
@@ -611,292 +678,80 @@ class _LandingScreenState extends State<LandingScreen> {
     );
   }
 
-  // What's New Section
-  Widget _buildWhatsNewSection(BuildContext context) {
+  Widget _buildUpdateCard(
+    String title,
+    String date,
+    String description,
+    bool isNew,
+    bool isMobile,
+  ) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      color: Colors.white,
-      child: Column(
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🆕', style: TextStyle(fontSize: 40)),
-              SizedBox(width: 16),
-              Text(
-                'What\'s New',
-                style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Stay updated with the latest features and improvements',
-            style: TextStyle(
-              fontSize: 18,
-              color: AppTheme.neutral600,
-            ),
-          ),
-          const SizedBox(height: 48),
-          
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
-              children: [
-                _buildUpdateCard(
-                  '🔥 Firebase Integration',
-                  'January 2025',
-                  'Real authentication, email verification, and persistent data storage with Firestore.',
-                  true,
-                ),
-                const SizedBox(height: 16),
-                _buildUpdateCard(
-                  '⭐ Points System',
-                  'January 2025',
-                  'New flexible points system with customizable rewards and conversion rates.',
-                  true,
-                ),
-                const SizedBox(height: 16),
-                _buildUpdateCard(
-                  '📊 Enhanced Dashboards',
-                  'January 2025',
-                  'Beautiful, responsive dashboards for Parents, Kids, and Coaches with real-time updates.',
-                  false,
-                ),
-                const SizedBox(height: 16),
-                _buildUpdateCard(
-                  '🔄 Recurring Tasks',
-                  'January 2025',
-                  'Create daily, weekly, or monthly recurring tasks with smart scheduling.',
-                  false,
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUpdateCard(String title, String date, String description, bool isNew) {
-    return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
       decoration: BoxDecoration(
         color: isNew ? const Color(0xFF6366F1).withOpacity(0.05) : Colors.grey[50],
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isNew ? const Color(0xFF6366F1).withOpacity(0.3) : Colors.grey[300]!,
-          width: 2,
         ),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isNew)
+          if (isNew) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
               decoration: BoxDecoration(
                 color: const Color(0xFF6366F1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: const Text(
                 'NEW',
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 12,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ),
-          if (isNew) const SizedBox(width: 16),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
-                          fontSize: 20,
+                        style: TextStyle(
+                          fontSize: isMobile ? 16 : 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1F2937),
                         ),
                       ),
                     ),
                     Text(
                       date,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: 12,
                         color: AppTheme.neutral500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: isMobile ? 14 : 15,
                     color: AppTheme.neutral600,
-                    height: 1.5,
                   ),
                 ),
               ],
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // CTA Section
-  Widget _buildCTASection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.grey[50]!,
-            const Color(0xFF6366F1).withOpacity(0.05),
-          ],
-        ),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            '🚀 Ready to Get Started?',
-            style: TextStyle(
-              fontSize: 40,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1F2937),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            'Join families and coaches using SparkTracks',
-            style: TextStyle(
-              fontSize: 20,
-              color: AppTheme.neutral600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () => context.go('/register'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-              elevation: 8,
-            ),
-            child: const Text(
-              'Sign Up Free - No Credit Card Required',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Footer
-  Widget _buildFooter(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(40),
-      color: AppTheme.neutral800,
-      child: Column(
-        children: [
-          Text(
-            '© 2025 SparkTracks • Made with ❤️',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 24,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
-            children: [
-              TextButton(
-                onPressed: () => context.go('/login'),
-                child: Text('Login', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-              TextButton(
-                onPressed: () => context.go('/register'),
-                child: Text('Sign Up', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('About', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('Privacy', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('Terms', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRoleCard(BuildContext context, String title, String emoji, String subtitle, Color color) {
-    return InkWell(
-      onTap: () => context.go('/register'),
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        width: 160,
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.1),
-              blurRadius: 10,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 48)),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppTheme.neutral600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }
