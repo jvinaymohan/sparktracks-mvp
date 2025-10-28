@@ -80,9 +80,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
 
   @override
   Widget build(BuildContext context) {
-    final childrenProvider = Provider.of<ChildrenProvider>(context);
-    final children = childrenProvider.children;
-    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Dashboard'),
@@ -143,22 +140,25 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildOverviewTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Quick Stats
-          Row(
+    return Consumer<ChildrenProvider>(
+      builder: (context, childrenProvider, child) {
+        final children = childrenProvider.children;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: _buildStatCard(
-                  'Total Children',
-                  children.length.toString(),
-                  Icons.child_care,
-                  AppTheme.primaryColor,
-                ),
-              ),
+              // Quick Stats
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildStatCard(
+                      'Total Children',
+                      children.length.toString(),
+                      Icons.child_care,
+                      AppTheme.primaryColor,
+                    ),
+                  ),
               const SizedBox(width: AppTheme.spacingM),
               Expanded(
                 child: _buildStatCard(
@@ -217,46 +217,51 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ..._recentTasks.take(3).map((task) => _buildActivityCard(task)),
         ],
       ),
+        );
+      },
     );
   }
 
   Widget _buildChildrenTab() {
-    return Column(
-      children: [
-        // Add Child Button
-        Container(
-          padding: const EdgeInsets.all(AppTheme.spacingL),
-          child: SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => context.push('/add-child'),
-              icon: const Icon(Icons.add),
-              label: const Text('Add Child'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+    return Consumer<ChildrenProvider>(
+      builder: (context, childrenProvider, child) {
+        final children = childrenProvider.children;
+        return Column(
+          children: [
+            // Add Child Button
+            Container(
+              padding: const EdgeInsets.all(AppTheme.spacingL),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => context.push('/add-child'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Child'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        // Children List
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-            itemCount: children.length,
-            itemBuilder: (context, index) {
-              final child = children[index];
+            // Children List
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
+                itemCount: children.length,
+                itemBuilder: (context, index) {
+                  final childItem = children[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: Color(int.parse(child.colorCode!.replaceFirst('#', '0xFF'))),
+                    backgroundColor: Color(int.parse(childItem.colorCode!.replaceFirst('#', '0xFF'))),
                     child: Text(
-                      child.name[0],
+                      childItem.name[0],
                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                     ),
                   ),
-                  title: Text(child.name),
-                  subtitle: Text(child.email ?? 'No email'),
+                  title: Text(childItem.name),
+                  subtitle: Text(childItem.email),
                   trailing: PopupMenuButton(
                     itemBuilder: (context) => [
                       const PopupMenuItem(
@@ -302,6 +307,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
         ),
       ],
+        );
+      },
     );
   }
 
