@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../utils/app_theme.dart';
 
-class LandingScreen extends StatelessWidget {
+class LandingScreen extends StatefulWidget {
   const LandingScreen({super.key});
+
+  @override
+  State<LandingScreen> createState() => _LandingScreenState();
+}
+
+class _LandingScreenState extends State<LandingScreen> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  
+  Future<Map<String, int>> _getStats() async {
+    try {
+      final usersSnapshot = await _firestore.collection('users').get();
+      final childrenSnapshot = await _firestore.collection('children').get();
+      final tasksSnapshot = await _firestore.collection('tasks').get();
+      final classesSnapshot = await _firestore.collection('classes').get();
+      
+      return {
+        'users': usersSnapshot.size,
+        'children': childrenSnapshot.size,
+        'tasks': tasksSnapshot.size,
+        'classes': classesSnapshot.size,
+      };
+    } catch (e) {
+      // Return placeholder values if Firebase isn't set up yet
+      return {
+        'users': 0,
+        'children': 0,
+        'tasks': 0,
+        'classes': 0,
+      };
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -205,15 +237,41 @@ class LandingScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 40),
-          Wrap(
-            spacing: 40,
-            runSpacing: 40,
-            alignment: WrapAlignment.center,
-            children: [
-              _buildStatCard('1000+', 'Active Users', Icons.people),
-              _buildStatCard('500+', 'Classes', Icons.school),
-              _buildStatCard('10K+', 'Tasks Completed', Icons.check_circle),
-            ],
+          FutureBuilder<Map<String, int>>(
+            future: _getStats(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const CircularProgressIndicator();
+              }
+              
+              final stats = snapshot.data ?? {'users': 0, 'children': 0, 'tasks': 0, 'classes': 0};
+              final userCount = stats['users'] ?? 0;
+              final classCount = stats['classes'] ?? 0;
+              final taskCount = stats['tasks'] ?? 0;
+              
+              return Wrap(
+                spacing: 40,
+                runSpacing: 40,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildStatCard(
+                    userCount > 0 ? '$userCount' : 'New!',
+                    'Active Users',
+                    Icons.people,
+                  ),
+                  _buildStatCard(
+                    classCount > 0 ? '$classCount' : 'New!',
+                    'Classes',
+                    Icons.school,
+                  ),
+                  _buildStatCard(
+                    taskCount > 0 ? '$taskCount' : 'New!',
+                    'Tasks Completed',
+                    Icons.check_circle,
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -701,13 +759,13 @@ class LandingScreen extends StatelessWidget {
   Widget _buildCTASection(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            Color(0xFF6366F1),
-            Color(0xFF8B5CF6),
+            Colors.grey[50]!,
+            const Color(0xFF6366F1).withOpacity(0.05),
           ],
         ),
       ),
@@ -718,16 +776,16 @@ class LandingScreen extends StatelessWidget {
             style: TextStyle(
               fontSize: 40,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Color(0xFF1F2937),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           Text(
-            'Join thousands of families and coaches already using SparkTracks',
+            'Join families and coaches using SparkTracks',
             style: TextStyle(
               fontSize: 20,
-              color: Colors.white.withOpacity(0.9),
+              color: AppTheme.neutral600,
             ),
             textAlign: TextAlign.center,
           ),
@@ -735,8 +793,8 @@ class LandingScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () => context.go('/register'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF6366F1),
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
               elevation: 8,
