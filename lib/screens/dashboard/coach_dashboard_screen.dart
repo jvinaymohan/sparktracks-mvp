@@ -710,6 +710,8 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
         return 'Pending';
       case PaymentStatus.failed:
         return 'Failed';
+      case PaymentStatus.cancelled:
+        return 'Cancelled';
       case PaymentStatus.refunded:
         return 'Refunded';
     }

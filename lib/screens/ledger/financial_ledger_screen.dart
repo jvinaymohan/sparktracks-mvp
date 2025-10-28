@@ -37,7 +37,7 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
       userId: 'user1',
       amount: 15.00,
       currency: 'USD',
-      type: PaymentType.bonusPayout,
+      type: PaymentType.bonus,
       status: PaymentStatus.completed,
       method: PaymentMethod.points,
       notes: 'Task completion bonus - 1500 points',
@@ -293,7 +293,7 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
   }
 
   bool _isIncome(PaymentType type) {
-    return type == PaymentType.bonusPayout || type == PaymentType.refund;
+    return type == PaymentType.bonus || type == PaymentType.taskReward || type == PaymentType.refund;
   }
 
   Color _getPaymentColor(Payment payment) {
@@ -308,12 +308,16 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
     switch (payment.type) {
       case PaymentType.classFee:
         return Icons.school;
-      case PaymentType.bonusPayout:
+      case PaymentType.taskReward:
+        return Icons.assignment_turned_in;
+      case PaymentType.bonus:
         return Icons.stars;
       case PaymentType.refund:
         return Icons.replay;
-      case PaymentType.other:
-        return Icons.receipt;
+      case PaymentType.penalty:
+        return Icons.warning;
+      case PaymentType.adjustment:
+        return Icons.tune;
     }
   }
 
@@ -321,12 +325,16 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
     switch (type) {
       case PaymentType.classFee:
         return 'Class Fee';
-      case PaymentType.bonusPayout:
-        return 'Bonus Payout';
+      case PaymentType.taskReward:
+        return 'Task Reward';
+      case PaymentType.bonus:
+        return 'Bonus';
       case PaymentType.refund:
         return 'Refund';
-      case PaymentType.other:
-        return 'Other';
+      case PaymentType.penalty:
+        return 'Penalty';
+      case PaymentType.adjustment:
+        return 'Adjustment';
     }
   }
 
@@ -338,6 +346,8 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
         return Icons.pending;
       case PaymentStatus.failed:
         return Icons.error;
+      case PaymentStatus.cancelled:
+        return Icons.cancel;
       case PaymentStatus.refunded:
         return Icons.replay;
     }
@@ -351,6 +361,8 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
         return AppTheme.warningColor;
       case PaymentStatus.failed:
         return AppTheme.errorColor;
+      case PaymentStatus.cancelled:
+        return AppTheme.neutral600;
       case PaymentStatus.refunded:
         return AppTheme.infoColor;
     }
@@ -364,6 +376,8 @@ class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with Tick
         return 'Pending';
       case PaymentStatus.failed:
         return 'Failed';
+      case PaymentStatus.cancelled:
+        return 'Cancelled';
       case PaymentStatus.refunded:
         return 'Refunded';
     }

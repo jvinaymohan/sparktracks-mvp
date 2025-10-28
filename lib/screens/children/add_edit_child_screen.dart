@@ -366,12 +366,13 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
 
       try {
         // Create or update student object
+        final emailText = _emailController.text.trim();
         final student = Student(
           id: widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}',
           userId: widget.child?.userId ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
           parentId: 'parent1', // Get from auth
           name: _nameController.text,
-          email: _emailController.text.isNotEmpty ? _emailController.text : null,
+          email: emailText.isNotEmpty ? emailText : 'child${DateTime.now().millisecondsSinceEpoch}@temp.com',
           dateOfBirth: _selectedDateOfBirth!,
           enrolledAt: widget.child?.enrolledAt ?? DateTime.now(),
           colorCode: _selectedColorCode,
