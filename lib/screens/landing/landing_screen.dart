@@ -11,65 +11,14 @@ class LandingScreen extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Hero Section
+            // Hero Section - Now compact and fun!
             _buildHeroSection(context),
             
-            // Features for Parents
-            _buildRoleSection(
-              context,
-              'For Parents',
-              'Empower your family with smart task management',
-              Icons.family_restroom,
-              AppTheme.primaryColor,
-              [
-                'Create and assign tasks with point rewards',
-                'Track your children\'s progress in real-time',
-                'Manage multiple children with color coding',
-                'Set up recurring tasks automatically',
-                'Convert points to real currency rewards',
-                'Access comprehensive financial ledger',
-              ],
-            ),
-            
-            // Features for Children
-            _buildRoleSection(
-              context,
-              'For Children',
-              'Learn responsibility while earning rewards',
-              Icons.child_care,
-              AppTheme.successColor,
-              [
-                'View your assigned tasks and deadlines',
-                'Track your points and earnings',
-                'Upload proof of completed tasks',
-                'Enroll in coach-led classes',
-                'Celebrate achievements and milestones',
-                'Learn financial responsibility early',
-              ],
-            ),
-            
-            // Features for Coaches
-            _buildRoleSection(
-              context,
-              'For Coaches',
-              'Grow your coaching business effortlessly',
-              Icons.school,
-              AppTheme.infoColor,
-              [
-                'Create and manage classes easily',
-                'Track student attendance and payments',
-                'Send automated payment reminders',
-                'Access detailed financial reports',
-                'Communicate with students and parents',
-                'Build your coaching reputation',
-              ],
-            ),
-            
-            // CTA Section
-            _buildCTASection(context),
+            // Quick Features Strip
+            _buildQuickFeatures(context),
             
             // Footer
-            _buildFooter(),
+            _buildCompactFooter(),
           ],
         ),
       ),
@@ -77,29 +26,44 @@ class LandingScreen extends StatelessWidget {
   }
 
   Widget _buildHeroSection(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
     return Container(
-      height: MediaQuery.of(context).size.height * 0.85,
+      height: screenHeight < 800 ? screenHeight * 0.95 : 700,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.primaryColor,
-            AppTheme.primaryColor.withOpacity(0.8),
-            AppTheme.secondaryColor,
+            const Color(0xFF6366F1), // Bright indigo
+            const Color(0xFF8B5CF6), // Purple
+            const Color(0xFFA855F7), // Light purple
           ],
         ),
       ),
       child: Stack(
         children: [
-          // Background pattern
-          Positioned.fill(
-            child: Opacity(
-              opacity: 0.1,
-              child: Image.asset(
-                'assets/images/pattern.png',
-                repeat: ImageRepeat.repeat,
-                errorBuilder: (context, error, stackTrace) => const SizedBox(),
+          // Animated circles background
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -80,
+            left: -80,
+            child: Container(
+              width: 250,
+              height: 250,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.08),
               ),
             ),
           ),
@@ -107,105 +71,167 @@ class LandingScreen extends StatelessWidget {
           // Content
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(AppTheme.spacingXL),
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingXL, vertical: AppTheme.spacingL),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo/Icon
+                  // Fun emoji-style logo
                   Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      size: 80,
                       color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 20,
+                          spreadRadius: 5,
+                        ),
+                      ],
+                    ),
+                    child: const Text(
+                      '⭐',
+                      style: TextStyle(fontSize: 60),
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingXL),
+                  const SizedBox(height: 24),
                   
-                  // Main Heading
+                  // Main Heading - More playful
                   Text(
                     'SparkTracks',
                     style: TextStyle(
-                      fontSize: 72,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 56,
+                      fontWeight: FontWeight.w900,
                       color: Colors.white,
-                      letterSpacing: 2,
+                      letterSpacing: 1,
                       shadows: [
                         Shadow(
-                          blurRadius: 10,
-                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 15,
+                          color: Colors.black.withOpacity(0.2),
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingM),
+                  const SizedBox(height: 12),
                   
-                  // Subtitle
+                  // Fun subtitle with emojis
                   Text(
-                    'Where Learning Meets Earning',
+                    '🎯 Learn • Earn • Grow 🚀',
                     style: TextStyle(
-                      fontSize: 28,
-                      color: Colors.white.withOpacity(0.95),
-                      fontWeight: FontWeight.w400,
-                      letterSpacing: 1,
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(height: AppTheme.spacingS),
+                  const SizedBox(height: 32),
                   
-                  // Description
-                  Container(
-                    constraints: const BoxConstraints(maxWidth: 700),
-                    child: Text(
-                      'The complete platform for families and coaches to manage tasks, track progress, and celebrate success together',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 18,
-                        color: Colors.white.withOpacity(0.9),
-                        height: 1.6,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingXXL),
-                  
-                  // CTA Buttons
+                  // Three role cards in a row
                   Wrap(
-                    spacing: AppTheme.spacingL,
-                    runSpacing: AppTheme.spacingM,
+                    spacing: 16,
+                    runSpacing: 16,
                     alignment: WrapAlignment.center,
                     children: [
-                      _buildRoleButton(
+                      _buildRoleCard(
                         context,
-                        'I\'m a Parent',
-                        Icons.family_restroom,
-                        () => context.go('/login'),
-                        isPrimary: true,
+                        'Parents',
+                        '👨‍👩‍👧',
+                        'Manage & Track',
+                        const Color(0xFF3B82F6),
                       ),
-                      _buildRoleButton(
+                      _buildRoleCard(
                         context,
-                        'I\'m a Child',
-                        Icons.child_care,
-                        () => context.go('/login'),
-                        isPrimary: false,
+                        'Kids',
+                        '🧒',
+                        'Learn & Earn',
+                        const Color(0xFF10B981),
                       ),
-                      _buildRoleButton(
+                      _buildRoleCard(
                         context,
-                        'I\'m a Coach',
-                        Icons.school,
-                        () => context.go('/login'),
-                        isPrimary: false,
+                        'Coaches',
+                        '👨‍🏫',
+                        'Teach & Grow',
+                        const Color(0xFFF59E0B),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Single prominent CTA
+                  ElevatedButton(
+                    onPressed: () => context.go('/login'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF6366F1),
+                      padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Get Started Free',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.arrow_forward, size: 24),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildRoleCard(BuildContext context, String title, String emoji, String subtitle, Color color) {
+    return InkWell(
+      onTap: () => context.go('/login'),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        width: 160,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              spreadRadius: 2,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 48)),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.neutral600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -234,161 +260,102 @@ class LandingScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoleSection(BuildContext context, String title, String subtitle, IconData icon, Color color, List<String> features) {
+  Widget _buildQuickFeatures(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 40),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 1200),
-        child: Column(
-          children: [
-            // Icon
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, size: 60, color: color),
-            ),
-            const SizedBox(height: AppTheme.spacingL),
-            
-            // Title
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingM),
-            
-            // Subtitle
-            Text(
-              subtitle,
-              style: AppTheme.headline6.copyWith(
-                color: AppTheme.neutral600,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spacingXL),
-            
-            // Features Grid
-            Wrap(
-              spacing: AppTheme.spacingL,
-              runSpacing: AppTheme.spacingL,
-              alignment: WrapAlignment.center,
-              children: features.map((feature) {
-                return Container(
-                  width: 350,
-                  padding: const EdgeInsets.all(AppTheme.spacingL),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 10,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.check_circle, color: color, size: 24),
-                      const SizedBox(width: AppTheme.spacingM),
-                      Expanded(
-                        child: Text(
-                          feature,
-                          style: AppTheme.bodyLarge,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCTASection(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 100, horizontal: 40),
-      decoration: BoxDecoration(
-        gradient: AppTheme.primaryGradient,
-      ),
+      padding: const EdgeInsets.all(40),
+      color: Colors.grey[50],
       child: Column(
         children: [
           Text(
-            'Ready to Get Started?',
+            '✨ Everything You Need in One Place',
             style: TextStyle(
-              fontSize: 48,
+              fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: AppTheme.neutral800,
             ),
           ),
-          const SizedBox(height: AppTheme.spacingM),
-          Text(
-            'Join thousands of families and coaches already using SparkTracks',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(height: AppTheme.spacingXL),
-          ElevatedButton(
-            onPressed: () => context.go('/register'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppTheme.primaryColor,
-              padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 25),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(30),
-              ),
-              elevation: 8,
-            ),
-            child: const Text(
-              'Create Free Account',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
+          const SizedBox(height: 40),
+          Wrap(
+            spacing: 24,
+            runSpacing: 24,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildFeatureChip('📝 Task Management', const Color(0xFF3B82F6)),
+              _buildFeatureChip('⭐ Points System', const Color(0xFFF59E0B)),
+              _buildFeatureChip('📊 Progress Tracking', const Color(0xFF10B981)),
+              _buildFeatureChip('💰 Financial Reports', const Color(0xFF8B5CF6)),
+              _buildFeatureChip('🎓 Class Management', const Color(0xFFEC4899)),
+              _buildFeatureChip('🏆 Achievements', const Color(0xFF6366F1)),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFooter() {
+  Widget _buildFeatureChip(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: color.withOpacity(0.3), width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 8,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCompactFooter() {
+    return Container(
+      padding: const EdgeInsets.all(32),
       color: AppTheme.neutral800,
       child: Column(
         children: [
+          const Text(
+            '🚀 Ready to get started?',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {},
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+            ),
+            child: const Text(
+              'Sign Up Free',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 24),
           Text(
-            '© 2025 SparkTracks. All rights reserved.',
+            '© 2025 SparkTracks • Made with ❤️',
             style: TextStyle(
               color: Colors.white.withOpacity(0.7),
               fontSize: 14,
             ),
-          ),
-          const SizedBox(height: AppTheme.spacingM),
-          Wrap(
-            spacing: AppTheme.spacingL,
-            children: [
-              TextButton(
-                onPressed: () {},
-                child: Text('Privacy Policy', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('Terms of Service', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('Contact Us', style: TextStyle(color: Colors.white.withOpacity(0.7))),
-              ),
-            ],
           ),
         ],
       ),
