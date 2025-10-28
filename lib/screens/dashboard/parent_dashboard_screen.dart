@@ -191,7 +191,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
             style: AppTheme.headline6,
           ),
           const SizedBox(height: AppTheme.spacingM),
-          ..._recentTasks.take(3).map((task) => _buildActivityCard(task)),
+          ...tasks.take(3).map((task) => _buildActivityCard(task)),
         ],
       ),
         );
