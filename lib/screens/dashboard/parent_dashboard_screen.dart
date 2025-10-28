@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/children_provider.dart';
 import '../../models/student_model.dart';
 import '../../models/task_model.dart';
 import '../../models/class_model.dart';
@@ -17,30 +18,6 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
-  
-  // Mock data - in real app, this would come from providers/services
-  final List<Student> _children = [
-    Student(
-      id: '1',
-      userId: 'child1',
-      parentId: 'parent1',
-      name: 'Emma Johnson',
-      email: 'emma@example.com',
-      dateOfBirth: DateTime(2015, 3, 15),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 30)),
-      colorCode: '#FF6B6B',
-    ),
-    Student(
-      id: '2',
-      userId: 'child2',
-      parentId: 'parent1',
-      name: 'Liam Johnson',
-      email: 'liam@example.com',
-      dateOfBirth: DateTime(2013, 7, 22),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 45)),
-      colorCode: '#4ECDC4',
-    ),
-  ];
 
   final List<Task> _recentTasks = [
     Task(
@@ -103,6 +80,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
 
   @override
   Widget build(BuildContext context) {
+    final childrenProvider = Provider.of<ChildrenProvider>(context);
+    final children = childrenProvider.children;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Dashboard'),
@@ -174,7 +154,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
               Expanded(
                 child: _buildStatCard(
                   'Total Children',
-                  _children.length.toString(),
+                  children.length.toString(),
                   Icons.child_care,
                   AppTheme.primaryColor,
                 ),
@@ -262,9 +242,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-            itemCount: _children.length,
+            itemCount: children.length,
             itemBuilder: (context, index) {
-              final child = _children[index];
+              final child = children[index];
               return Card(
                 margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
                 child: ListTile(

@@ -9,6 +9,7 @@ import 'services/auth_service.dart';
 import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/children_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -24,6 +25,7 @@ import 'screens/tasks/create_task_screen.dart';
 import 'screens/children/add_edit_child_screen.dart';
 import 'screens/settings/points_settings_screen.dart';
 import 'screens/ledger/financial_ledger_screen.dart';
+import 'screens/landing/landing_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +52,7 @@ class SparktracksMVP extends StatelessWidget {
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ChildrenProvider()),
       ],
       child: MaterialApp.router(
         title: AppConfig.appName,
@@ -108,6 +111,10 @@ class SparktracksMVP extends StatelessWidget {
         // Public routes
         GoRoute(
           path: '/',
+          builder: (context, state) => const LandingScreen(),
+        ),
+        GoRoute(
+          path: '/splash',
           builder: (context, state) => const SplashScreen(),
         ),
         GoRoute(
@@ -181,11 +188,13 @@ class SparktracksMVP extends StatelessWidget {
         final isLoggedIn = authProvider.isLoggedIn;
         final isOnboarding = authProvider.isOnboarding;
         
-        // If not logged in and not on auth pages, redirect to login
-        if (!isLoggedIn && !state.matchedLocation.startsWith('/login') && 
-            !state.matchedLocation.startsWith('/register') && 
-            !state.matchedLocation.startsWith('/email-verification')) {
-          return '/login';
+        // Allow landing page and auth pages for non-logged-in users
+        final publicPaths = ['/', '/login', '/register', '/email-verification'];
+        final isPublicPath = publicPaths.any((path) => state.matchedLocation.startsWith(path));
+        
+        // If not logged in and not on public pages, redirect to landing
+        if (!isLoggedIn && !isPublicPath) {
+          return '/';
         }
         
         // If logged in but needs onboarding, redirect to onboarding

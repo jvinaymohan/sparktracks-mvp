@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/children_provider.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
 
@@ -378,8 +379,16 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
           colorCode: _selectedColorCode,
         );
 
+        // Save to provider
+        final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+        if (isEditing) {
+          childrenProvider.updateChild(student);
+        } else {
+          childrenProvider.addChild(student);
+        }
+
         // Simulate API call
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -390,11 +399,7 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
           );
           
           // Go back to parent dashboard
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/parent-dashboard');
-          }
+          context.go('/parent-dashboard');
         }
       } catch (e) {
         if (mounted) {
@@ -452,8 +457,12 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
     });
 
     try {
+      // Delete from provider
+      final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+      childrenProvider.deleteChild(widget.child!.id);
+
       // Simulate API call
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(milliseconds: 500));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -464,11 +473,7 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
         );
         
         // Go back to parent dashboard
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/parent-dashboard');
-        }
+        context.go('/parent-dashboard');
       }
     } catch (e) {
       if (mounted) {
