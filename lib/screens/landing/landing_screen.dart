@@ -29,182 +29,436 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
   Future<Map<String, int>> _getStats() async {
     try {
       final usersSnapshot = await _firestore.collection('users').get();
-      final childrenSnapshot = await _firestore.collection('children').get();
       final tasksSnapshot = await _firestore.collection('tasks').get();
       final classesSnapshot = await _firestore.collection('classes').get();
       
       return {
         'users': usersSnapshot.size,
-        'children': childrenSnapshot.size,
         'tasks': tasksSnapshot.size,
         'classes': classesSnapshot.size,
       };
     } catch (e) {
-      return {
-        'users': 0,
-        'children': 0,
-        'tasks': 0,
-        'classes': 0,
-      };
+      return {'users': 0, 'tasks': 0, 'classes': 0};
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final isMobile = MediaQuery.of(context).size.width < 600;
+    final size = MediaQuery.of(context).size;
+    final isMobile = size.width < 600;
     
     return Scaffold(
-      body: Column(
-        children: [
-          // Hero Section (Fixed, no scrolling)
-          _buildHeroSection(context, isMobile),
-          
-          // Tab Bar
-          Container(
-            color: Colors.white,
-            child: TabBar(
-              controller: _tabController,
-              labelColor: AppTheme.primaryColor,
-              unselectedLabelColor: AppTheme.neutral600,
-              indicatorColor: AppTheme.primaryColor,
-              indicatorWeight: 3,
-              tabs: const [
-                Tab(icon: Icon(Icons.info_outline), text: 'About'),
-                Tab(icon: Icon(Icons.store), text: 'Marketplace'),
-                Tab(icon: Icon(Icons.new_releases), text: 'What\'s New'),
-              ],
-            ),
-          ),
-          
-          // Tab Views
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
+      body: CustomScrollView(
+        slivers: [
+          // App Bar
+          SliverAppBar(
+            expandedHeight: 0,
+            floating: true,
+            pinned: true,
+            backgroundColor: Colors.white,
+            elevation: 0,
+            title: Row(
               children: [
-                _buildAboutTab(context, isMobile),
-                _buildMarketplaceTab(context, isMobile),
-                _buildWhatsNewTab(context, isMobile),
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)],
+                    ),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text('⭐', style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'SparkTracks',
+                  style: TextStyle(
+                    color: Color(0xFF1F2937),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                  ),
+                ),
               ],
             ),
+            actions: [
+              TextButton(
+                onPressed: () => context.go('/login'),
+                child: const Text('Sign In'),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(right: 16),
+                child: ElevatedButton(
+                  onPressed: () => context.go('/register'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF6366F1),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(25),
+                    ),
+                  ),
+                  child: const Text('Get Started'),
+                ),
+              ),
+            ],
           ),
           
-          // Footer CTA
-          _buildFooterCTA(context, isMobile),
+          // Hero Section
+          SliverToBoxAdapter(
+            child: _buildModernHero(isMobile),
+          ),
+          
+          // Stats Section
+          SliverToBoxAdapter(
+            child: _buildStatsSection(isMobile),
+          ),
+          
+          // Features Section
+          SliverToBoxAdapter(
+            child: _buildFeaturesSection(isMobile),
+          ),
+          
+          // Marketplace Preview
+          SliverToBoxAdapter(
+            child: _buildMarketplaceSection(isMobile),
+          ),
+          
+          // CTA Section
+          SliverToBoxAdapter(
+            child: _buildCTASection(isMobile),
+          ),
+          
+          // Footer
+          SliverToBoxAdapter(
+            child: _buildFooter(isMobile),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildHeroSection(BuildContext context, bool isMobile) {
+  Widget _buildModernHero(bool isMobile) {
     return Container(
-      padding: EdgeInsets.all(isMobile ? 24 : 40),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 60 : 100,
+      ),
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF6366F1),
-            Color(0xFF8B5CF6),
-            Color(0xFFA855F7),
+            const Color(0xFF6366F1).withOpacity(0.05),
+            const Color(0xFF8B5CF6).withOpacity(0.05),
+            const Color(0xFFA855F7).withOpacity(0.05),
           ],
         ),
       ),
       child: Column(
         children: [
-          // Logo
+          // Badge
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
-                  blurRadius: 15,
-                  spreadRadius: 3,
+              color: const Color(0xFF6366F1).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFF6366F1).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  '✨ Now with Firebase & Real-time Updates',
+                  style: TextStyle(
+                    color: Color(0xFF6366F1),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
-            child: const Text('⭐', style: TextStyle(fontSize: 40)),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isMobile ? 24 : 32),
           
-          // Title
+          // Main Headline
           Text(
-            'SparkTracks',
+            'Learning Made Fun,',
             style: TextStyle(
-              fontSize: isMobile ? 36 : 48,
+              fontSize: isMobile ? 36 : 56,
               fontWeight: FontWeight.w900,
-              color: Colors.white,
+              color: const Color(0xFF1F2937),
+              height: 1.1,
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 8),
+          Text(
+            'Progress Made Easy',
+            style: TextStyle(
+              fontSize: isMobile ? 36 : 56,
+              fontWeight: FontWeight.w900,
+              height: 1.1,
+              foreground: Paint()
+                ..shader = const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7)],
+                ).createShader(const Rect.fromLTWH(0, 0, 400, 70)),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: isMobile ? 16 : 24),
           
           // Subtitle
-          Text(
-            '🎯 Learn • Earn • Grow 🚀',
-            style: TextStyle(
-              fontSize: isMobile ? 16 : 20,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Text(
+              'Connect parents, kids, and coaches in one powerful platform. '
+              'Track tasks, earn rewards, and celebrate achievements together.',
+              style: TextStyle(
+                fontSize: isMobile ? 16 : 20,
+                color: const Color(0xFF6B7280),
+                height: 1.6,
+              ),
+              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'For parents, kids, and coaches',
-            style: TextStyle(
-              fontSize: isMobile ? 14 : 16,
-              color: Colors.white.withOpacity(0.9),
-            ),
-          ),
-          const SizedBox(height: 24),
+          SizedBox(height: isMobile ? 32 : 48),
           
           // CTA Buttons
           Wrap(
-            spacing: 12,
-            runSpacing: 12,
+            spacing: 16,
+            runSpacing: 16,
             alignment: WrapAlignment.center,
             children: [
-              ElevatedButton.icon(
+              ElevatedButton(
                 onPressed: () => context.go('/register'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF6366F1),
+                  backgroundColor: const Color(0xFF6366F1),
+                  foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 20 : 32,
-                    vertical: isMobile ? 12 : 16,
+                    horizontal: isMobile ? 32 : 40,
+                    vertical: isMobile ? 16 : 20,
                   ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                  elevation: 8,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                  elevation: 0,
                 ),
-                icon: const Icon(Icons.rocket_launch),
-                label: Text(
-                  'Get Started Free',
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Start Free Today',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward, size: 20),
+                  ],
                 ),
               ),
-              OutlinedButton.icon(
-                onPressed: () => context.go('/login'),
+              OutlinedButton(
+                onPressed: () => _tabController.animateTo(1),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white, width: 2),
+                  foregroundColor: const Color(0xFF6366F1),
+                  side: const BorderSide(color: Color(0xFF6366F1), width: 2),
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 20 : 32,
-                    vertical: isMobile ? 12 : 16,
+                    horizontal: isMobile ? 32 : 40,
+                    vertical: isMobile ? 16 : 20,
                   ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
-                ),
-                icon: const Icon(Icons.login),
-                label: Text(
-                  'Sign In',
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.bold,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
                   ),
                 ),
+                child: const Text(
+                  'Watch Demo',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 24 : 32),
+          
+          // Trust Badge
+          Text(
+            '✓ No credit card required  •  ✓ Free forever',
+            style: TextStyle(
+              fontSize: 14,
+              color: const Color(0xFF6B7280),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatsSection(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 40 : 60,
+      ),
+      color: Colors.white,
+      child: FutureBuilder<Map<String, int>>(
+        future: _getStats(),
+        builder: (context, snapshot) {
+          final stats = snapshot.data ?? {'users': 0, 'tasks': 0, 'classes': 0};
+          
+          return Wrap(
+            spacing: isMobile ? 20 : 60,
+            runSpacing: isMobile ? 20 : 40,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildStatCard(
+                stats['users']! > 0 ? '${stats['users']}+' : 'New',
+                'Active Users',
+                Icons.people_outline,
+                const Color(0xFF6366F1),
+                isMobile,
+              ),
+              _buildStatCard(
+                stats['classes']! > 0 ? '${stats['classes']}+' : 'New',
+                'Classes Available',
+                Icons.school_outlined,
+                const Color(0xFFEC4899),
+                isMobile,
+              ),
+              _buildStatCard(
+                stats['tasks']! > 0 ? '${stats['tasks']}+' : 'New',
+                'Tasks Completed',
+                Icons.check_circle_outline,
+                const Color(0xFF10B981),
+                isMobile,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String value, String label, IconData icon, Color color, bool isMobile) {
+    return Container(
+      width: isMobile ? 140 : 180,
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, size: 32, color: color),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: isMobile ? 28 : 36,
+              fontWeight: FontWeight.w900,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeaturesSection(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 60 : 80,
+      ),
+      color: const Color(0xFFFAFAFA),
+      child: Column(
+        children: [
+          Text(
+            'Everything You Need',
+            style: TextStyle(
+              fontSize: isMobile ? 28 : 40,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF1F2937),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Powerful features designed for modern families',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 18,
+              color: const Color(0xFF6B7280),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: isMobile ? 32 : 48),
+          
+          Wrap(
+            spacing: isMobile ? 16 : 24,
+            runSpacing: isMobile ? 16 : 24,
+            alignment: WrapAlignment.center,
+            children: [
+              _buildFeatureCard(
+                '📝',
+                'Smart Tasks',
+                'Create and manage tasks with rewards, deadlines, and recurring schedules.',
+                const Color(0xFF3B82F6),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '⭐',
+                'Points System',
+                'Motivate with a flexible points system that converts to real rewards.',
+                const Color(0xFFF59E0B),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '📊',
+                'Live Progress',
+                'Track achievements and progress in beautiful, real-time dashboards.',
+                const Color(0xFF10B981),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '🎓',
+                'Class Hub',
+                'Browse and book classes from certified coaches in your area.',
+                const Color(0xFFEC4899),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '💰',
+                'Finance Tools',
+                'Manage payments, invoices, and family finances effortlessly.',
+                const Color(0xFF8B5CF6),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '🏆',
+                'Achievements',
+                'Celebrate milestones with badges, streaks, and leaderboards.',
+                const Color(0xFF6366F1),
+                isMobile,
               ),
             ],
           ),
@@ -213,190 +467,116 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
     );
   }
 
-  // About Tab
-  Widget _buildAboutTab(BuildContext context, bool isMobile) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isMobile ? 20 : 40),
+  Widget _buildFeatureCard(String emoji, String title, String description, Color color, bool isMobile) {
+    return Container(
+      width: isMobile ? double.infinity : 320,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 32)),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMarketplaceSection(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 60 : 80,
+      ),
+      color: Colors.white,
       child: Column(
         children: [
           Text(
-            '💡 What is SparkTracks?',
+            '🛍️ Coach Marketplace',
             style: TextStyle(
-              fontSize: isMobile ? 24 : 32,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.neutral800,
+              fontSize: isMobile ? 28 : 40,
+              fontWeight: FontWeight.w900,
+              color: const Color(0xFF1F2937),
             ),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
-            child: Text(
-              'A comprehensive platform connecting parents, children, and coaches. '
-              'Track tasks, manage rewards, organize classes, and monitor progress.',
-              style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                color: AppTheme.neutral600,
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ),
-          const SizedBox(height: 32),
-          
-          // Dynamic Stats
-          FutureBuilder<Map<String, int>>(
-            future: _getStats(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const CircularProgressIndicator();
-              }
-              
-              final stats = snapshot.data ?? {'users': 0, 'tasks': 0, 'classes': 0};
-              
-              return Wrap(
-                spacing: 20,
-                runSpacing: 20,
-                alignment: WrapAlignment.center,
-                children: [
-                  _buildStatCard(
-                    stats['users']! > 0 ? '${stats['users']}' : 'New!',
-                    'Users',
-                    Icons.people,
-                    isMobile,
-                  ),
-                  _buildStatCard(
-                    stats['classes']! > 0 ? '${stats['classes']}' : 'New!',
-                    'Classes',
-                    Icons.school,
-                    isMobile,
-                  ),
-                  _buildStatCard(
-                    stats['tasks']! > 0 ? '${stats['tasks']}' : 'New!',
-                    'Tasks',
-                    Icons.check_circle,
-                    isMobile,
-                  ),
-                ],
-              );
-            },
-          ),
-          const SizedBox(height: 32),
-          
-          // Key Features
-          Text(
-            '✨ Key Features',
-            style: TextStyle(
-              fontSize: isMobile ? 22 : 28,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.neutral800,
-            ),
-          ),
-          const SizedBox(height: 24),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 800),
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              alignment: WrapAlignment.center,
-              children: [
-                _buildFeatureChip('📝 Task Management', const Color(0xFF3B82F6), isMobile),
-                _buildFeatureChip('⭐ Points System', const Color(0xFFF59E0B), isMobile),
-                _buildFeatureChip('📊 Progress Tracking', const Color(0xFF10B981), isMobile),
-                _buildFeatureChip('💰 Financial Reports', const Color(0xFF8B5CF6), isMobile),
-                _buildFeatureChip('🎓 Class Management', const Color(0xFFEC4899), isMobile),
-                _buildFeatureChip('🏆 Achievements', const Color(0xFF6366F1), isMobile),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Marketplace Tab
-  Widget _buildMarketplaceTab(BuildContext context, bool isMobile) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isMobile ? 20 : 40),
-      child: Column(
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🛍️', style: TextStyle(fontSize: 32)),
-              SizedBox(width: 12),
-              Text(
-                'Coach Marketplace',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 600),
             child: Text(
-              'Browse classes from certified coaches. Sports, music, academics, arts—find the perfect fit!',
+              'Discover amazing classes from certified coaches. Sports, music, academics, and more!',
               style: TextStyle(
                 fontSize: isMobile ? 16 : 18,
-                color: AppTheme.neutral600,
-                height: 1.5,
+                color: const Color(0xFF6B7280),
               ),
               textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 32),
+          SizedBox(height: isMobile ? 32 : 48),
           
-          // Sample Classes
           Wrap(
             spacing: 20,
             runSpacing: 20,
             alignment: WrapAlignment.center,
             children: [
-              _buildMarketplaceCard(
-                'Soccer Training ⚽',
-                'Coach Mike',
-                '\$25',
-                '15 spots',
-                const Color(0xFF10B981),
-                isMobile,
-              ),
-              _buildMarketplaceCard(
-                'Piano Lessons 🎹',
-                'Coach Sarah',
-                '\$40',
-                '8 spots',
-                const Color(0xFFEC4899),
-                isMobile,
-              ),
-              _buildMarketplaceCard(
-                'Math Tutoring 📐',
-                'Coach David',
-                '\$30',
-                '12 spots',
-                const Color(0xFF3B82F6),
-                isMobile,
-              ),
+              _buildClassCard('⚽', 'Soccer Training', 'Coach Mike', '\$25', const Color(0xFF10B981), isMobile),
+              _buildClassCard('🎹', 'Piano Lessons', 'Coach Sarah', '\$40', const Color(0xFFEC4899), isMobile),
+              _buildClassCard('📐', 'Math Tutoring', 'Coach David', '\$30', const Color(0xFF3B82F6), isMobile),
             ],
           ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
+          SizedBox(height: isMobile ? 32 : 40),
+          
+          ElevatedButton(
             onPressed: () => context.go('/register'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF59E0B),
               foregroundColor: Colors.white,
               padding: EdgeInsets.symmetric(
                 horizontal: isMobile ? 24 : 32,
-                vertical: isMobile ? 12 : 16,
+                vertical: isMobile ? 14 : 18,
               ),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(25),
+              ),
+              elevation: 0,
             ),
-            icon: const Icon(Icons.explore),
-            label: const Text(
-              'Explore Marketplace',
+            child: const Text(
+              'Browse All Classes',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
@@ -405,71 +585,85 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
     );
   }
 
-  // What's New Tab
-  Widget _buildWhatsNewTab(BuildContext context, bool isMobile) {
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(isMobile ? 20 : 40),
-      child: Column(
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text('🆕', style: TextStyle(fontSize: 32)),
-              SizedBox(width: 12),
-              Text(
-                'What\'s New',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-            ],
+  Widget _buildClassCard(String emoji, String title, String coach, String price, Color color, bool isMobile) {
+    return Container(
+      width: isMobile ? double.infinity : 260,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[200]!),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Latest features and updates',
-            style: TextStyle(
-              fontSize: isMobile ? 16 : 18,
-              color: AppTheme.neutral600,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            height: 140,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [color.withOpacity(0.7), color],
+              ),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            ),
+            child: Center(
+              child: Text(emoji, style: const TextStyle(fontSize: 64)),
             ),
           ),
-          const SizedBox(height: 32),
-          
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 700),
+          Padding(
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildUpdateCard(
-                  '🔥 Firebase Integration',
-                  'Jan 2025',
-                  'Real authentication & persistent data storage.',
-                  true,
-                  isMobile,
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  coach,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF6B7280),
+                  ),
                 ),
                 const SizedBox(height: 12),
-                _buildUpdateCard(
-                  '⭐ Points System',
-                  'Jan 2025',
-                  'Flexible rewards with custom conversion rates.',
-                  true,
-                  isMobile,
-                ),
-                const SizedBox(height: 12),
-                _buildUpdateCard(
-                  '📊 Enhanced Dashboards',
-                  'Jan 2025',
-                  'Beautiful dashboards with real-time updates.',
-                  false,
-                  isMobile,
-                ),
-                const SizedBox(height: 12),
-                _buildUpdateCard(
-                  '🔄 Recurring Tasks',
-                  'Jan 2025',
-                  'Daily, weekly, monthly task scheduling.',
-                  false,
-                  isMobile,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$price/class',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: color,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Available',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -479,20 +673,80 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
     );
   }
 
-  // Footer CTA
-  Widget _buildFooterCTA(BuildContext context, bool isMobile) {
+  Widget _buildCTASection(bool isMobile) {
     return Container(
-      padding: EdgeInsets.all(isMobile ? 20 : 32),
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 60 : 80,
+      ),
       decoration: BoxDecoration(
-        color: AppTheme.neutral800,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF6366F1),
+            const Color(0xFF8B5CF6),
+          ],
+        ),
+      ),
+      child: Column(
+        children: [
+          Text(
+            'Ready to Get Started?',
+            style: TextStyle(
+              fontSize: isMobile ? 32 : 48,
+              fontWeight: FontWeight.w900,
+              color: Colors.white,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Join families and coaches using SparkTracks today',
+            style: TextStyle(
+              fontSize: isMobile ? 16 : 20,
+              color: Colors.white.withOpacity(0.9),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          SizedBox(height: isMobile ? 32 : 40),
+          
+          ElevatedButton(
+            onPressed: () => context.go('/register'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF6366F1),
+              padding: EdgeInsets.symmetric(
+                horizontal: isMobile ? 32 : 48,
+                vertical: isMobile ? 16 : 20,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Start Your Free Trial',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No credit card required',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.white.withOpacity(0.8),
+            ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildFooter(bool isMobile) {
+    return Container(
+      padding: const EdgeInsets.all(40),
+      color: const Color(0xFF1F2937),
       child: Column(
         children: [
           Text(
@@ -502,10 +756,10 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
               fontSize: 14,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Wrap(
-            spacing: 16,
-            runSpacing: 8,
+            spacing: 24,
+            runSpacing: 12,
             alignment: WrapAlignment.center,
             children: [
               TextButton(
@@ -516,240 +770,15 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 onPressed: () => context.go('/register'),
                 child: Text('Sign Up', style: TextStyle(color: Colors.white.withOpacity(0.9))),
               ),
+              TextButton(
+                onPressed: () {},
+                child: Text('About', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              ),
+              TextButton(
+                onPressed: () {},
+                child: Text('Privacy', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatCard(String number, String label, IconData icon, bool isMobile) {
-    return Container(
-      width: isMobile ? 120 : 160,
-      padding: EdgeInsets.all(isMobile ? 16 : 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: isMobile ? 28 : 36, color: const Color(0xFF6366F1)),
-          const SizedBox(height: 8),
-          Text(
-            number,
-            style: TextStyle(
-              fontSize: isMobile ? 24 : 28,
-              fontWeight: FontWeight.bold,
-              color: const Color(0xFF6366F1),
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: isMobile ? 12 : 14,
-              color: AppTheme.neutral600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureChip(String label, Color color, bool isMobile) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: isMobile ? 12 : 16,
-        vertical: isMobile ? 8 : 12,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 2),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: isMobile ? 13 : 15,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMarketplaceCard(
-    String title,
-    String coach,
-    String price,
-    String spots,
-    Color color,
-    bool isMobile,
-  ) {
-    return Container(
-      width: isMobile ? 200 : 240,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            height: isMobile ? 100 : 120,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [color.withOpacity(0.7), color],
-              ),
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-            ),
-            child: Center(
-              child: Text(
-                title.split(' ').last,
-                style: const TextStyle(fontSize: 48),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title.replaceAll(RegExp(r'[^\w\s]'), '').trim(),
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  coach,
-                  style: const TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      price,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: color.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        spots,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildUpdateCard(
-    String title,
-    String date,
-    String description,
-    bool isNew,
-    bool isMobile,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 12 : 16),
-      decoration: BoxDecoration(
-        color: isNew ? const Color(0xFF6366F1).withOpacity(0.05) : Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isNew ? const Color(0xFF6366F1).withOpacity(0.3) : Colors.grey[300]!,
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (isNew) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFF6366F1),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Text(
-                'NEW',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      date,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.neutral500,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: isMobile ? 14 : 15,
-                    color: AppTheme.neutral600,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
