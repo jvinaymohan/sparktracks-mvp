@@ -64,7 +64,12 @@ class AuthProvider extends ChangeNotifier {
         _setError('Registration failed');
       }
     } catch (e) {
-      _setError(e.toString());
+      // Clean up the error message for better display
+      String errorMessage = e.toString()
+          .replaceAll('Exception: ', '')
+          .replaceAll('firebase_auth/', '');
+      _setError(errorMessage);
+      print('Registration error: $e'); // Debug log
     } finally {
       _setLoading(false);
     }
