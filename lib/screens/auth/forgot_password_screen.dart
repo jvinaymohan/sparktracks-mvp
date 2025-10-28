@@ -212,7 +212,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           padding: const EdgeInsets.all(AppTheme.spacingL),
           decoration: BoxDecoration(
             color: AppTheme.infoColor.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(AppTheme.borderRadiusM),
+            borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
