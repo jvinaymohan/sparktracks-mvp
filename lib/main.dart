@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 
+import 'firebase_options.dart';
 import 'utils/app_config.dart';
 import 'utils/app_theme.dart';
 import 'services/auth_service.dart';
@@ -14,6 +15,7 @@ import 'providers/tasks_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'screens/dashboard/parent_dashboard_screen.dart';
 import 'screens/dashboard/child_dashboard_screen.dart';
@@ -33,12 +35,7 @@ void main() async {
   
   // Initialize Firebase
   await Firebase.initializeApp(
-    options: const FirebaseOptions(
-      apiKey: AppConfig.firebaseApiKey,
-      appId: AppConfig.firebaseAppId,
-      messagingSenderId: AppConfig.firebaseMessagingSenderId,
-      projectId: AppConfig.firebaseProjectId,
-    ),
+    options: DefaultFirebaseOptions.currentPlatform,
   );
   
   runApp(const SparktracksMVP());
@@ -126,6 +123,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/register',
           builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: '/forgot-password',
+          builder: (context, state) => const ForgotPasswordScreen(),
         ),
         GoRoute(
           path: '/email-verification',

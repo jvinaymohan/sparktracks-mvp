@@ -73,40 +73,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: AppTheme.spacingL),
                   
                   // Default Credentials Info
-                  Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingM),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Default Credentials:',
-                          style: AppTheme.bodyMedium.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: AppTheme.spacingS),
-                        Text(
-                          'Parent: parent@sparktracks.com / parent123',
-                          style: AppTheme.bodySmall.copyWith(color: Colors.white),
-                        ),
-                        Text(
-                          'Child: child@sparktracks.com / child123',
-                          style: AppTheme.bodySmall.copyWith(color: Colors.white),
-                        ),
-                        Text(
-                          'Coach: coach@sparktracks.com / coach123',
-                          style: AppTheme.bodySmall.copyWith(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: AppTheme.spacingXL),
                   
                   // Login Form
                   Card(
@@ -179,9 +145,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             const SizedBox(height: AppTheme.spacingM),
                             
                             TextButton(
-                              onPressed: () {
-                                // TODO: Implement forgot password
-                              },
+                              onPressed: () => context.go('/forgot-password'),
                               child: const Text('Forgot Password?'),
                             ),
                             
