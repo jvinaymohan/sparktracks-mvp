@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
+import '../../providers/tasks_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
@@ -438,6 +439,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       });
 
       try {
+        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        
         // Combine date and time
         final dueDateTime = DateTime(
           _selectedDueDate.year,
@@ -452,7 +456,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           id: 'task_${DateTime.now().millisecondsSinceEpoch}',
           title: _titleController.text,
           description: _descriptionController.text,
-          parentId: 'parent1', // Get from auth
+          parentId: authProvider.currentUser?.id ?? 'parent1',
           childId: _selectedChildId!,
           status: TaskStatus.pending,
           rewardAmount: double.parse(_rewardController.text), // Now represents points
@@ -463,8 +467,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           updatedAt: DateTime.now(),
         );
 
+        // Save to provider
+        tasksProvider.addTask(task);
+
         // Simulate API call
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

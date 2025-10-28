@@ -10,6 +10,7 @@ import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/children_provider.dart';
+import 'providers/tasks_provider.dart';
 import 'models/user_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
@@ -53,6 +54,7 @@ class SparktracksMVP extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChildrenProvider()),
+        ChangeNotifierProvider(create: (_) => TasksProvider()),
       ],
       child: MaterialApp.router(
         title: AppConfig.appName,

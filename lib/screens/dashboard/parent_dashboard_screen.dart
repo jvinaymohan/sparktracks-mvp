@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
+import '../../providers/tasks_provider.dart';
 import '../../models/student_model.dart';
 import '../../models/task_model.dart';
 import '../../models/class_model.dart';
@@ -19,32 +20,7 @@ class ParentDashboardScreen extends StatefulWidget {
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
 
-  final List<Task> _recentTasks = [
-    Task(
-      id: '1',
-      title: 'Complete Math Homework',
-      description: 'Finish pages 45-50 in math workbook',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.completed,
-      rewardAmount: 5.0,
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Task(
-      id: '2',
-      title: 'Practice Piano',
-      description: 'Practice for 30 minutes daily',
-      parentId: 'parent1',
-      childId: 'child2',
-      status: TaskStatus.pending,
-      rewardAmount: 3.0,
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-  ];
+  // Tasks are now managed by TasksProvider
 
   final List<Class> _upcomingClasses = [
     Class(
@@ -140,9 +116,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildOverviewTab() {
-    return Consumer<ChildrenProvider>(
-      builder: (context, childrenProvider, child) {
+    return Consumer2<ChildrenProvider, TasksProvider>(
+      builder: (context, childrenProvider, tasksProvider, child) {
         final children = childrenProvider.children;
+        final tasks = tasksProvider.tasks;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppTheme.spacingL),
           child: Column(
@@ -163,7 +140,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
               Expanded(
                 child: _buildStatCard(
                   'Active Tasks',
-                  _recentTasks.where((t) => t.status == TaskStatus.pending).length.toString(),
+                  tasks.where((t) => t.status == TaskStatus.pending).length.toString(),
                   Icons.assignment,
                   AppTheme.warningColor,
                 ),
@@ -176,7 +153,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
               Expanded(
                 child: _buildStatCard(
                   'Completed Tasks',
-                  _recentTasks.where((t) => t.status == TaskStatus.completed).length.toString(),
+                  tasks.where((t) => t.status == TaskStatus.completed).length.toString(),
                   Icons.check_circle,
                   AppTheme.successColor,
                 ),
@@ -313,11 +290,30 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildTasksTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      itemCount: _recentTasks.length,
-      itemBuilder: (context, index) {
-        final task = _recentTasks[index];
+    return Consumer<TasksProvider>(
+      builder: (context, tasksProvider, child) {
+        final tasks = tasksProvider.tasks;
+        
+        if (tasks.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.assignment_outlined, size: 64, color: AppTheme.neutral400),
+                const SizedBox(height: AppTheme.spacingL),
+                Text('No tasks yet', style: AppTheme.headline6),
+                const SizedBox(height: AppTheme.spacingS),
+                Text('Create your first task!', style: AppTheme.bodyMedium),
+              ],
+            ),
+          );
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          itemCount: tasks.length,
+          itemBuilder: (context, index) {
+            final task = tasks[index];
         return Card(
           margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
           child: ListTile(
@@ -349,12 +345,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                 ? IconButton(
                     icon: const Icon(Icons.check),
                     onPressed: () {
-                      // TODO: Approve task
+                      tasksProvider.approveTask(task.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Task approved!')),
+                      );
                     },
                   )
                 : null,
           ),
         );
+      },
+    );
       },
     );
   }
