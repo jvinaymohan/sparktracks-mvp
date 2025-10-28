@@ -482,7 +482,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           );
           
           // Go back to parent dashboard
-          context.pop();
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/parent-dashboard');
+          }
         }
       } catch (e) {
         if (mounted) {
