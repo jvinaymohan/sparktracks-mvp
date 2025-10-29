@@ -18,11 +18,11 @@ class AddEditChildScreen extends StatefulWidget {
 class _AddEditChildScreenState extends State<AddEditChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
-  final _emailController = TextEditingController();
   
   DateTime? _selectedDateOfBirth;
   String _selectedColorCode = '#4CAF50';
   bool _isSubmitting = false;
+  String? _generatedPassword; // Auto-generated password for the child
 
   final List<String> _availableColors = [
     '#4CAF50', // Green
@@ -43,7 +43,6 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
     if (widget.child != null) {
       // Editing mode - populate fields
       _nameController.text = widget.child!.name;
-      _emailController.text = widget.child!.email ?? '';
       _selectedDateOfBirth = widget.child!.dateOfBirth;
       _selectedColorCode = widget.child!.colorCode ?? '#4CAF50';
     }
@@ -52,8 +51,16 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     super.dispose();
+  }
+  
+  // Generate a simple, memorable password for the child
+  String _generateChildPassword(String name, DateTime birthDate) {
+    // Format: FirstName + MMDD (e.g., "Emma0315" for Emma born March 15)
+    final firstName = name.split(' ').first;
+    final month = birthDate.month.toString().padLeft(2, '0');
+    final day = birthDate.day.toString().padLeft(2, '0');
+    return '$firstName$month$day';
   }
 
   bool get isEditing => widget.child != null;
@@ -155,25 +162,27 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
                         'Email (Optional)',
                         style: AppTheme.headline6,
                       ),
-                      const SizedBox(height: AppTheme.spacingM),
-                      TextFormField(
-                        controller: _emailController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          hintText: 'child@example.com',
-                          prefixIcon: Icon(Icons.email),
-                          helperText: 'Used for child login if provided',
+                      const SizedBox(height: AppTheme.spacingS),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: AppTheme.infoColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          if (value != null && value.isNotEmpty) {
-                            final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                            if (!emailRegex.hasMatch(value)) {
-                              return 'Please enter a valid email';
-                            }
-                          }
-                          return null;
-                        },
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: AppTheme.infoColor, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'An email and password will be auto-generated for child login',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: AppTheme.infoColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -320,6 +329,26 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
                 ),
               ),
               
+              // Reset Password Button (only in edit mode)
+              if (isEditing) ...[
+                const SizedBox(height: AppTheme.spacingM),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isSubmitting ? null : _showResetPasswordDialog,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
+                      side: BorderSide(color: AppTheme.primaryColor),
+                    ),
+                    icon: Icon(Icons.lock_reset, color: AppTheme.primaryColor),
+                    label: Text(
+                      'Reset Child Password',
+                      style: TextStyle(color: AppTheme.primaryColor),
+                    ),
+                  ),
+                ),
+              ],
+              
               // Delete Button (only in edit mode)
               if (isEditing) ...[
                 const SizedBox(height: AppTheme.spacingM),
@@ -366,14 +395,25 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
       });
 
       try {
+        // Get current parent ID from auth
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final parentId = authProvider.currentUser?.id ?? 'parent1';
+        
+        // Generate auto-email and password for child
+        final childId = widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}';
+        final firstName = _nameController.text.split(' ').first.toLowerCase();
+        final autoEmail = '$firstName.${childId.substring(6, 12)}@sparktracks.child';
+        
+        // Generate password
+        _generatedPassword = _generateChildPassword(_nameController.text, _selectedDateOfBirth!);
+        
         // Create or update student object
-        final emailText = _emailController.text.trim();
         final student = Student(
-          id: widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}',
+          id: childId,
           userId: widget.child?.userId ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
-          parentId: 'parent1', // Get from auth
+          parentId: parentId,
           name: _nameController.text,
-          email: emailText.isNotEmpty ? emailText : 'child${DateTime.now().millisecondsSinceEpoch}@temp.com',
+          email: widget.child?.email ?? autoEmail, // Keep existing email if editing
           dateOfBirth: _selectedDateOfBirth!,
           enrolledAt: widget.child?.enrolledAt ?? DateTime.now(),
           colorCode: _selectedColorCode,
@@ -387,19 +427,22 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
           childrenProvider.addChild(student);
         }
 
-        // Simulate API call
+        // Simulate API call (in real app, create Firebase account here)
         await Future.delayed(const Duration(milliseconds: 500));
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEditing ? 'Child updated successfully!' : 'Child added successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          
-          // Go back to parent dashboard
-          context.go('/parent-dashboard');
+          // Show success with login credentials for new children
+          if (!isEditing) {
+            _showCredentialsDialog(autoEmail, _generatedPassword!);
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Child updated successfully!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+            context.go('/parent-dashboard');
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -449,6 +492,199 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
         ],
       ),
     );
+  }
+
+  void _showCredentialsDialog(String email, String password) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 28),
+            const SizedBox(width: 8),
+            const Text('Child Added!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Save these login credentials:',
+              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.neutral100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.neutral300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Email:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    email,
+                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Password:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    password,
+                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.warningColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppTheme.warningColor, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Please write this down! Your child will need these to log in.',
+                      style: AppTheme.bodySmall.copyWith(color: AppTheme.warningColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/parent-dashboard');
+            },
+            child: const Text('Done'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showResetPasswordDialog() {
+    final newPassword = _generateChildPassword(widget.child!.name, widget.child!.dateOfBirth);
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Reset Child Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'A new password will be generated for ${widget.child!.name}:',
+              style: AppTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.neutral100,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.neutral300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('New Password:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
+                  const SizedBox(height: 4),
+                  SelectableText(
+                    newPassword,
+                    style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.infoColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, color: AppTheme.infoColor, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Please write this down and share it with your child.',
+                      style: AppTheme.bodySmall.copyWith(color: AppTheme.infoColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resetChildPassword(newPassword);
+            },
+            child: const Text('Reset Password'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resetChildPassword(String newPassword) async {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // TODO: In real app, update password in Firebase Auth
+      // For now, just show success message
+      
+      await Future.delayed(const Duration(milliseconds: 500));
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Password reset for ${widget.child!.name}'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error resetting password: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
   }
 
   void _deleteChild() async {
