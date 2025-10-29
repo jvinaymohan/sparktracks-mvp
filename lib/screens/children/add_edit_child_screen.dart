@@ -5,6 +5,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
+import '../../services/auth_service.dart';
 
 class AddEditChildScreen extends StatefulWidget {
   final Student? child; // If null, we're adding; if not null, we're editing
@@ -423,18 +424,8 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
         final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
         if (isEditing) {
           childrenProvider.updateChild(student);
-        } else {
-          childrenProvider.addChild(student);
-        }
-
-        // Simulate API call (in real app, create Firebase account here)
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        if (mounted) {
-          // Show success with login credentials for new children
-          if (!isEditing) {
-            _showCredentialsDialog(autoEmail, _generatedPassword!);
-          } else {
+          
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Child updated successfully!'),
@@ -442,6 +433,64 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               ),
             );
             context.go('/parent-dashboard');
+          }
+        } else {
+          // Create Firebase account for new child
+          final authService = AuthService();
+          
+          try {
+            print('Attempting to create Firebase account for child');
+            
+            final result = await authService.createChildAccount(
+              email: autoEmail,
+              password: _generatedPassword!,
+              childName: _nameController.text,
+              parentId: parentId,
+              dateOfBirth: _selectedDateOfBirth!,
+            );
+            
+            print('Firebase account created successfully: ${result['userId']}');
+            
+            // Now add to provider with the Firebase userId
+            final studentWithFirebaseId = Student(
+              id: childId,
+              userId: result['userId']!,
+              parentId: parentId,
+              name: _nameController.text,
+              email: autoEmail,
+              dateOfBirth: _selectedDateOfBirth!,
+              enrolledAt: DateTime.now(),
+              colorCode: _selectedColorCode,
+            );
+            
+            childrenProvider.addChild(studentWithFirebaseId);
+            
+            // Re-authenticate parent after creating child account
+            print('Re-authenticating parent');
+            final parentEmail = authProvider.currentUser?.email;
+            if (parentEmail != null) {
+              // Parent will need to log in again
+              // Show credentials dialog with note about re-login
+              if (mounted) {
+                _showCredentialsDialog(autoEmail, _generatedPassword!, needsParentRelogin: true);
+              }
+            } else {
+              if (mounted) {
+                _showCredentialsDialog(autoEmail, _generatedPassword!);
+              }
+            }
+          } catch (e) {
+            print('Error creating Firebase child account: $e');
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Error creating child account: ${e.toString().replaceAll('Exception: ', '')}'),
+                  backgroundColor: Colors.red,
+                  duration: const Duration(seconds: 5),
+                ),
+              );
+            }
+            throw e;
           }
         }
       } catch (e) {
@@ -494,7 +543,7 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
     );
   }
 
-  void _showCredentialsDialog(String email, String password) {
+  void _showCredentialsDialog(String email, String password, {bool needsParentRelogin = false}) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -506,70 +555,98 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
             const Text('Child Added!'),
           ],
         ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Save these login credentials:',
-              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppTheme.neutral100,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: AppTheme.neutral300),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Save these login credentials:',
+                style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Email:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    email,
-                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 12),
-                  Text('Password:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
-                  const SizedBox(height: 4),
-                  SelectableText(
-                    password,
-                    style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.warningColor.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, color: AppTheme.warningColor, size: 20),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Please write this down! Your child will need these to log in.',
-                      style: AppTheme.bodySmall.copyWith(color: AppTheme.warningColor),
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.neutral100,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppTheme.neutral300),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Email:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
+                    const SizedBox(height: 4),
+                    SelectableText(
+                      email,
+                      style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 12),
+                    Text('Password:', style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600)),
+                    const SizedBox(height: 4),
+                    SelectableText(
+                      password,
+                      style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Please write this down! Your child will need these to log in.',
+                        style: AppTheme.bodySmall.copyWith(color: AppTheme.warningColor),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (needsParentRelogin) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.infoColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: AppTheme.infoColor, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'You will need to log in again to continue.',
+                          style: AppTheme.bodySmall.copyWith(color: AppTheme.infoColor),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
         ),
         actions: [
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              context.go('/parent-dashboard');
+              if (needsParentRelogin) {
+                context.go('/login');
+              } else {
+                context.go('/parent-dashboard');
+              }
             },
-            child: const Text('Done'),
+            child: Text(needsParentRelogin ? 'Go to Login' : 'Done'),
           ),
         ],
       ),

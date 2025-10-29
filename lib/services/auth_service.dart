@@ -233,4 +233,78 @@ class AuthService {
       return false;
     }
   }
+  
+  /// Create a child account (called by parent)
+  /// Note: This will create the child in Firebase but won't sign them in
+  Future<Map<String, String>> createChildAccount({
+    required String email,
+    required String password,
+    required String childName,
+    required String parentId,
+    required DateTime dateOfBirth,
+  }) async {
+    try {
+      print('Creating child account: $email');
+      
+      // Create Firebase account for child
+      final firebase_auth.UserCredential userCredential = 
+          await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        throw Exception('Failed to create child account');
+      }
+      
+      print('Child Firebase user created: ${firebaseUser.uid}');
+      
+      // Create user document in Firestore
+      final childUser = User(
+        id: firebaseUser.uid,
+        email: email,
+        name: childName,
+        type: UserType.child,
+        parentId: parentId,
+        emailVerified: true, // Children don't need to verify email
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        notificationPreferences: NotificationPreferences(),
+        paymentProfile: PaymentProfile(),
+      );
+      
+      // Save to Firestore
+      final userData = childUser.toJson();
+      await _firestore.collection('users').doc(childUser.id).set(userData);
+      
+      print('Child Firestore document created');
+      
+      // Sign out the child account immediately
+      await _firebaseAuth.signOut();
+      
+      print('Signed out child account');
+      
+      return {
+        'userId': firebaseUser.uid,
+        'email': email,
+        'password': password,
+      };
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      print('Firebase error creating child: ${e.code} - ${e.message}');
+      await _firebaseAuth.signOut(); // Make sure we're signed out
+      switch (e.code) {
+        case 'weak-password':
+          throw Exception('The password provided is too weak.');
+        case 'email-already-in-use':
+          throw Exception('This email is already in use.');
+        default:
+          throw Exception('Failed to create child account: ${e.message}');
+      }
+    } catch (e) {
+      print('Error creating child: $e');
+      await _firebaseAuth.signOut();
+      throw Exception('Failed to create child account: $e');
+    }
+  }
 }
