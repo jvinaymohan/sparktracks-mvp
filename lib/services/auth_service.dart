@@ -37,7 +37,9 @@ class AuthService {
         paymentProfile: PaymentProfile(),
       );
       
-      await _firestore.collection('users').doc(user.id).set(user.toJson());
+      // Convert to JSON and ensure nested objects are properly serialized
+      final userData = user.toJson();
+      await _firestore.collection('users').doc(user.id).set(userData);
       
       return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
@@ -74,13 +76,19 @@ class AuthService {
       final userDoc = await _firestore.collection('users').doc(firebaseUser.uid).get();
       
       if (!userDoc.exists) {
-        throw Exception('User data not found');
+        // User exists in Firebase Auth but not in Firestore
+        // This can happen if registration was partially completed
+        throw Exception('User profile not found. Please contact support.');
       }
       
       final userData = userDoc.data()!;
+      
+      // Ensure dates are properly parsed
       final user = User.fromJson({
         ...userData,
-        'emailVerified': firebaseUser.emailVerified, // Update from Firebase Auth
+        'emailVerified': firebaseUser.emailVerified,
+        'createdAt': (userData['createdAt'] as Timestamp?)?.toDate().toIso8601String() ?? DateTime.now().toIso8601String(),
+        'updatedAt': (userData['updatedAt'] as Timestamp?)?.toDate().toIso8601String() ?? DateTime.now().toIso8601String(),
       });
       
       return user;
