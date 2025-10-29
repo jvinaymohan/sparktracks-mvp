@@ -33,13 +33,16 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     });
 
     try {
+      print('Sending password reset email to: ${_emailController.text.trim()}');
       await _authService.sendPasswordResetEmail(_emailController.text.trim());
+      print('Password reset email sent successfully');
       
       setState(() {
         _emailSent = true;
         _isLoading = false;
       });
     } catch (e) {
+      print('Password reset error: $e');
       setState(() {
         _isLoading = false;
       });
@@ -49,6 +52,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           SnackBar(
             content: Text(e.toString().replaceAll('Exception: ', '')),
             backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
@@ -214,7 +218,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
             color: AppTheme.infoColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
           ),
-          child: Column(
+          child:               Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -231,11 +235,35 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               const SizedBox(height: AppTheme.spacingM),
               Text(
-                '1. Check your email inbox\n'
-                '2. Click the reset link in the email\n'
-                '3. Create a new password\n'
-                '4. Log in with your new password',
+                '1. Check your email inbox (and SPAM folder)\n'
+                '2. Look for email from: noreply@sparktracks-mvp.firebaseapp.com\n'
+                '3. Click the reset link in the email\n'
+                '4. Create a new password\n'
+                '5. Log in with your new password',
                 style: AppTheme.bodyMedium,
+              ),
+              const SizedBox(height: AppTheme.spacingM),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.warningColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.warning_amber, color: AppTheme.warningColor, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Check your SPAM/JUNK folder if you don\'t see it',
+                        style: AppTheme.bodySmall.copyWith(
+                          color: AppTheme.warningColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
