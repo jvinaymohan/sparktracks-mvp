@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/tasks_provider.dart';
+import '../../providers/children_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/class_model.dart';
+import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
 
 class CalendarScreen extends StatefulWidget {
@@ -22,57 +26,122 @@ class _CalendarScreenState extends State<CalendarScreen> {
   DateTime? _rangeStart;
   DateTime? _rangeEnd;
 
-  // Mock data for calendar events
-  final Map<DateTime, List<CalendarEvent>> _events = {
-    DateTime.now(): [
+  // Convert tasks to calendar events with child grouping and recurring support
+  Map<DateTime, List<CalendarEvent>> _getEventsFromTasks(
+    List<Task> tasks,
+    List<Student> children,
+  ) {
+    final Map<DateTime, List<CalendarEvent>> events = {};
+    
+    for (final task in tasks) {
+      if (task.dueDate == null) continue;
+      
+      // Get child color for this task
+      final child = children.firstWhere(
+        (c) => c.id == task.childId,
+        orElse: () => children.isNotEmpty ? children.first : Student(
+          id: task.childId,
+          userId: '',
+          parentId: '',
+          name: 'Unknown',
+          email: '',
+          dateOfBirth: DateTime.now(),
+          enrolledAt: DateTime.now(),
+        ),
+      );
+      final childColor = child.colorCode != null
+          ? Color(int.parse(child.colorCode!.replaceFirst('#', '0xFF')))
+          : AppTheme.primaryColor;
+      
+      if (task.isRecurring && task.recurringPattern != null) {
+        // Generate recurring events
+        _addRecurringTaskEvents(task, childColor, events);
+      } else {
+        // Single task event
+        _addSingleTaskEvent(task, childColor, events);
+      }
+    }
+    
+    return events;
+  }
+  
+  void _addSingleTaskEvent(
+    Task task,
+    Color color,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
+    if (task.dueDate == null) return;
+    
+    final day = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+    final startTime = task.dueDate!;
+    final endTime = startTime.add(const Duration(hours: 1)); // Default 1 hour duration
+    
+    events.putIfAbsent(day, () => []).add(
       CalendarEvent(
-        id: '1',
-        title: 'Math Homework Due',
+        id: task.id,
+        title: task.title,
+        description: task.description,
         type: CalendarEventType.task,
-        startTime: DateTime.now().copyWith(hour: 18, minute: 0),
-        endTime: DateTime.now().copyWith(hour: 19, minute: 0),
-        color: AppTheme.warningColor,
+        startTime: startTime,
+        endTime: endTime,
+        color: color,
+        task: task, // Store reference to task for editing
       ),
-      CalendarEvent(
-        id: '2',
-        title: 'Soccer Training',
-        type: CalendarEventType.classEvent,
-        startTime: DateTime.now().copyWith(hour: 16, minute: 0),
-        endTime: DateTime.now().copyWith(hour: 17, minute: 0),
-        color: AppTheme.primaryColor,
-      ),
-    ],
-    DateTime.now().add(const Duration(days: 1)): [
-      CalendarEvent(
-        id: '3',
-        title: 'Piano Practice',
-        type: CalendarEventType.task,
-        startTime: DateTime.now().add(const Duration(days: 1)).copyWith(hour: 15, minute: 0),
-        endTime: DateTime.now().add(const Duration(days: 1)).copyWith(hour: 16, minute: 0),
-        color: AppTheme.infoColor,
-      ),
-    ],
-    DateTime.now().add(const Duration(days: 2)): [
-      CalendarEvent(
-        id: '4',
-        title: 'Piano Lessons',
-        type: CalendarEventType.classEvent,
-        startTime: DateTime.now().add(const Duration(days: 2)).copyWith(hour: 16, minute: 0),
-        endTime: DateTime.now().add(const Duration(days: 2)).copyWith(hour: 17, minute: 0),
-        color: AppTheme.successColor,
-      ),
-    ],
-    DateTime.now().add(const Duration(days: 3)): [
-      CalendarEvent(
-        id: '5',
-        title: 'Reading Assignment',
-        type: CalendarEventType.task,
-        startTime: DateTime.now().add(const Duration(days: 3)).copyWith(hour: 14, minute: 0),
-        endTime: DateTime.now().add(const Duration(days: 3)).copyWith(hour: 15, minute: 0),
-        color: AppTheme.warningColor,
-      ),
-    ],
-  };
+    );
+  }
+  
+  void _addRecurringTaskEvents(
+    Task task,
+    Color color,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
+    if (task.dueDate == null || task.recurringPattern == null) return;
+    
+    final startDate = DateTime(task.dueDate!.year, task.dueDate!.month, task.dueDate!.day);
+    final endDate = DateTime.now().add(const Duration(days: 90)); // Show next 90 days
+    
+    DateTime currentDate = startDate;
+    
+    while (currentDate.isBefore(endDate) || currentDate.isAtSameMomentAs(endDate)) {
+      final startTime = DateTime(
+        currentDate.year,
+        currentDate.month,
+        currentDate.day,
+        task.dueDate!.hour,
+        task.dueDate!.minute,
+      );
+      final endTime = startTime.add(const Duration(hours: 1));
+      
+      events.putIfAbsent(currentDate, () => []).add(
+        CalendarEvent(
+          id: '${task.id}_${currentDate.millisecondsSinceEpoch}',
+          title: task.title,
+          description: task.description,
+          type: CalendarEventType.task,
+          startTime: startTime,
+          endTime: endTime,
+          color: color,
+          task: task,
+          isRecurring: true,
+        ),
+      );
+      
+      // Move to next occurrence
+      switch (task.recurringPattern) {
+        case 'daily':
+          currentDate = currentDate.add(const Duration(days: 1));
+          break;
+        case 'weekly':
+          currentDate = currentDate.add(const Duration(days: 7));
+          break;
+        case 'monthly':
+          currentDate = DateTime(currentDate.year, currentDate.month + 1, currentDate.day);
+          break;
+        default:
+          break;
+      }
+    }
+  }
 
   @override
   void initState() {
@@ -87,21 +156,44 @@ class _CalendarScreenState extends State<CalendarScreen> {
     super.dispose();
   }
 
-  List<CalendarEvent> _getEventsForDay(DateTime day) {
-    return _events[day] ?? [];
+  List<CalendarEvent> _getEventsForDay(
+    DateTime day,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
+    final dayKey = DateTime(day.year, day.month, day.day);
+    return events[dayKey] ?? [];
   }
 
-  List<CalendarEvent> _getEventsForRange(DateTime start, DateTime end) {
+  List<CalendarEvent> _getEventsForRange(
+    DateTime start,
+    DateTime end,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
     final days = <DateTime>[];
     for (DateTime d = start; d.isBefore(end.add(const Duration(days: 1))); d = d.add(const Duration(days: 1))) {
-      days.add(d);
+      days.add(DateTime(d.year, d.month, d.day));
     }
     return [
-      for (final d in days) ..._getEventsForDay(d),
+      for (final d in days) ..._getEventsForDay(d, events),
     ];
   }
+  
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Update selected events when tasks change
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final events = _getEventsFromTasks(tasksProvider.tasks, childrenProvider.children);
+    final selectedEventsForDay = _getEventsForDay(_selectedDay ?? DateTime.now(), events);
+    _selectedEvents.value = selectedEventsForDay;
+  }
 
-  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+  void _onDaySelected(
+    DateTime selectedDay,
+    DateTime focusedDay,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
     if (!isSameDay(_selectedDay, selectedDay)) {
       setState(() {
         _selectedDay = selectedDay;
@@ -111,11 +203,16 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _rangeSelectionMode = RangeSelectionMode.toggledOff;
       });
 
-      _selectedEvents.value = _getEventsForDay(selectedDay);
+      _selectedEvents.value = _getEventsForDay(selectedDay, events);
     }
   }
 
-  void _onRangeSelected(DateTime? start, DateTime? end, DateTime focusedDay) {
+  void _onRangeSelected(
+    DateTime? start,
+    DateTime? end,
+    DateTime focusedDay,
+    Map<DateTime, List<CalendarEvent>> events,
+  ) {
     setState(() {
       _selectedDay = null;
       _focusedDay = focusedDay;
@@ -125,9 +222,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
     });
 
     if (start != null && end != null) {
-      _selectedEvents.value = _getEventsForRange(start, end);
+      _selectedEvents.value = _getEventsForRange(start, end, events);
     } else if (start != null) {
-      _selectedEvents.value = _getEventsForDay(start);
+      _selectedEvents.value = _getEventsForDay(start, events);
     } else {
       _selectedEvents.value = [];
     }
@@ -135,31 +232,34 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar'),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () => _showAddEventDialog(),
+            onPressed: () => context.go('/create-task'),
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Calendar
-          Card(
-            margin: const EdgeInsets.all(AppTheme.spacingL),
-            child: TableCalendar<CalendarEvent>(
-              firstDay: DateTime.utc(2020, 1, 1),
-              lastDay: DateTime.utc(2030, 12, 31),
-              focusedDay: _focusedDay,
-              calendarFormat: _calendarFormat,
-              eventLoader: _getEventsForDay,
-              startingDayOfWeek: StartingDayOfWeek.monday,
+      body: Consumer2<TasksProvider, ChildrenProvider>(
+        builder: (context, tasksProvider, childrenProvider, _) {
+          final tasks = tasksProvider.tasks;
+          final children = childrenProvider.children;
+          final events = _getEventsFromTasks(tasks, children);
+          
+          return Column(
+            children: [
+              // Calendar
+              Card(
+                margin: const EdgeInsets.all(AppTheme.spacingL),
+                child: TableCalendar<CalendarEvent>(
+                  firstDay: DateTime.utc(2020, 1, 1),
+                  lastDay: DateTime.utc(2030, 12, 31),
+                  focusedDay: _focusedDay,
+                  calendarFormat: _calendarFormat,
+                  eventLoader: (day) => _getEventsForDay(day, events),
+                  startingDayOfWeek: StartingDayOfWeek.monday,
               calendarStyle: CalendarStyle(
                 outsideDaysVisible: false,
                 markersMaxCount: 3,
@@ -176,8 +276,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   shape: BoxShape.circle,
                 ),
               ),
-              onDaySelected: _onDaySelected,
-              onRangeSelected: _onRangeSelected,
+              onDaySelected: (selectedDay, focusedDay) => _onDaySelected(selectedDay, focusedDay, events),
+              onRangeSelected: (start, end, focusedDay) => _onRangeSelected(start, end, focusedDay, events),
               rangeSelectionMode: _rangeSelectionMode,
               onFormatChanged: (format) {
                 if (_calendarFormat != format) {
@@ -197,58 +297,184 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
           
-          // Events List
+          // Events List - Grouped by Child
           Expanded(
             child: ValueListenableBuilder<List<CalendarEvent>>(
               valueListenable: _selectedEvents,
               builder: (context, value, _) {
-                return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-                  itemCount: value.length,
-                  itemBuilder: (context, index) {
-                    final event = value[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
-                      child: ListTile(
-                        leading: Container(
-                          width: 12,
-                          height: 12,
-                          decoration: BoxDecoration(
-                            color: event.color,
-                            shape: BoxShape.circle,
-                          ),
+                if (value.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.event_note, size: 64, color: AppTheme.neutral400),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No tasks on this day',
+                          style: AppTheme.bodyLarge.copyWith(color: AppTheme.neutral600),
                         ),
-                        title: Text(event.title),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(_formatTime(event.startTime)),
-                            Text(
-                              event.type == CalendarEventType.task ? 'Task' : 'Class',
-                              style: AppTheme.bodySmall.copyWith(
-                                color: event.color,
-                                fontWeight: FontWeight.bold,
+                      ],
+                    ),
+                  );
+                }
+                
+                // Group events by child
+                final groupedEvents = <String, List<CalendarEvent>>{};
+                for (final event in value) {
+                  if (event.task != null) {
+                    final childId = event.task!.childId;
+                    final child = children.firstWhere(
+                      (c) => c.id == childId,
+                      orElse: () => children.isNotEmpty ? children.first : Student(
+                        id: childId,
+                        userId: '',
+                        parentId: '',
+                        name: 'Unknown',
+                        email: '',
+                        dateOfBirth: DateTime.now(),
+                        enrolledAt: DateTime.now(),
+                      ),
+                    );
+                    final childName = child.name;
+                    groupedEvents.putIfAbsent(childName, () => []).add(event);
+                  } else {
+                    groupedEvents.putIfAbsent('Other', () => []).add(event);
+                  }
+                }
+                
+                return ListView.builder(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  itemCount: groupedEvents.length,
+                  itemBuilder: (context, index) {
+                    final childName = groupedEvents.keys.elementAt(index);
+                    final childEvents = groupedEvents[childName]!;
+                    final firstEvent = childEvents.first;
+                    final childColor = firstEvent.color;
+                    
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Child header
+                          Container(
+                            padding: const EdgeInsets.all(AppTheme.spacingM),
+                            decoration: BoxDecoration(
+                              color: childColor.withOpacity(0.1),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(12),
+                                topRight: Radius.circular(12),
                               ),
                             ),
-                          ],
-                        ),
-                        trailing: PopupMenuButton(
-                          itemBuilder: (context) => [
-                            const PopupMenuItem(
-                              value: 'view',
-                              child: Text('View Details'),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 16,
+                                  backgroundColor: childColor,
+                                  child: Text(
+                                    childName[0].toUpperCase(),
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    childName,
+                                    style: AppTheme.bodyLarge.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  '${childEvents.length} ${childEvents.length == 1 ? 'task' : 'tasks'}',
+                                  style: AppTheme.bodySmall.copyWith(
+                                    color: AppTheme.neutral600,
+                                  ),
+                                ),
+                              ],
                             ),
-                            const PopupMenuItem(
-                              value: 'edit',
-                              child: Text('Edit'),
+                          ),
+                          // Tasks for this child
+                          ...childEvents.map((event) => ListTile(
+                            leading: Container(
+                              width: 4,
+                              height: 40,
+                              decoration: BoxDecoration(
+                                color: event.color,
+                                borderRadius: BorderRadius.circular(2),
+                              ),
                             ),
-                            const PopupMenuItem(
-                              value: 'delete',
-                              child: Text('Delete'),
+                            title: Row(
+                              children: [
+                                Expanded(child: Text(event.title)),
+                                if (event.isRecurring)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: Icon(
+                                      Icons.repeat,
+                                      size: 16,
+                                      color: AppTheme.infoColor,
+                                    ),
+                                  ),
+                              ],
                             ),
-                          ],
-                          onSelected: (action) => _handleEventAction(action, event),
-                        ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const SizedBox(height: 4),
+                                Text(
+                                  '${_formatTime(event.startTime)} • ${event.task?.category?.toUpperCase() ?? 'TASK'}',
+                                  style: AppTheme.bodySmall.copyWith(
+                                    color: AppTheme.neutral600,
+                                  ),
+                                ),
+                                if (event.task?.rewardAmount != null && event.task!.rewardAmount > 0)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.star, size: 14, color: Colors.amber),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '${event.task!.rewardAmount.toInt()} pts',
+                                          style: AppTheme.bodySmall.copyWith(
+                                            color: Colors.amber,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            trailing: PopupMenuButton(
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'view',
+                                  child: Text('View Details'),
+                                ),
+                                if (event.task != null)
+                                  const PopupMenuItem(
+                                    value: 'edit',
+                                    child: Text('Edit Task'),
+                                  ),
+                                if (event.task != null)
+                                  const PopupMenuItem(
+                                    value: 'delete',
+                                    child: Text('Delete Task'),
+                                  ),
+                              ],
+                              onSelected: (action) => _handleEventAction(action, event),
+                            ),
+                            onTap: event.task != null
+                                ? () => context.go('/create-task?taskId=${event.task!.id}')
+                                : null,
+                          )),
+                        ],
                       ),
                     );
                   },
@@ -256,11 +482,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
               },
             ),
           ),
-        ],
+            ],
+          ),
+        },
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showAddEventDialog(),
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/create-task'),
+        icon: const Icon(Icons.add),
+        label: const Text('New Task'),
       ),
     );
   }
@@ -275,35 +504,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
         _showEventDetails(event);
         break;
       case 'edit':
-        _showEditEventDialog(event);
+        if (event.task != null) {
+          // Navigate to task wizard with existing task
+          context.go('/create-task?taskId=${event.task!.id}');
+        }
         break;
       case 'delete':
         _showDeleteEventDialog(event);
         break;
     }
-  }
-
-  void _showAddEventDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Add Event'),
-        content: const Text('Event creation form would go here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Create event
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
-    );
   }
 
   void _showEventDetails(CalendarEvent event) {
@@ -330,34 +539,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     );
   }
 
-  void _showEditEventDialog(CalendarEvent event) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Event'),
-        content: const Text('Event editing form would go here'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Update event
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDeleteEventDialog(CalendarEvent event) {
+    if (event.task == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Cannot delete: Task not found')),
+      );
+      return;
+    }
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Event'),
+        title: const Text('Delete Task'),
         content: Text('Are you sure you want to delete "${event.title}"?'),
         actions: [
           TextButton(
@@ -366,8 +559,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           ElevatedButton(
             onPressed: () {
+              final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+              tasksProvider.deleteTask(event.task!.id);
               Navigator.pop(context);
-              // TODO: Delete event
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Task deleted successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorColor),
             child: const Text('Delete'),
@@ -391,6 +591,8 @@ class CalendarEvent {
   final DateTime startTime;
   final DateTime endTime;
   final Color color;
+  final Task? task; // Reference to the task for editing
+  final bool isRecurring; // Whether this is a recurring task instance
 
   CalendarEvent({
     required this.id,
@@ -400,5 +602,7 @@ class CalendarEvent {
     required this.startTime,
     required this.endTime,
     required this.color,
+    this.task,
+    this.isRecurring = false,
   });
 }

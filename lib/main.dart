@@ -164,7 +164,19 @@ class SparktracksMVP extends StatelessWidget {
         ),
         GoRoute(
           path: '/create-task',
-          builder: (context, state) => const CreateTaskWizard(),
+          builder: (context, state) {
+            final taskId = state.uri.queryParameters['taskId'];
+            Task? existingTask;
+            if (taskId != null) {
+              final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+              try {
+                existingTask = tasksProvider.tasks.firstWhere((t) => t.id == taskId);
+              } catch (e) {
+                // Task not found, will create new
+              }
+            }
+            return CreateTaskWizard(existingTask: existingTask);
+          },
         ),
         GoRoute(
           path: '/add-child',
