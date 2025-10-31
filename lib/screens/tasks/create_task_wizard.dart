@@ -32,7 +32,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   TimeOfDay _selectedDueTime = TimeOfDay(hour: 17, minute: 0); // 5 PM default
   bool _isRecurring = false;
   String _recurringPattern = 'daily';
-  TaskCategory _selectedCategory = TaskCategory.chores;
+  String _selectedCategory = 'chores';
   
   bool _isSubmitting = false;
 
@@ -48,13 +48,15 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
     final task = widget.existingTask!;
     _titleController.text = task.title;
     _descriptionController.text = task.description;
-    _rewardController.text = task.rewardAmount.toString();
+    _rewardController.text = task.rewardAmount.toInt().toString();
     _selectedChildId = task.childId;
-    _selectedDueDate = task.dueDate;
-    _selectedDueTime = TimeOfDay.fromDateTime(task.dueDate);
+    if (task.dueDate != null) {
+      _selectedDueDate = task.dueDate!;
+      _selectedDueTime = TimeOfDay.fromDateTime(task.dueDate!);
+    }
     _isRecurring = task.isRecurring;
     _recurringPattern = task.recurringPattern ?? 'daily';
-    _selectedCategory = task.category;
+    _selectedCategory = task.category ?? 'chores';
   }
 
   @override
@@ -623,18 +625,18 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
           ),
           const SizedBox(height: AppTheme.spacingM),
           
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              _buildCategoryCard('Chores', Icons.cleaning_services, TaskCategory.chores, Colors.blue),
-              _buildCategoryCard('Homework', Icons.school, TaskCategory.homework, Colors.purple),
-              _buildCategoryCard('Reading', Icons.menu_book, TaskCategory.reading, Colors.orange),
-              _buildCategoryCard('Practice', Icons.music_note, TaskCategory.practice, Colors.green),
-              _buildCategoryCard('Exercise', Icons.fitness_center, TaskCategory.exercise, Colors.red),
-              _buildCategoryCard('Other', Icons.more_horiz, TaskCategory.other, Colors.grey),
-            ],
-          ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _buildCategoryCard('Chores', Icons.cleaning_services, 'chores', Colors.blue),
+                _buildCategoryCard('Homework', Icons.school, 'homework', Colors.purple),
+                _buildCategoryCard('Reading', Icons.menu_book, 'reading', Colors.orange),
+                _buildCategoryCard('Practice', Icons.music_note, 'practice', Colors.green),
+                _buildCategoryCard('Exercise', Icons.fitness_center, 'exercise', Colors.red),
+                _buildCategoryCard('Other', Icons.more_horiz, 'other', Colors.grey),
+              ],
+            ),
           
           const SizedBox(height: AppTheme.spacingXL),
           
@@ -689,7 +691,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
     );
   }
 
-  Widget _buildCategoryCard(String label, IconData icon, TaskCategory category, Color color) {
+  Widget _buildCategoryCard(String label, IconData icon, String category, Color color) {
     final isSelected = _selectedCategory == category;
     
     return SizedBox(
@@ -810,7 +812,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                   _buildReviewRow(
                     Icons.category,
                     'Category',
-                    _selectedCategory.toString().split('.').last.toUpperCase(),
+                    _selectedCategory.substring(0, 1).toUpperCase() + _selectedCategory.substring(1),
                   ),
                   const SizedBox(height: AppTheme.spacingM),
                   _buildReviewRow(
@@ -1013,7 +1015,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         description: _descriptionController.text.trim(),
         category: _selectedCategory,
         dueDate: dueDateTime,
-        rewardAmount: int.tryParse(_rewardController.text) ?? 0,
+        rewardAmount: (int.tryParse(_rewardController.text) ?? 0).toDouble(),
         status: widget.existingTask?.status ?? TaskStatus.pending,
         isRecurring: _isRecurring,
         recurringPattern: _isRecurring ? _recurringPattern : null,
