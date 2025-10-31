@@ -25,6 +25,7 @@ import 'screens/settings/notification_settings_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
 import 'screens/feedback/feedback_screen.dart';
 import 'screens/tasks/create_task_wizard.dart';
+import 'screens/tasks/child_task_view_screen.dart';
 import 'screens/children/add_edit_child_screen.dart';
 import 'screens/settings/points_settings_screen.dart';
 import 'screens/ledger/financial_ledger_screen.dart';
@@ -145,6 +146,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/child-dashboard',
           builder: (context, state) => const ChildDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/child-tasks',
+          builder: (context, state) => const ChildTaskViewScreen(),
         ),
         GoRoute(
           path: '/coach-dashboard',
