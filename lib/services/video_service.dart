@@ -8,10 +8,7 @@ class VideoService {
       final uri = Uri.parse(meetingLink);
       
       if (await canLaunchUrl(uri)) {
-        return await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        return await launchUrl(uri);
       } else {
         if (kDebugMode) {
           print('❌ Could not launch meeting: $meetingLink');

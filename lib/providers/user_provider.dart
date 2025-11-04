@@ -5,6 +5,7 @@ class UserProvider extends ChangeNotifier {
   User? _currentUser;
   bool _isLoading = false;
   String? _error;
+  final List<User> _usersCache = [];
   
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
@@ -94,5 +95,10 @@ class UserProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+  
+  // Get user by ID
+  User? getUserById(String userId) {
+    return _usersCache.firstWhere((u) => u.id == userId, orElse: () => null);
   }
 }
