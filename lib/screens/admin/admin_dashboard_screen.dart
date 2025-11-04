@@ -6,6 +6,8 @@ import '../../providers/user_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/classes_provider.dart';
 import '../../utils/app_theme.dart';
+import 'admin_users_tab.dart';
+import 'admin_settings_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -20,7 +22,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final List<Widget> _screens = [
     const AdminOverviewTab(),
     const AdminUsersTab(),
-    const AdminBetaSignupsTab(),
     const AdminSettingsTab(),
   ];
 
@@ -93,10 +94,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               NavigationRailDestination(
                 icon: Icon(Icons.people),
                 label: Text('Users'),
-              ),
-              NavigationRailDestination(
-                icon: Icon(Icons.email),
-                label: Text('Beta Signups'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.settings),
@@ -179,15 +176,15 @@ class AdminOverviewTab extends StatelessWidget {
                     AppTheme.successColor,
                   ),
                   _buildStatCard(
-                    'Beta Pending',
-                    stats['beta_pending']?.toString() ?? '0',
-                    Icons.pending,
+                    'Active Today',
+                    '0',
+                    Icons.timeline,
                     AppTheme.warningColor,
                   ),
                   _buildStatCard(
-                    'Beta Approved',
-                    stats['beta_approved']?.toString() ?? '0',
-                    Icons.check_circle,
+                    'New This Week',
+                    '0',
+                    Icons.trending_up,
                     AppTheme.successColor,
                   ),
                 ],
@@ -275,42 +272,6 @@ class AdminOverviewTab extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// Users Tab - Placeholder
-class AdminUsersTab extends StatelessWidget {
-  const AdminUsersTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('User Management - Coming in next implementation'),
-    );
-  }
-}
-
-// Beta Signups Tab - Placeholder
-class AdminBetaSignupsTab extends StatelessWidget {
-  const AdminBetaSignupsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('Beta Signups Management - Coming in next implementation'),
-    );
-  }
-}
-
-// Settings Tab - Placeholder
-class AdminSettingsTab extends StatelessWidget {
-  const AdminSettingsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text('System Settings - Coming in next implementation'),
     );
   }
 }

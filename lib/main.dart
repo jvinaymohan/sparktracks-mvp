@@ -11,6 +11,11 @@ import 'providers/user_provider.dart';
 import 'providers/children_provider.dart';
 import 'providers/tasks_provider.dart';
 import 'providers/classes_provider.dart';
+import 'providers/enrollment_provider.dart';
+import 'providers/attendance_provider.dart';
+import 'providers/achievements_provider.dart';
+import 'providers/messaging_provider.dart';
+import 'providers/admin_provider.dart';
 import 'models/user_model.dart';
 import 'models/task_model.dart';
 import 'models/class_model.dart';
@@ -33,6 +38,15 @@ import 'screens/ledger/financial_ledger_screen.dart';
 import 'screens/landing/landing_screen.dart';
 import 'screens/classes/create_class_wizard.dart';
 import 'screens/coach/coach_profile_screen.dart';
+import 'screens/classes/browse_classes_screen.dart';
+import 'screens/classes/class_detail_screen.dart';
+import 'screens/attendance/mark_attendance_screen.dart';
+import 'screens/payments/payment_dashboard_screen.dart';
+import 'screens/analytics/analytics_dashboard_screen.dart';
+import 'screens/achievements/achievements_screen.dart';
+import 'screens/messaging/messages_screen.dart';
+import 'screens/admin/admin_login_screen.dart';
+import 'screens/admin/admin_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +71,11 @@ class SparktracksMVP extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ChildrenProvider()),
         ChangeNotifierProvider(create: (_) => TasksProvider()),
         ChangeNotifierProvider(create: (_) => ClassesProvider()),
+        ChangeNotifierProvider(create: (_) => EnrollmentProvider()),
+        ChangeNotifierProvider(create: (_) => AttendanceProvider()),
+        ChangeNotifierProvider(create: (_) => AchievementsProvider()),
+        ChangeNotifierProvider(create: (_) => MessagingProvider()),
+        ChangeNotifierProvider(create: (_) => AdminProvider()),
       ],
       child: MaterialApp.router(
         title: AppConfig.appName,
