@@ -52,8 +52,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           ),
           PopupMenuButton(
             icon: const Icon(Icons.account_circle),
-            itemBuilder: (context) => [
+            itemBuilder: (context) => <PopupMenuEntry>[
               PopupMenuItem(
+                enabled: false,
                 child: ListTile(
                   leading: const Icon(Icons.person),
                   title: Text(admin.name),

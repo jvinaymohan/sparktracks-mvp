@@ -63,7 +63,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
             padding: const EdgeInsets.all(24),
             child: Card(
               elevation: 8,
-              shape: RoundedRectangle(
+              shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Container(
