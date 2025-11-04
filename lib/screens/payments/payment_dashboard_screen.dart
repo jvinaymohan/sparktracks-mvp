@@ -182,10 +182,10 @@ class _PaymentDashboardScreenState extends State<PaymentDashboardScreen> with Si
       itemBuilder: (context, index) {
         final enrollment = pendingPayments[index];
         final classItem = classesProvider.getClassById(enrollment.classId);
-        final student = childrenProvider.children.firstWhere(
-          (s) => s.userId == enrollment.studentId,
-          orElse: () => null,
-        );
+        final studentList = childrenProvider.children.where(
+          (s) => s.userId == enrollment.studentId
+        ).toList();
+        final student = studentList.isNotEmpty ? studentList.first : null;
         
         if (classItem == null || student == null) return const SizedBox.shrink();
         
@@ -203,10 +203,10 @@ class _PaymentDashboardScreenState extends State<PaymentDashboardScreen> with Si
       itemBuilder: (context, index) {
         final enrollment = paidEnrollments[index];
         final classItem = classesProvider.getClassById(enrollment.classId);
-        final student = childrenProvider.children.firstWhere(
-          (s) => s.userId == enrollment.studentId,
-          orElse: () => null,
-        );
+        final studentList = childrenProvider.children.where(
+          (s) => s.userId == enrollment.studentId
+        ).toList();
+        final student = studentList.isNotEmpty ? studentList.first : null;
         
         if (classItem == null || student == null) return const SizedBox.shrink();
         
