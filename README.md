@@ -849,12 +849,16 @@ Built with:
 
 ## 📈 Statistics
 
-- **Total Lines of Code:** ~15,000+
-- **Number of Screens:** 20+
-- **Data Models:** 6 core models
-- **Providers:** 5 state management providers
+- **Total Lines of Code:** ~22,000+
+- **Number of Screens:** 32+
+- **Data Models:** 12 core models
+- **Providers:** 9 state management providers
+- **Services:** 4 integration services
 - **Supported Currencies:** 6
 - **User Roles:** 3 (Parent, Child, Coach)
+- **Achievements:** 13+ predefined
+- **Email Templates:** 12+
+- **Features Implemented:** 40+
 
 ---
 
