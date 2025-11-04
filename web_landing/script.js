@@ -1,53 +1,127 @@
 // Smooth scrolling for navigation links
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function (e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            target.scrollIntoView({
+        const href = this.getAttribute('href');
+        if (href === '#login') {
+            e.preventDefault();
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('loginForm').style.display = 'block';
+            document.getElementById('signup').scrollIntoView({
                 behavior: 'smooth',
                 block: 'start'
             });
+        } else {
+            e.preventDefault();
+            const target = document.querySelector(href);
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
         }
     });
 });
 
-// Beta form submission
-document.getElementById('betaForm').addEventListener('submit', async function(e) {
+// Nav login link
+document.getElementById('navLoginLink')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('signup').scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+    });
+});
+
+// Toggle between signup and login forms
+document.getElementById('showLoginLink')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('signupForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+});
+
+document.getElementById('showSignupLink')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('signupForm').style.display = 'block';
+});
+
+// Signup form submission
+document.getElementById('signupForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const formData = {
         name: this.name.value,
         email: this.email.value,
+        password: this.password.value,
         role: this.role.value,
-        message: this.message.value,
         timestamp: new Date().toISOString()
     };
     
     // Show loading state
     const submitButton = this.querySelector('button[type="submit"]');
     const originalText = submitButton.textContent;
-    submitButton.textContent = 'Submitting...';
+    submitButton.textContent = 'Creating Account...';
     submitButton.disabled = true;
     
     try {
-        // In production, this would send to your backend API
-        // For now, we'll simulate a successful submission
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        // In production, this would call your Firebase Auth API
+        // For now, we'll redirect to the app registration
+        await new Promise(resolve => setTimeout(resolve, 1000));
         
-        // Log to console (in production, send to your API)
-        console.log('Beta signup:', formData);
+        // Log to console
+        console.log('Signup:', formData);
         
-        // Show success message
-        alert(`Thank you, ${formData.name}! We've received your beta access request. Check your email (${formData.email}) for next steps!`);
+        // Redirect to app with pre-filled data
+        const appUrl = window.location.origin.replace('www.', 'app.');
+        const params = new URLSearchParams({
+            email: formData.email,
+            name: formData.name,
+            role: formData.role
+        });
         
-        // Reset form
-        this.reset();
+        // Open app in new tab or redirect
+        window.location.href = `/register?${params.toString()}`;
+        
+        // Alternative: Show success and provide link
+        // alert(`Welcome to Sparktracks, ${formData.name}! Redirecting to the app...`);
         
     } catch (error) {
         console.error('Error:', error);
-        alert('Oops! Something went wrong. Please try again or email us directly at beta@sparktracks.com');
-    } finally {
+        alert('Oops! Something went wrong. Please try again or email us at support@sparktracks.com');
+        submitButton.textContent = originalText;
+        submitButton.disabled = false;
+    }
+});
+
+// Login form submission
+document.getElementById('loginForm')?.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const formData = {
+        email: this.email.value,
+        password: this.password.value,
+    };
+    
+    // Show loading state
+    const submitButton = this.querySelector('button[type="submit"]');
+    const originalText = submitButton.textContent;
+    submitButton.textContent = 'Logging in...';
+    submitButton.disabled = true;
+    
+    try {
+        // In production, authenticate and redirect
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        console.log('Login:', formData);
+        
+        // Redirect to app
+        window.location.href = `/login?email=${encodeURIComponent(formData.email)}`;
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Invalid credentials. Please try again.');
         submitButton.textContent = originalText;
         submitButton.disabled = false;
     }

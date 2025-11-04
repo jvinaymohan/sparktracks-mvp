@@ -22,10 +22,13 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How It Works</a>
-                <a href="#beta">Beta Access</a>
+                <a href="#signup">Get Started</a>
                 <a href="#contact">Contact</a>
             </div>
-            <a href="#beta" class="btn btn-primary">Join Beta</a>
+            <div class="nav-auth">
+                <a href="#login" id="navLoginLink" class="nav-link-btn">Login</a>
+                <a href="#signup" class="btn btn-primary">Sign Up Free</a>
+            </div>
         </div>
     </nav>
 
@@ -33,8 +36,8 @@
     <section class="hero">
         <div class="container">
             <div class="hero-content">
-                <div class="hero-badge">🚀 Now in Beta</div>
-                <h1 class="hero-title">
+                <div class="hero-badge">🚀 Early Access Now Available</div>
+<h1 class="hero-title">
                     Transform Learning with
                     <span class="gradient-text">Sparktracks</span>
                 </h1>
@@ -43,7 +46,7 @@
                     through task management, gamification, and class enrollment.
                 </p>
                 <div class="hero-buttons">
-                    <a href="#beta" class="btn btn-primary btn-large">Get Beta Access</a>
+                    <a href="#signup" class="btn btn-primary btn-large">Get Started Free</a>
                     <a href="#demo" class="btn btn-secondary btn-large">Watch Demo</a>
                 </div>
                 <div class="hero-stats">
@@ -61,7 +64,7 @@
                     </div>
                     <div class="stat">
                         <div class="stat-number">100%</div>
-                        <div class="stat-label">Free Beta</div>
+                        <div class="stat-label">Free Forever</div>
                     </div>
                 </div>
             </div>
@@ -229,35 +232,35 @@
         </div>
     </section>
 
-    <!-- Beta Access -->
-    <section id="beta" class="beta-signup">
+    <!-- Early Access Signup -->
+    <section id="signup" class="beta-signup">
         <div class="container">
             <div class="beta-content">
                 <div class="beta-info">
-                    <h2>Join Our Beta Program</h2>
-                    <p>Be among the first to experience Sparktracks and help shape the future of learning management.</p>
+                    <h2>Get Started with Early Access</h2>
+                    <p>Sign up now and start using Sparktracks immediately. No waiting, no approval needed!</p>
                     <div class="beta-benefits">
                         <div class="benefit">
                             <span class="benefit-icon">🎉</span>
-                            <span>Free lifetime access to premium features</span>
+                            <span>Instant access - Start using immediately</span>
                         </div>
                         <div class="benefit">
                             <span class="benefit-icon">🚀</span>
-                            <span>Early access to new features</span>
+                            <span>100% free forever - All features included</span>
                         </div>
                         <div class="benefit">
                             <span class="benefit-icon">💡</span>
-                            <span>Direct influence on product development</span>
+                            <span>Direct support from our team</span>
                         </div>
                         <div class="benefit">
                             <span class="benefit-icon">🎁</span>
-                            <span>Exclusive beta tester rewards</span>
+                            <span>Early adopter perks and rewards</span>
                         </div>
                     </div>
                 </div>
                 <div class="beta-form">
-                    <form id="betaForm">
-                        <h3>Request Beta Access</h3>
+                    <form id="signupForm">
+                        <h3>Create Your Account</h3>
                         <div class="form-group">
                             <input type="text" name="name" placeholder="Full Name" required>
                         </div>
@@ -265,18 +268,30 @@
                             <input type="email" name="email" placeholder="Email Address" required>
                         </div>
                         <div class="form-group">
-                            <select name="role" required>
-                                <option value="">Select Your Role</option>
-                                <option value="parent">Parent</option>
-                                <option value="child">Child/Student</option>
-                                <option value="coach">Coach/Educator</option>
-                            </select>
+                            <input type="password" name="password" placeholder="Password (min 8 characters)" minlength="8" required>
                         </div>
                         <div class="form-group">
-                            <textarea name="message" placeholder="Tell us why you're excited about Sparktracks (optional)" rows="4"></textarea>
+                            <select name="role" required>
+                                <option value="">I am a...</option>
+                                <option value="PARENT">Parent</option>
+                                <option value="COACH">Coach/Educator</option>
+                            </select>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block">Request Beta Access</button>
-                        <p class="form-note">Limited spots available. We'll email you with access details!</p>
+                        <button type="submit" class="btn btn-primary btn-block">Create Account & Start Now</button>
+                        <p class="form-note">Already have an account? <a href="#login" id="showLoginLink">Login here</a></p>
+                    </form>
+                    
+                    <!-- Hidden Login Form -->
+                    <form id="loginForm" style="display: none;">
+                        <h3>Welcome Back!</h3>
+                        <div class="form-group">
+                            <input type="email" name="email" placeholder="Email Address" required>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" name="password" placeholder="Password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Login to Sparktracks</button>
+                        <p class="form-note">Don't have an account? <a href="#signup" id="showSignupLink">Sign up here</a></p>
                     </form>
                 </div>
             </div>
