@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
@@ -19,11 +20,13 @@ class AddEditChildScreen extends StatefulWidget {
 class _AddEditChildScreenState extends State<AddEditChildScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   
   DateTime? _selectedDateOfBirth;
   String _selectedColorCode = '#4CAF50';
   bool _isSubmitting = false;
-  String? _generatedPassword; // Auto-generated password for the child
+  bool _useCustomCredentials = false; // Toggle for custom vs auto-generated
 
   final List<String> _availableColors = [
     '#4CAF50', // Green
@@ -52,6 +55,8 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
   
@@ -152,39 +157,100 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               ),
               const SizedBox(height: AppTheme.spacingL),
               
-              // Email (Optional)
+              // Login Credentials Section
               Card(
                 child: Padding(
                   padding: const EdgeInsets.all(AppTheme.spacingL),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Email (Optional)',
-                        style: AppTheme.headline6,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Login Credentials',
+                            style: AppTheme.headline6,
+                          ),
+                          Switch(
+                            value: _useCustomCredentials,
+                            onChanged: (value) {
+                              setState(() {
+                                _useCustomCredentials = value;
+                                if (!value) {
+                                  _emailController.clear();
+                                  _passwordController.clear();
+                                }
+                              });
+                            },
+                          ),
+                        ],
                       ),
                       const SizedBox(height: AppTheme.spacingS),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: AppTheme.infoColor.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(Icons.info_outline, color: AppTheme.infoColor, size: 20),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                'An email and password will be auto-generated for child login',
-                                style: AppTheme.bodySmall.copyWith(
-                                  color: AppTheme.infoColor,
+                      
+                      if (!_useCustomCredentials)
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.infoColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.info_outline, color: AppTheme.infoColor, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Email and password will be auto-generated. Turn on switch to set custom credentials.',
+                                  style: AppTheme.bodySmall.copyWith(
+                                    color: AppTheme.infoColor,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        )
+                      else ...[
+                        const SizedBox(height: AppTheme.spacingM),
+                        TextFormField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Email',
+                            hintText: 'child@example.com',
+                            prefixIcon: Icon(Icons.email),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) {
+                            if (_useCustomCredentials && (value == null || value.isEmpty)) {
+                              return 'Please enter an email';
+                            }
+                            if (_useCustomCredentials && !value!.contains('@')) {
+                              return 'Please enter a valid email';
+                            }
+                            return null;
+                          },
                         ),
-                      ),
+                        const SizedBox(height: AppTheme.spacingM),
+                        TextFormField(
+                          controller: _passwordController,
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'Password',
+                            hintText: 'Minimum 6 characters',
+                            prefixIcon: Icon(Icons.lock),
+                          ),
+                          obscureText: true,
+                          validator: (value) {
+                            if (_useCustomCredentials && (value == null || value.isEmpty)) {
+                              return 'Please enter a password';
+                            }
+                            if (_useCustomCredentials && value!.length < 6) {
+                              return 'Password must be at least 6 characters';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -400,21 +466,30 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final parentId = authProvider.currentUser?.id ?? 'parent1';
         
-        // Generate auto-email and password for child
-        final childId = widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}';
-        final firstName = _nameController.text.split(' ').first.toLowerCase();
-        final autoEmail = '$firstName.${childId.substring(6, 12)}@sparktracks.child';
+        // Determine email and password (custom or auto-generated)
+        final String childEmail;
+        final String childPassword;
         
-        // Generate password
-        _generatedPassword = _generateChildPassword(_nameController.text, _selectedDateOfBirth!);
+        if (_useCustomCredentials) {
+          // Use custom credentials provided by parent
+          childEmail = _emailController.text.trim();
+          childPassword = _passwordController.text;
+        } else {
+          // Auto-generate credentials
+          final childId = widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}';
+          final firstName = _nameController.text.split(' ').first.toLowerCase();
+          childEmail = '$firstName.${childId.substring(6, 12)}@sparktracks.child';
+          childPassword = _generateChildPassword(_nameController.text, _selectedDateOfBirth!);
+        }
         
         // Create or update student object
+        final childId = widget.child?.id ?? 'child_${DateTime.now().millisecondsSinceEpoch}';
         final student = Student(
           id: childId,
           userId: widget.child?.userId ?? 'user_${DateTime.now().millisecondsSinceEpoch}',
           parentId: parentId,
           name: _nameController.text,
-          email: widget.child?.email ?? autoEmail, // Keep existing email if editing
+          email: widget.child?.email ?? childEmail, // Keep existing email if editing
           dateOfBirth: _selectedDateOfBirth!,
           enrolledAt: widget.child?.enrolledAt ?? DateTime.now(),
           colorCode: _selectedColorCode,
@@ -442,8 +517,8 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
             print('Attempting to create Firebase account for child');
             
             final result = await authService.createChildAccount(
-              email: autoEmail,
-              password: _generatedPassword!,
+              email: childEmail,
+              password: childPassword,
               childName: _nameController.text,
               parentId: parentId,
               dateOfBirth: _selectedDateOfBirth!,
@@ -457,7 +532,7 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               userId: result['userId']!,
               parentId: parentId,
               name: _nameController.text,
-              email: autoEmail,
+              email: childEmail,
               dateOfBirth: _selectedDateOfBirth!,
               enrolledAt: DateTime.now(),
               colorCode: _selectedColorCode,
@@ -472,11 +547,11 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               // Parent will need to log in again
               // Show credentials dialog with note about re-login
               if (mounted) {
-                _showCredentialsDialog(autoEmail, _generatedPassword!, needsParentRelogin: true);
+                _showCredentialsDialog(childEmail, childPassword, needsParentRelogin: true);
               }
             } else {
               if (mounted) {
-                _showCredentialsDialog(autoEmail, _generatedPassword!);
+                _showCredentialsDialog(childEmail, childPassword);
               }
             }
           } catch (e) {

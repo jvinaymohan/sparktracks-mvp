@@ -6,13 +6,14 @@ import 'package:go_router/go_router.dart';
 import 'firebase_options.dart';
 import 'utils/app_config.dart';
 import 'utils/app_theme.dart';
-import 'services/auth_service.dart';
-import 'services/notification_service.dart';
 import 'providers/auth_provider.dart';
 import 'providers/user_provider.dart';
 import 'providers/children_provider.dart';
 import 'providers/tasks_provider.dart';
+import 'providers/classes_provider.dart';
 import 'models/user_model.dart';
+import 'models/task_model.dart';
+import 'models/class_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
@@ -30,6 +31,8 @@ import 'screens/children/add_edit_child_screen.dart';
 import 'screens/settings/points_settings_screen.dart';
 import 'screens/ledger/financial_ledger_screen.dart';
 import 'screens/landing/landing_screen.dart';
+import 'screens/classes/create_class_wizard.dart';
+import 'screens/coach/coach_profile_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,6 +56,7 @@ class SparktracksMVP extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChildrenProvider()),
         ChangeNotifierProvider(create: (_) => TasksProvider()),
+        ChangeNotifierProvider(create: (_) => ClassesProvider()),
       ],
       child: MaterialApp.router(
         title: AppConfig.appName,
@@ -201,6 +205,26 @@ class SparktracksMVP extends StatelessWidget {
             final userType = state.uri.queryParameters['userType'] ?? 'parent';
             return FinancialLedgerScreen(userType: userType);
           },
+        ),
+        GoRoute(
+          path: '/create-class',
+          builder: (context, state) {
+            final classId = state.uri.queryParameters['classId'];
+            Class? existingClass;
+            if (classId != null) {
+              final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+              try {
+                existingClass = classesProvider.classes.firstWhere((c) => c.id == classId);
+              } catch (e) {
+                // Class not found, will create new
+              }
+            }
+            return CreateClassWizard(existingClass: existingClass);
+          },
+        ),
+        GoRoute(
+          path: '/coach-profile',
+          builder: (context, state) => const CoachProfileScreen(),
         ),
       ],
       redirect: (context, state) {

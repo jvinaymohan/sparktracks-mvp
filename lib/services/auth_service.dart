@@ -83,12 +83,19 @@ class AuthService {
       
       final userData = userDoc.data()!;
       
-      // Ensure dates are properly parsed
+      // Ensure dates are properly parsed - handle both Timestamp and String formats
+      String parseDate(dynamic dateValue) {
+        if (dateValue == null) return DateTime.now().toIso8601String();
+        if (dateValue is Timestamp) return dateValue.toDate().toIso8601String();
+        if (dateValue is String) return dateValue;
+        return DateTime.now().toIso8601String();
+      }
+      
       final user = User.fromJson({
         ...userData,
         'emailVerified': firebaseUser.emailVerified,
-        'createdAt': (userData['createdAt'] as Timestamp?)?.toDate().toIso8601String() ?? DateTime.now().toIso8601String(),
-        'updatedAt': (userData['updatedAt'] as Timestamp?)?.toDate().toIso8601String() ?? DateTime.now().toIso8601String(),
+        'createdAt': parseDate(userData['createdAt']),
+        'updatedAt': parseDate(userData['updatedAt']),
       });
       
       return user;
@@ -138,9 +145,20 @@ class AuthService {
       }
       
       final userData = userDoc.data()!;
+      
+      // Ensure dates are properly parsed - handle both Timestamp and String formats
+      String parseDate(dynamic dateValue) {
+        if (dateValue == null) return DateTime.now().toIso8601String();
+        if (dateValue is Timestamp) return dateValue.toDate().toIso8601String();
+        if (dateValue is String) return dateValue;
+        return DateTime.now().toIso8601String();
+      }
+      
       final user = User.fromJson({
         ...userData,
         'emailVerified': firebaseUser.emailVerified,
+        'createdAt': parseDate(userData['createdAt']),
+        'updatedAt': parseDate(userData['updatedAt']),
       });
       
       return user;

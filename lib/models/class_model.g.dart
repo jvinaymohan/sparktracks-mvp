@@ -42,6 +42,11 @@ Class _$ClassFromJson(Map<String, dynamic> json) => Class(
       const [],
   requirements: json['requirements'] as Map<String, dynamic>? ?? const {},
   metadata: json['metadata'] as Map<String, dynamic>? ?? const {},
+  isPublic: json['isPublic'] as bool? ?? false,
+  isGroupClass: json['isGroupClass'] as bool? ?? true,
+  paymentSchedule: json['paymentSchedule'] as String? ?? 'per_class',
+  makeUpClassesAllowed: json['makeUpClassesAllowed'] as bool? ?? false,
+  shareableLink: json['shareableLink'] as String?,
 );
 
 Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
@@ -70,6 +75,11 @@ Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
   'tags': instance.tags,
   'requirements': instance.requirements,
   'metadata': instance.metadata,
+  'isPublic': instance.isPublic,
+  'isGroupClass': instance.isGroupClass,
+  'paymentSchedule': instance.paymentSchedule,
+  'makeUpClassesAllowed': instance.makeUpClassesAllowed,
+  'shareableLink': instance.shareableLink,
 };
 
 const _$ClassTypeEnumMap = {

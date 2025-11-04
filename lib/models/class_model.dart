@@ -71,6 +71,13 @@ class Class {
   final List<String> tags;
   final Map<String, dynamic> requirements;
   final Map<String, dynamic> metadata;
+  
+  // New fields for enhanced class management
+  final bool isPublic; // Public (anyone can join) vs Private (invite only)
+  final bool isGroupClass; // Group class vs Individual 1-on-1
+  final String paymentSchedule; // 'per_class', 'monthly', 'term'
+  final bool makeUpClassesAllowed; // Allow students to schedule make-up classes
+  final String? shareableLink; // Link to share for enrollment
 
   Class({
     required this.id,
@@ -98,6 +105,11 @@ class Class {
     this.tags = const [],
     this.requirements = const {},
     this.metadata = const {},
+    this.isPublic = false,
+    this.isGroupClass = true,
+    this.paymentSchedule = 'per_class',
+    this.makeUpClassesAllowed = false,
+    this.shareableLink,
   });
 
   factory Class.fromJson(Map<String, dynamic> json) => _$ClassFromJson(json);
@@ -129,6 +141,11 @@ class Class {
     List<String>? tags,
     Map<String, dynamic>? requirements,
     Map<String, dynamic>? metadata,
+    bool? isPublic,
+    bool? isGroupClass,
+    String? paymentSchedule,
+    bool? makeUpClassesAllowed,
+    String? shareableLink,
   }) {
     return Class(
       id: id ?? this.id,
@@ -156,6 +173,12 @@ class Class {
       tags: tags ?? this.tags,
       requirements: requirements ?? this.requirements,
       metadata: metadata ?? this.metadata,
+      isPublic: isPublic ?? this.isPublic,
+      isGroupClass: isGroupClass ?? this.isGroupClass,
+      paymentSchedule: paymentSchedule ?? this.paymentSchedule,
+      makeUpClassesAllowed: makeUpClassesAllowed ?? this.makeUpClassesAllowed,
+      shareableLink: shareableLink ?? this.shareableLink,
     );
   }
 }
+

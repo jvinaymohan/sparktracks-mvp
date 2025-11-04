@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -182,7 +183,21 @@ class _LoginScreenState extends State<LoginScreen> {
       
       if (authProvider.isLoggedIn) {
         if (mounted) {
-          context.go('/parent-dashboard'); // Default to parent dashboard
+          // Redirect based on user type
+          final userType = authProvider.currentUser?.type;
+          switch (userType) {
+            case UserType.parent:
+              context.go('/parent-dashboard');
+              break;
+            case UserType.child:
+              context.go('/child-dashboard');
+              break;
+            case UserType.coach:
+              context.go('/coach-dashboard');
+              break;
+            default:
+              context.go('/parent-dashboard');
+          }
         }
       } else if (authProvider.error != null) {
         if (mounted) {

@@ -9,6 +9,7 @@ import '../../models/task_model.dart';
 import '../../models/class_model.dart';
 import '../../models/payment_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/dev_utils.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -22,25 +23,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
 
   // Tasks are now managed by TasksProvider
 
-  final List<Class> _upcomingClasses = [
-    Class(
-      id: '1',
-      title: 'Soccer Training',
-      description: 'Weekly soccer practice',
-      coachId: 'coach1',
-      type: ClassType.weekly,
-      locationType: LocationType.inPerson,
-      location: 'Community Field',
-      startTime: DateTime.now().add(const Duration(hours: 2)),
-      endTime: DateTime.now().add(const Duration(hours: 3)),
-      durationMinutes: 60,
-      price: 25.0,
-      currency: Currency.usd,
-      maxStudents: 15,
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-  ];
+  final List<Class> _upcomingClasses = [];
 
   @override
   void initState() {
@@ -87,6 +70,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
             onPressed: () => context.go('/notification-settings'),
           ),
           IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'Dev Tools (Clear Data)',
+            onPressed: () => DevUtils.showDebugMenu(context),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -116,10 +104,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildOverviewTab() {
-    return Consumer2<ChildrenProvider, TasksProvider>(
-      builder: (context, childrenProvider, tasksProvider, child) {
-        final children = childrenProvider.children;
-        final tasks = tasksProvider.tasks;
+    return Consumer3<ChildrenProvider, TasksProvider, AuthProvider>(
+      builder: (context, childrenProvider, tasksProvider, authProvider, child) {
+        final currentParentId = authProvider.currentUser?.id ?? '';
+        
+        // Filter to only show this parent's data
+        final children = childrenProvider.children.where((child) => child.parentId == currentParentId).toList();
+        final tasks = tasksProvider.tasks.where((task) => task.parentId == currentParentId).toList();
         return SingleChildScrollView(
           padding: const EdgeInsets.all(AppTheme.spacingL),
           child: Column(
@@ -200,9 +191,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildChildrenTab() {
-    return Consumer<ChildrenProvider>(
-      builder: (context, childrenProvider, child) {
-        final children = childrenProvider.children;
+    return Consumer2<ChildrenProvider, AuthProvider>(
+      builder: (context, childrenProvider, authProvider, child) {
+        final currentParentId = authProvider.currentUser?.id ?? '';
+        
+        // Filter children to only show this parent's children
+        final children = childrenProvider.children.where((child) => child.parentId == currentParentId).toList();
         return Column(
           children: [
             // Add Child Button
@@ -290,9 +284,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildTasksTab() {
-    return Consumer<TasksProvider>(
-      builder: (context, tasksProvider, child) {
-        final tasks = tasksProvider.tasks;
+    return Consumer3<TasksProvider, ChildrenProvider, AuthProvider>(
+      builder: (context, tasksProvider, childrenProvider, authProvider, child) {
+        final currentParentId = authProvider.currentUser?.id ?? '';
+        
+        // Filter tasks to only show this parent's tasks
+        final tasks = tasksProvider.tasks.where((task) => task.parentId == currentParentId).toList();
+        final children = childrenProvider.children;
         
         if (tasks.isEmpty) {
           return Center(
@@ -309,53 +307,153 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           );
         }
         
+        // Group tasks by child
+        final Map<String, List<Task>> tasksByChild = {};
+        for (final task in tasks) {
+          tasksByChild.putIfAbsent(task.childId, () => []).add(task);
+        }
+        
         return ListView.builder(
           padding: const EdgeInsets.all(AppTheme.spacingL),
-          itemCount: tasks.length,
-          itemBuilder: (context, index) {
-            final task = tasks[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: _getTaskStatusColor(task.status),
-              child: Icon(
-                _getTaskStatusIcon(task.status),
-                color: Colors.white,
+          itemCount: tasksByChild.length,
+          itemBuilder: (context, groupIndex) {
+            final childId = tasksByChild.keys.elementAt(groupIndex);
+            final childTasks = tasksByChild[childId]!;
+            
+            // Find the child info - match by userId (Firebase Auth ID)
+            final childInfo = children.firstWhere(
+              (c) => c.userId == childId,
+              orElse: () => Student(
+                id: childId,
+                userId: childId,
+                parentId: currentParentId,
+                name: 'Unknown Child',
+                email: '',
+                dateOfBirth: DateTime.now(),
+                enrolledAt: DateTime.now(),
               ),
-            ),
-            title: Text(task.title),
-            subtitle: Column(
+            );
+            
+            return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(task.description),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(Icons.stars, size: 16, color: AppTheme.warningColor),
-                    Text('${task.rewardAmount.toInt()} points'),
-                    const SizedBox(width: 16),
-                    Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
-                    Text(_formatDate(task.dueDate)),
-                  ],
+                // Child header
+                Container(
+                  margin: EdgeInsets.only(bottom: AppTheme.spacingM, top: groupIndex > 0 ? AppTheme.spacingL : 0),
+                  padding: const EdgeInsets.all(AppTheme.spacingM),
+                  decoration: BoxDecoration(
+                    color: Color(int.parse(childInfo.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50')),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                  ),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: Colors.white,
+                        child: Text(
+                          childInfo.name[0].toUpperCase(),
+                          style: TextStyle(
+                            color: Color(int.parse(childInfo.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50')),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              childInfo.name,
+                              style: AppTheme.headline6.copyWith(color: Colors.white),
+                            ),
+                            Text(
+                              '${childTasks.length} ${childTasks.length == 1 ? 'task' : 'tasks'}',
+                              style: AppTheme.bodySmall.copyWith(color: Colors.white.withOpacity(0.9)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Task stats for this child
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.stars, size: 16, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${childTasks.where((t) => t.status == TaskStatus.approved).fold<double>(0, (sum, t) => sum + t.rewardAmount).toInt()} pts',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                // Tasks for this child
+                ...childTasks.map((task) => Card(
+                  margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: _getTaskStatusColor(task.status),
+                      child: Icon(
+                        _getTaskStatusIcon(task.status),
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(task.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(task.description),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            const Icon(Icons.stars, size: 16, color: AppTheme.warningColor),
+                            const SizedBox(width: 4),
+                            Text('${task.rewardAmount.toInt()} points'),
+                            const SizedBox(width: 16),
+                            const Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
+                            const SizedBox(width: 4),
+                            Text(_formatDate(task.dueDate)),
+                          ],
+                        ),
+                      ],
+                    ),
+                    trailing: task.status == TaskStatus.completed
+                        ? ElevatedButton.icon(
+                            icon: const Icon(Icons.check, size: 18),
+                            label: const Text('Approve'),
+                            onPressed: () {
+                              tasksProvider.approveTask(task.id);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Task approved for ${childInfo.name}!')),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.successColor,
+                              foregroundColor: Colors.white,
+                            ),
+                          )
+                        : Chip(
+                            label: Text(
+                              task.status.toString().split('.').last.toUpperCase(),
+                              style: const TextStyle(fontSize: 10),
+                            ),
+                            backgroundColor: _getTaskStatusColor(task.status).withOpacity(0.2),
+                          ),
+                  ),
+                )),
               ],
-            ),
-            trailing: task.status == TaskStatus.completed
-                ? IconButton(
-                    icon: const Icon(Icons.check),
-                    onPressed: () {
-                      tasksProvider.approveTask(task.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Task approved!')),
-                      );
-                    },
-                  )
-                : null,
-          ),
+            );
+          },
         );
-      },
-    );
       },
     );
   }
@@ -433,7 +531,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
         ),
         title: Text(task.title),
-        subtitle: Text('${task.status.name} - \$${task.rewardAmount.toStringAsFixed(2)}'),
+        subtitle: Text('${task.status.name} - ${task.rewardAmount.toInt()} points'),
         trailing: Text(_formatDate(task.updatedAt)),
       ),
     );

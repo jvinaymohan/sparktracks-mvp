@@ -2,57 +2,15 @@ import 'package:flutter/material.dart';
 import '../models/task_model.dart';
 
 class TasksProvider with ChangeNotifier {
-  final List<Task> _tasks = [
-    // Mock initial tasks
-    Task(
-      id: 'task1',
-      title: 'Complete Math Homework',
-      description: 'Finish pages 45-47 in the workbook',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.pending,
-      priority: TaskPriority.high,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-      rewardAmount: 500,
-      category: 'Education',
-      tags: ['homework', 'math'],
-    ),
-    Task(
-      id: 'task2',
-      title: 'Clean Your Room',
-      description: 'Make bed, organize toys, vacuum floor',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.inProgress,
-      priority: TaskPriority.medium,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 3)),
-      dueDate: DateTime.now(),
-      rewardAmount: 300,
-      category: 'Chores',
-      tags: ['cleaning'],
-    ),
-    Task(
-      id: 'task3',
-      title: 'Practice Piano',
-      description: 'Practice scales and the new song for 30 minutes',
-      parentId: 'parent1',
-      childId: 'child2',
-      status: TaskStatus.completed,
-      priority: TaskPriority.medium,
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      completedAt: DateTime.now().subtract(const Duration(days: 1)),
-      rewardAmount: 400,
-      category: 'Music',
-      tags: ['practice', 'piano'],
-    ),
-  ];
+  final List<Task> _tasks = [];
 
   List<Task> get tasks => _tasks;
+  
+  // Clear all tasks (for testing/reset purposes)
+  void clearAllTasks() {
+    _tasks.clear();
+    notifyListeners();
+  }
 
   List<Task> getTasksForChild(String childId) {
     return _tasks.where((task) => task.childId == childId).toList();

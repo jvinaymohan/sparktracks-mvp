@@ -33,6 +33,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   bool _isRecurring = false;
   String _recurringPattern = 'daily';
   String _selectedCategory = 'chores';
+  Set<int> _selectedWeekDays = {}; // 1=Monday, 2=Tuesday, ..., 7=Sunday
   
   bool _isSubmitting = false;
 
@@ -317,7 +318,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
     final children = childrenProvider.children;
     
     if (_selectedChildId == null && children.isNotEmpty) {
-      _selectedChildId = children[0].id;
+      _selectedChildId = children[0].userId; // Use Firebase User ID
     }
 
     return SingleChildScrollView(
@@ -462,7 +463,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.repeat, color: AppTheme.primaryColor),
+                      const Icon(Icons.repeat, color: AppTheme.primaryColor),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -507,6 +508,40 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                         _buildRecurringChip('Monthly', 'monthly'),
                       ],
                     ),
+                    
+                    // Day selection for weekly tasks
+                    if (_recurringPattern == 'weekly') ...[
+                      const SizedBox(height: AppTheme.spacingL),
+                      Text(
+                        'Select days of the week:',
+                        style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: AppTheme.spacingS),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildDayChip('Mon', 1),
+                          _buildDayChip('Tue', 2),
+                          _buildDayChip('Wed', 3),
+                          _buildDayChip('Thu', 4),
+                          _buildDayChip('Fri', 5),
+                          _buildDayChip('Sat', 6),
+                          _buildDayChip('Sun', 7),
+                        ],
+                      ),
+                      if (_selectedWeekDays.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Please select at least one day',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                    ],
                   ],
                 ],
               ),
@@ -518,7 +553,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   }
 
   Widget _buildChildSelectionCard(Student child) {
-    final isSelected = _selectedChildId == child.id;
+    final isSelected = _selectedChildId == child.userId; // Use Firebase User ID
     final colorValue = int.parse(child.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50');
     
     return Card(
@@ -534,7 +569,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
       child: InkWell(
         onTap: () {
           setState(() {
-            _selectedChildId = child.id;
+            _selectedChildId = child.userId; // Use Firebase User ID
           });
         },
         borderRadius: BorderRadius.circular(12),
@@ -589,6 +624,10 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         if (selected) {
           setState(() {
             _recurringPattern = value;
+            // Clear day selection when switching from weekly
+            if (value != 'weekly') {
+              _selectedWeekDays.clear();
+            }
           });
         }
       },
@@ -598,6 +637,40 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );
+  }
+
+  Widget _buildDayChip(String label, int dayNumber) {
+    final isSelected = _selectedWeekDays.contains(dayNumber);
+    
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedWeekDays.add(dayNumber);
+          } else {
+            _selectedWeekDays.remove(dayNumber);
+          }
+        });
+      },
+      selectedColor: AppTheme.primaryColor,
+      checkmarkColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppTheme.neutral700,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+
+  String _getSelectedDaysText() {
+    if (_selectedWeekDays.isEmpty) return '';
+    
+    final days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final selectedDayNames = _selectedWeekDays.map((day) => days[day - 1]).toList();
+    selectedDayNames.sort((a, b) => days.indexOf(a).compareTo(days.indexOf(b)));
+    
+    return selectedDayNames.join(', ');
   }
 
   // Step 3: Category and Reward
@@ -826,7 +899,10 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                     _buildReviewRow(
                       Icons.repeat,
                       'Repeats',
-                      _recurringPattern.toUpperCase(),
+                      _recurringPattern.toUpperCase() + 
+                        (_recurringPattern == 'weekly' && _selectedWeekDays.isNotEmpty 
+                          ? ' (${_getSelectedDaysText()})' 
+                          : ''),
                     ),
                   ],
                 ],

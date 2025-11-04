@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
-import '../../providers/auth_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../models/task_model.dart';
-import '../../models/class_model.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
 
@@ -147,7 +145,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     _selectedDay = DateTime.now();
-    _selectedEvents = ValueNotifier(_getEventsForDay(_selectedDay!));
+    _selectedEvents = ValueNotifier([]);
   }
 
   @override
@@ -483,7 +481,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
             ),
           ),
             ],
-          ),
+          );
         },
       ),
       floatingActionButton: FloatingActionButton.extended(

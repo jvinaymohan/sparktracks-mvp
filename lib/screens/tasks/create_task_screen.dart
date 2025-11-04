@@ -50,7 +50,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     
     // Set default selected child if not set
     if (_selectedChildId == null && children.isNotEmpty) {
-      _selectedChildId = children[0].id;
+      _selectedChildId = children[0].userId; // Use Firebase User ID
     }
 
     return Scaffold(
@@ -187,7 +187,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                         ),
                         items: children.map((child) {
                           return DropdownMenuItem(
-                            value: child.id,
+                            value: child.userId, // Use Firebase User ID, not Student ID
                             child: Row(
                               children: [
                                 Container(

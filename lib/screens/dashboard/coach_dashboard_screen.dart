@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/classes_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/student_model.dart';
 import '../../models/attendance_model.dart';
@@ -18,144 +19,9 @@ class CoachDashboardScreen extends StatefulWidget {
 class _CoachDashboardScreenState extends State<CoachDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   
-  // Mock data for coach dashboard
-  final List<Class> _myClasses = [
-    Class(
-      id: '1',
-      title: 'Soccer Training',
-      description: 'Weekly soccer practice for beginners',
-      coachId: 'coach1',
-      type: ClassType.weekly,
-      locationType: LocationType.inPerson,
-      location: 'Community Field',
-      startTime: DateTime.now().add(const Duration(hours: 2)),
-      endTime: DateTime.now().add(const Duration(hours: 3)),
-      durationMinutes: 60,
-      price: 25.0,
-      currency: Currency.usd,
-      maxStudents: 15,
-      enrolledStudentIds: ['child1', 'child2', 'child3'],
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    Class(
-      id: '2',
-      title: 'Advanced Soccer',
-      description: 'Advanced soccer training for experienced players',
-      coachId: 'coach1',
-      type: ClassType.weekly,
-      locationType: LocationType.inPerson,
-      location: 'Stadium Field',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 4)),
-      endTime: DateTime.now().add(const Duration(days: 1, hours: 5)),
-      durationMinutes: 60,
-      price: 35.0,
-      currency: Currency.usd,
-      maxStudents: 10,
-      enrolledStudentIds: ['child4', 'child5'],
-      createdAt: DateTime.now().subtract(const Duration(days: 14)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 14)),
-    ),
-  ];
-
-  final List<Student> _myStudents = [
-    Student(
-      id: '1',
-      userId: 'child1',
-      parentId: 'parent1',
-      coachId: 'coach1',
-      name: 'Emma Johnson',
-      email: 'emma@example.com',
-      dateOfBirth: DateTime(2015, 3, 15),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 30)),
-      colorCode: '#FF6B6B',
-    ),
-    Student(
-      id: '2',
-      userId: 'child2',
-      parentId: 'parent1',
-      coachId: 'coach1',
-      name: 'Liam Johnson',
-      email: 'liam@example.com',
-      dateOfBirth: DateTime(2013, 7, 22),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 45)),
-      colorCode: '#4ECDC4',
-    ),
-    Student(
-      id: '3',
-      userId: 'child3',
-      parentId: 'parent2',
-      coachId: 'coach1',
-      name: 'Sophia Chen',
-      email: 'sophia@example.com',
-      dateOfBirth: DateTime(2014, 11, 8),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 20)),
-      colorCode: '#45B7D1',
-    ),
-  ];
-
-  final List<Attendance> _todayAttendance = [
-    Attendance(
-      id: '1',
-      classId: '1',
-      studentId: 'child1',
-      classDate: DateTime.now(),
-      status: AttendanceStatus.present,
-      markedAt: DateTime.now().subtract(const Duration(hours: 1)),
-      markedBy: 'coach1',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    Attendance(
-      id: '2',
-      classId: '1',
-      studentId: 'child2',
-      classDate: DateTime.now(),
-      status: AttendanceStatus.absent,
-      markedAt: DateTime.now().subtract(const Duration(hours: 1)),
-      markedBy: 'coach1',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-    Attendance(
-      id: '3',
-      classId: '1',
-      studentId: 'child3',
-      classDate: DateTime.now(),
-      status: AttendanceStatus.unmarked,
-      markedBy: 'coach1',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
-    ),
-  ];
-
-  final List<Payment> _recentPayments = [
-    Payment(
-      id: '1',
-      userId: 'child1',
-      classId: '1',
-      amount: 25.0,
-      currency: 'USD',
-      type: PaymentType.classFee,
-      status: PaymentStatus.completed,
-      method: PaymentMethod.cash,
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-      completedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Payment(
-      id: '2',
-      userId: 'child2',
-      classId: '1',
-      amount: 25.0,
-      currency: 'USD',
-      type: PaymentType.classFee,
-      status: PaymentStatus.pending,
-      method: PaymentMethod.cash,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-  ];
+  final List<Student> _myStudents = [];
+  final List<Attendance> _todayAttendance = [];
+  final List<Payment> _recentPayments = [];
 
   @override
   void initState() {
@@ -184,6 +50,11 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            tooltip: 'Coach Profile',
+            onPressed: () => context.push('/coach-profile'),
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: () => context.go('/calendar'),
@@ -217,21 +88,25 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           _buildFinanceTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showCreateClassDialog();
-        },
-        child: const Icon(Icons.add),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/create-class'),
+        icon: const Icon(Icons.add),
+        label: const Text('Create Class'),
       ),
     );
   }
 
   Widget _buildOverviewTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+    return Consumer2<ClassesProvider, AuthProvider>(
+      builder: (context, classesProvider, authProvider, _) {
+        final currentCoachId = authProvider.currentUser?.id ?? '';
+        final myClasses = classesProvider.classes.where((c) => c.coachId == currentCoachId).toList();
+        
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Welcome Section
           Container(
             width: double.infinity,
@@ -243,9 +118,14 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  'Welcome back, Coach Smith!',
-                  style: AppTheme.headline4.copyWith(color: Colors.white),
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, _) {
+                    final coachName = authProvider.currentUser?.name ?? 'Coach';
+                    return Text(
+                      'Welcome back, $coachName!',
+                      style: AppTheme.headline4.copyWith(color: Colors.white),
+                    );
+                  },
                 ),
                 const SizedBox(height: AppTheme.spacingS),
                 Text(
@@ -272,7 +152,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
               Expanded(
                 child: _buildStatCard(
                   'Active Classes',
-                  _myClasses.length.toString(),
+                  myClasses.length.toString(),
                   Icons.school,
                   AppTheme.successColor,
                 ),
@@ -309,7 +189,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
             style: AppTheme.headline6,
           ),
           const SizedBox(height: AppTheme.spacingM),
-          ..._myClasses.where((c) => _isToday(c.startTime)).map((classItem) => _buildClassCard(classItem)),
+          ...myClasses.where((c) => _isToday(c.startTime)).map((classItem) => _buildClassCard(classItem)),
           
           const SizedBox(height: AppTheme.spacingXL),
           
@@ -320,17 +200,45 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ),
           const SizedBox(height: AppTheme.spacingM),
           ..._todayAttendance.map((attendance) => _buildAttendanceCard(attendance)),
-        ],
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildClassesTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      itemCount: _myClasses.length,
-      itemBuilder: (context, index) {
-        final classItem = _myClasses[index];
+    return Consumer2<ClassesProvider, AuthProvider>(
+      builder: (context, classesProvider, authProvider, _) {
+        final currentCoachId = authProvider.currentUser?.id ?? '';
+        final myClasses = classesProvider.classes.where((c) => c.coachId == currentCoachId).toList();
+        
+        if (myClasses.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.school_outlined, size: 64, color: AppTheme.neutral400),
+                const SizedBox(height: AppTheme.spacingL),
+                Text('No classes yet', style: AppTheme.headline6),
+                const SizedBox(height: AppTheme.spacingS),
+                Text('Create your first class!', style: AppTheme.bodyMedium),
+                const SizedBox(height: AppTheme.spacingL),
+                ElevatedButton.icon(
+                  onPressed: () => context.go('/create-class'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Class'),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.all(AppTheme.spacingL),
+          itemCount: myClasses.length,
+          itemBuilder: (context, index) {
+            final classItem = myClasses[index];
         return Card(
           margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
           child: ListTile(
@@ -389,6 +297,8 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
               },
             ),
           ),
+        );
+          },
         );
       },
     );

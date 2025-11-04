@@ -2,31 +2,20 @@ import 'package:flutter/material.dart';
 import '../models/student_model.dart';
 
 class ChildrenProvider extends ChangeNotifier {
-  List<Student> _children = [
-    // Default mock children
-    Student(
-      id: '1',
-      userId: 'child1',
-      parentId: 'parent1',
-      name: 'Emma Johnson',
-      email: 'emma@example.com',
-      dateOfBirth: DateTime(2015, 3, 15),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 30)),
-      colorCode: '#FF6B6B',
-    ),
-    Student(
-      id: '2',
-      userId: 'child2',
-      parentId: 'parent1',
-      name: 'Liam Johnson',
-      email: 'liam@example.com',
-      dateOfBirth: DateTime(2013, 7, 22),
-      enrolledAt: DateTime.now().subtract(const Duration(days: 45)),
-      colorCode: '#4ECDC4',
-    ),
-  ];
+  final List<Student> _children = [];
 
   List<Student> get children => _children;
+  
+  // Get children for specific parent
+  List<Student> getChildrenForParent(String parentId) {
+    return _children.where((child) => child.parentId == parentId).toList();
+  }
+  
+  // Clear all children (for testing/reset purposes)
+  void clearAllChildren() {
+    _children.clear();
+    notifyListeners();
+  }
 
   void addChild(Student child) {
     _children.add(child);

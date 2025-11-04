@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../providers/auth_provider.dart';
+import '../../providers/tasks_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/class_model.dart';
 import '../../models/payment_model.dart';
@@ -19,101 +21,8 @@ class ChildDashboardScreen extends StatefulWidget {
 class _ChildDashboardScreenState extends State<ChildDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   
-  // Mock data for child dashboard
-  final List<Task> _myTasks = [
-    Task(
-      id: '1',
-      title: 'Complete Math Homework',
-      description: 'Finish pages 45-50 in math workbook',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.completed,
-      rewardAmount: 5.0,
-      dueDate: DateTime.now().subtract(const Duration(days: 1)),
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-      completionNotes: 'Completed all problems correctly!',
-    ),
-    Task(
-      id: '2',
-      title: 'Practice Piano',
-      description: 'Practice for 30 minutes daily',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.pending,
-      rewardAmount: 3.0,
-      dueDate: DateTime.now().add(const Duration(days: 2)),
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Task(
-      id: '3',
-      title: 'Read for 20 minutes',
-      description: 'Read your favorite book for 20 minutes',
-      parentId: 'parent1',
-      childId: 'child1',
-      status: TaskStatus.inProgress,
-      rewardAmount: 2.0,
-      dueDate: DateTime.now().add(const Duration(days: 1)),
-      createdAt: DateTime.now().subtract(const Duration(hours: 6)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-  ];
-
-  final List<Class> _myClasses = [
-    Class(
-      id: '1',
-      title: 'Soccer Training',
-      description: 'Weekly soccer practice',
-      coachId: 'coach1',
-      type: ClassType.weekly,
-      locationType: LocationType.inPerson,
-      location: 'Community Field',
-      startTime: DateTime.now().add(const Duration(hours: 2)),
-      endTime: DateTime.now().add(const Duration(hours: 3)),
-      durationMinutes: 60,
-      price: 25.0,
-      currency: Currency.usd,
-      maxStudents: 15,
-      enrolledStudentIds: ['child1'],
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    Class(
-      id: '2',
-      title: 'Piano Lessons',
-      description: 'Individual piano instruction',
-      coachId: 'coach2',
-      type: ClassType.weekly,
-      locationType: LocationType.inPerson,
-      location: 'Music Studio',
-      startTime: DateTime.now().add(const Duration(days: 1, hours: 4)),
-      endTime: DateTime.now().add(const Duration(days: 1, hours: 5)),
-      durationMinutes: 60,
-      price: 40.0,
-      currency: Currency.usd,
-      maxStudents: 1,
-      enrolledStudentIds: ['child1'],
-      createdAt: DateTime.now().subtract(const Duration(days: 14)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 14)),
-    ),
-  ];
-
-  final List<String> _achievements = [
-    'First Task Completed',
-    'Math Master',
-    'Piano Pro',
-    'Reading Champion',
-    'Perfect Attendance',
-  ];
-
-  double get _totalEarnings => _myTasks
-      .where((task) => task.status == TaskStatus.approved)
-      .fold(0.0, (sum, task) => sum + task.rewardAmount);
-
-  double get _pendingEarnings => _myTasks
-      .where((task) => task.status == TaskStatus.completed)
-      .fold(0.0, (sum, task) => sum + task.rewardAmount);
+  final List<Class> _myClasses = [];
+  final List<String> _achievements = [];
 
   @override
   void initState() {
@@ -171,6 +80,22 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
   }
 
   Widget _buildOverviewTab() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final tasksProvider = Provider.of<TasksProvider>(context);
+    final userName = authProvider.currentUser?.name ?? 'Student';
+    final currentUserId = authProvider.currentUser?.id ?? '';
+    
+    // Get tasks for this child using their Firebase user ID
+    final myTasks = tasksProvider.tasks.where((task) => task.childId == currentUserId).toList();
+    
+    final totalEarnings = myTasks
+        .where((task) => task.status == TaskStatus.approved)
+        .fold<double>(0.0, (sum, task) => sum + task.rewardAmount);
+
+    final pendingEarnings = myTasks
+        .where((task) => task.status == TaskStatus.completed)
+        .fold<double>(0.0, (sum, task) => sum + task.rewardAmount);
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       child: Column(
@@ -188,7 +113,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back, Emma!',
+                  'Welcome back, $userName! 👋',
                   style: AppTheme.headline4.copyWith(color: Colors.white),
                 ),
                 const SizedBox(height: AppTheme.spacingS),
@@ -207,7 +132,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               Expanded(
                 child: _buildStatCard(
                   'Total Points',
-                  '${_totalEarnings.toInt()} pts',
+                  '${totalEarnings.toInt()} pts',
                   Icons.stars,
                   AppTheme.successColor,
                 ),
@@ -216,7 +141,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               Expanded(
                 child: _buildStatCard(
                   'Pending',
-                  '${_pendingEarnings.toInt()} pts',
+                  '${pendingEarnings.toInt()} pts',
                   Icons.pending,
                   AppTheme.warningColor,
                 ),
@@ -229,7 +154,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               Expanded(
                 child: _buildStatCard(
                   'Tasks Done',
-                  _myTasks.where((t) => t.status == TaskStatus.completed || t.status == TaskStatus.approved).length.toString(),
+                  myTasks.where((t) => t.status == TaskStatus.completed || t.status == TaskStatus.approved).length.toString(),
                   Icons.check_circle,
                   AppTheme.primaryColor,
                 ),
@@ -267,18 +192,40 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
             style: AppTheme.headline6,
           ),
           const SizedBox(height: AppTheme.spacingM),
-          ..._myTasks.take(3).map((task) => _buildTaskCard(task)),
+          ...myTasks.take(3).map((task) => _buildTaskCard(task)),
         ],
       ),
     );
   }
 
   Widget _buildTasksTab() {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final tasksProvider = Provider.of<TasksProvider>(context);
+    final currentUserId = authProvider.currentUser?.id ?? '';
+    
+    // Get tasks for this child
+    final myTasks = tasksProvider.tasks.where((task) => task.childId == currentUserId).toList();
+    
+    if (myTasks.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.assignment_outlined, size: 64, color: AppTheme.neutral400),
+            const SizedBox(height: AppTheme.spacingL),
+            Text('No tasks assigned yet', style: AppTheme.headline6),
+            const SizedBox(height: AppTheme.spacingS),
+            Text('Check back later for new tasks!', style: AppTheme.bodyMedium),
+          ],
+        ),
+      );
+    }
+    
     return ListView.builder(
       padding: const EdgeInsets.all(AppTheme.spacingL),
-      itemCount: _myTasks.length,
+      itemCount: myTasks.length,
       itemBuilder: (context, index) {
-        final task = _myTasks[index];
+        final task = myTasks[index];
         return Card(
           margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
           child: ListTile(
@@ -570,12 +517,19 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
                             children: [
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(8),
-                                child: Image.file(
-                                  File(selectedImages[index].path),
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                ),
+                                child: kIsWeb
+                                    ? Image.network(
+                                        selectedImages[index].path,
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      )
+                                    : Image.file(
+                                        File(selectedImages[index].path),
+                                        width: 80,
+                                        height: 80,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                               Positioned(
                                 top: 4,
@@ -640,21 +594,17 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
             ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
-                setState(() {
-                  // Update task status to completed
-                  final index = _myTasks.indexWhere((t) => t.id == task.id);
-                  if (index != -1) {
-                    _myTasks[index] = task.copyWith(
-                      status: TaskStatus.completed,
-                      completedAt: DateTime.now(),
-                      updatedAt: DateTime.now(),
-                      completionNotes: notesController.text.isNotEmpty 
-                          ? notesController.text 
-                          : 'Task completed successfully!',
-                      imageUrls: selectedImages.map((img) => img.path).toList(),
-                    );
-                  }
-                });
+                
+                // Update task status using TasksProvider
+                final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+                tasksProvider.completeTask(
+                  task.id,
+                  notes: notesController.text.isNotEmpty 
+                      ? notesController.text 
+                      : 'Task completed successfully!',
+                  imageUrls: selectedImages.map((img) => img.path).toList(),
+                );
+                
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text('Task completed! ${selectedImages.length} photo(s) uploaded. Waiting for approval.'),
