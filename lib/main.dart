@@ -245,6 +245,54 @@ class SparktracksMVP extends StatelessWidget {
           path: '/coach-profile',
           builder: (context, state) => const CoachProfileScreen(),
         ),
+        
+        // Class Management Routes
+        GoRoute(
+          path: '/browse-classes',
+          builder: (context, state) => const BrowseClassesScreen(),
+        ),
+        GoRoute(
+          path: '/class-detail',
+          builder: (context, state) => ClassDetailScreen(
+            classItem: state.extra as Class,
+          ),
+        ),
+        GoRoute(
+          path: '/mark-attendance',
+          builder: (context, state) => MarkAttendanceScreen(
+            classItem: state.extra as Class,
+          ),
+        ),
+        
+        // Financial & Analytics Routes
+        GoRoute(
+          path: '/payments',
+          builder: (context, state) => const PaymentDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/analytics',
+          builder: (context, state) => const AnalyticsDashboardScreen(),
+        ),
+        
+        // Achievements & Messaging Routes
+        GoRoute(
+          path: '/achievements',
+          builder: (context, state) => const AchievementsScreen(),
+        ),
+        GoRoute(
+          path: '/messages',
+          builder: (context, state) => const MessagesScreen(),
+        ),
+        
+        // Admin Routes
+        GoRoute(
+          path: '/admin/login',
+          builder: (context, state) => const AdminLoginScreen(),
+        ),
+        GoRoute(
+          path: '/admin/dashboard',
+          builder: (context, state) => const AdminDashboardScreen(),
+        ),
       ],
       redirect: (context, state) {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
