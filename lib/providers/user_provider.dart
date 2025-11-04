@@ -99,6 +99,10 @@ class UserProvider extends ChangeNotifier {
   
   // Get user by ID
   User? getUserById(String userId) {
-    return _usersCache.firstWhere((u) => u.id == userId, orElse: () => null);
+    try {
+      return _usersCache.firstWhere((u) => u.id == userId);
+    } catch (e) {
+      return null;
+    }
   }
 }
