@@ -7,6 +7,7 @@ import '../../providers/enrollment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/enrollment_model.dart';
+import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
 
 class ClassDetailScreen extends StatelessWidget {

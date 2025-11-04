@@ -8,6 +8,7 @@ import '../../providers/attendance_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/enrollment_model.dart';
+import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
 
 class AnalyticsDashboardScreen extends StatefulWidget {
@@ -76,13 +77,12 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   Widget _buildParentAnalytics(String parentId, TasksProvider tasksProvider, ChildrenProvider childrenProvider) {
     final myChildren = childrenProvider.children.where((c) => c.parentId == parentId).toList();
     final allTasks = tasksProvider.tasks.where((t) => 
-      myChildren.any((c) => c.userId == t.assignedTo)
+      myChildren.any((c) => c.userId == t.childId)
     ).toList();
     
     final completedTasks = allTasks.where((t) => 
       t.status == TaskStatus.completed || t.status == TaskStatus.approved
     ).length;
-    final pendingTasks = allTasks.where((t) => t.status == TaskStatus.pending).length;
     final totalPoints = allTasks.where((t) => t.status == TaskStatus.approved).fold<double>(0, (sum, t) => sum + t.rewardAmount).toInt();
     final completionRate = allTasks.isEmpty ? 0.0 : (completedTasks / allTasks.length * 100);
     
@@ -145,7 +145,7 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         const SizedBox(height: AppTheme.spacingM),
         
         ...myChildren.map((child) {
-          final childTasks = allTasks.where((t) => t.assignedTo == child.userId).toList();
+          final childTasks = allTasks.where((t) => t.childId == child.userId).toList();
           final childCompleted = childTasks.where((t) => 
             t.status == TaskStatus.completed || t.status == TaskStatus.approved
           ).length;
@@ -281,8 +281,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
         Text('Performance by Class', style: AppTheme.headline6),
         const SizedBox(height: AppTheme.spacingM),
         
-        ...myClasses.map((classItem) {
-          final enrollments = enrollmentProvider.getEnrollmentsForClass(classItem.id).where((e) => e.status == EnrollmentStatus.active).toList();
+            ...myClasses.map((classItem) {
+          final enrollments = enrollmentProvider.getEnrollmentsForClass(classItem.id)
+              .where((e) => e.status == EnrollmentStatus.active)
+              .toList();
           final revenue = enrollments.fold<double>(0, (sum, e) => sum + e.amountPaid);
           final pending = enrollments.fold<double>(0, (sum, e) => sum + e.amountDue);
           final fillRate = classItem.maxStudents > 0 ? (enrollments.length / classItem.maxStudents) : 0.0;
@@ -339,11 +341,10 @@ class _AnalyticsDashboardScreenState extends State<AnalyticsDashboardScreen> {
   }
 
   Widget _buildChildAnalytics(String userId, TasksProvider tasksProvider) {
-    final myTasks = tasksProvider.tasks.where((t) => t.assignedTo == userId).toList();
+    final myTasks = tasksProvider.tasks.where((t) => t.childId == userId).toList();
     final completedTasks = myTasks.where((t) => 
       t.status == TaskStatus.completed || t.status == TaskStatus.approved
     ).length;
-    final pendingTasks = myTasks.where((t) => t.status == TaskStatus.pending).length;
     final totalPoints = myTasks.where((t) => t.status == TaskStatus.approved).fold<double>(0, (sum, t) => sum + t.rewardAmount).toInt();
     final completionRate = myTasks.isEmpty ? 0.0 : (completedTasks / myTasks.length * 100);
     

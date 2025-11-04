@@ -24,7 +24,7 @@ class AchievementsScreen extends StatelessWidget {
           
           // Calculate user progress
           final myTasks = tasksProvider.tasks.where((t) => 
-            t.assignedTo == userId && t.status == TaskStatus.approved
+            t.childId == userId && t.status == TaskStatus.approved
           ).toList();
           final tasksCompleted = myTasks.length;
           final pointsEarned = myTasks.fold<double>(0, (sum, t) => sum + t.rewardAmount).toInt();

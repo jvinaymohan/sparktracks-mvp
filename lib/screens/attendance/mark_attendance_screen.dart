@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/attendance_model.dart';
 import '../../models/student_model.dart';
+import '../../models/enrollment_model.dart';
 import '../../utils/app_theme.dart';
 
 class MarkAttendanceScreen extends StatefulWidget {
@@ -60,7 +61,6 @@ class _MarkAttendanceScreenState extends State<MarkAttendanceScreen> {
   Widget build(BuildContext context) {
     final enrollmentProvider = Provider.of<EnrollmentProvider>(context);
     final childrenProvider = Provider.of<ChildrenProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
     
     // Get enrolled students for this class
     final enrollments = enrollmentProvider.getEnrollmentsForClass(widget.classItem.id)
