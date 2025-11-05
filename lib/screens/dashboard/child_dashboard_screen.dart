@@ -64,6 +64,11 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.explore),
+            tooltip: 'Browse Classes',
+            onPressed: () => context.push('/browse-classes'),
+          ),
+          IconButton(
             icon: const Icon(Icons.emoji_events),
             tooltip: 'Achievements',
             onPressed: () => context.push('/achievements'),
