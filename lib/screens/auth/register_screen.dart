@@ -687,23 +687,10 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             ),
           );
           
-          // Redirect based on user type
-          await Future.delayed(const Duration(milliseconds: 500));
+          // Redirect to welcome screen for first-time users
+          await Future.delayed(const Duration(milliseconds: 800));
           if (mounted) {
-            final userType = authProvider.currentUser?.type;
-            switch (userType) {
-              case UserType.parent:
-                context.go('/parent-dashboard');
-                break;
-              case UserType.child:
-                context.go('/child-dashboard');
-                break;
-              case UserType.coach:
-                context.go('/coach-dashboard');
-                break;
-              default:
-                context.go('/email-verification');
-            }
+            context.go('/welcome');
           }
         }
       } else if (authProvider.error != null) {

@@ -21,6 +21,7 @@ import 'models/task_model.dart';
 import 'models/class_model.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/onboarding/welcome_screen.dart';
 import 'screens/auth/forgot_password_screen.dart';
 import 'screens/auth/email_verification_screen.dart';
 import 'screens/dashboard/parent_dashboard_screen.dart';
@@ -148,6 +149,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/register',
           builder: (context, state) => const RegisterScreen(),
+        ),
+        GoRoute(
+          path: '/welcome',
+          builder: (context, state) => const WelcomeScreen(),
         ),
         GoRoute(
           path: '/forgot-password',
