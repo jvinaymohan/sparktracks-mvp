@@ -22,35 +22,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       description: 'The comprehensive learning management platform that connects parents, children, and coaches in one seamless experience.',
       icon: Icons.school,
       color: AppTheme.primaryColor,
-      features: ['Task Management', 'Progress Tracking', 'Class Scheduling'],
-    ),
-    OnboardingPage(
-      title: 'For Parents',
-      description: 'Manage your children\'s tasks, track their progress, coordinate with coaches, and reward achievements.',
-      icon: Icons.family_restroom,
-      color: AppTheme.successColor,
-      features: ['Task Assignment', 'Progress Monitoring', 'Payment Management', 'Coach Communication'],
-    ),
-    OnboardingPage(
-      title: 'For Children',
-      description: 'Complete tasks, earn rewards, participate in classes, and track your personal achievements.',
-      icon: Icons.child_care,
-      color: AppTheme.warningColor,
-      features: ['Task Completion', 'Earnings Tracking', 'Class Participation', 'Achievement Badges'],
-    ),
-    OnboardingPage(
-      title: 'For Coaches',
-      description: 'Create classes, manage students, track attendance, and provide feedback to help athletes succeed.',
-      icon: Icons.sports_handball,
-      color: AppTheme.infoColor,
-      features: ['Class Management', 'Student Enrollment', 'Attendance Tracking', 'Performance Analytics'],
-    ),
-    OnboardingPage(
-      title: 'Key Features',
-      description: 'Calendar integration, image uploads, notifications, and comprehensive analytics to enhance your experience.',
-      icon: Icons.star,
-      color: AppTheme.primaryColor,
-      features: ['Calendar View', 'Photo Uploads', 'Smart Notifications', 'Detailed Analytics'],
+      features: ['Task Management', 'Progress Tracking', 'Class Scheduling', 'Achievements & Rewards'],
     ),
   ];
 

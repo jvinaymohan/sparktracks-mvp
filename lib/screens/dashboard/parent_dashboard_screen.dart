@@ -20,6 +20,7 @@ class ParentDashboardScreen extends StatefulWidget {
 
 class _ParentDashboardScreenState extends State<ParentDashboardScreen> with TickerProviderStateMixin {
   late TabController _tabController;
+  int _selectedIndex = 0;
 
   // Tasks are now managed by TasksProvider
 
@@ -29,6 +30,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _tabController.addListener(() {
+      setState(() {
+        _selectedIndex = _tabController.index;
+      });
+    });
   }
 
   @override
@@ -42,6 +48,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Dashboard'),
+        leading: _selectedIndex != 0 ? IconButton(
+          icon: const Icon(Icons.home),
+          tooltip: 'Home',
+          onPressed: () {
+            setState(() {
+              _tabController.index = 0;
+            });
+          },
+        ) : null,
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -130,9 +145,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
               const SizedBox(width: AppTheme.spacingM),
               Expanded(
                 child: _buildStatCard(
-                  'Active Tasks',
-                  tasks.where((t) => t.status == TaskStatus.pending).length.toString(),
-                  Icons.assignment,
+                  'Waiting Approval',
+                  tasks.where((t) => t.status == TaskStatus.completed).length.toString(),
+                  Icons.pending_actions,
                   AppTheme.warningColor,
                 ),
               ),
@@ -176,18 +191,136 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
-          // Recent Activity
-          Text(
-            'Recent Activity',
-            style: AppTheme.headline6,
+          // Pending Approval Section
+          if (tasks.where((t) => t.status == TaskStatus.completed).isNotEmpty) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Waiting for Approval',
+                  style: AppTheme.headline6,
+                ),
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _tabController.index = 2; // Go to Tasks tab
+                    });
+                  },
+                  child: const Text('View All'),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            ...tasks.where((t) => t.status == TaskStatus.completed).take(3).map((task) {
+              final child = children.firstWhere(
+                (c) => c.userId == task.childId,
+                orElse: () => Student(
+                  id: task.childId,
+                  userId: task.childId,
+                  parentId: currentParentId,
+                  name: 'Unknown',
+                  email: '',
+                  dateOfBirth: DateTime.now(),
+                  enrolledAt: DateTime.now(),
+                ),
+              );
+              return Card(
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                color: AppTheme.warningColor.withOpacity(0.05),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppTheme.warningColor,
+                    child: const Icon(Icons.pending_actions, color: Colors.white, size: 20),
+                  ),
+                  title: Text(task.title),
+                  subtitle: Text('${child.name} • Completed ${_formatTimeAgo(task.completedAt!)}'),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.check_circle, color: AppTheme.successColor),
+                        onPressed: () {
+                          tasksProvider.approveTask(task.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✓ Task approved!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.cancel, color: AppTheme.errorColor),
+                        onPressed: () {
+                          tasksProvider.rejectTask(task.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Task rejected'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+            const SizedBox(height: AppTheme.spacingXL),
+          ],
+          
+          // Recent Activity with Calendar Toggle
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Recent Activity',
+                style: AppTheme.headline6,
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.calendar_view_day),
+                    onPressed: () {
+                      context.push('/calendar');
+                    },
+                    tooltip: 'Calendar View',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.analytics),
+                    onPressed: () {
+                      context.push('/analytics');
+                    },
+                    tooltip: 'Analytics',
+                  ),
+                ],
+              ),
+            ],
           ),
           const SizedBox(height: AppTheme.spacingM),
-          ...tasks.take(3).map((task) => _buildActivityCard(task)),
+          ...tasks.take(3).map((task) => _buildActivityCard(task, children)),
         ],
       ),
         );
       },
     );
+  }
+  
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+    
+    if (difference.inMinutes < 1) {
+      return 'just now';
+    } else if (difference.inMinutes < 60) {
+      return '${difference.inMinutes}m ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inDays < 7) {
+      return '${difference.inDays}d ago';
+    } else {
+      return '${dateTime.month}/${dateTime.day}/${dateTime.year}';
+    }
   }
 
   Widget _buildChildrenTab() {
@@ -518,20 +651,47 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
     );
   }
 
-  Widget _buildActivityCard(Task task) {
+  Widget _buildActivityCard(Task task, List<Student> children) {
+    final child = children.firstWhere(
+      (c) => c.userId == task.childId,
+      orElse: () => Student(
+        id: task.childId,
+        userId: task.childId,
+        parentId: task.parentId,
+        name: 'Unknown',
+        email: '',
+        dateOfBirth: DateTime.now(),
+        enrolledAt: DateTime.now(),
+      ),
+    );
+    
     return Card(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
       child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getTaskStatusColor(task.status),
-          child: Icon(
-            _getTaskStatusIcon(task.status),
-            color: Colors.white,
-            size: 16,
-          ),
+        leading: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 4,
+              height: 40,
+              decoration: BoxDecoration(
+                color: Color(int.parse(child.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50')),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(width: 8),
+            CircleAvatar(
+              backgroundColor: _getTaskStatusColor(task.status),
+              child: Icon(
+                _getTaskStatusIcon(task.status),
+                color: Colors.white,
+                size: 16,
+              ),
+            ),
+          ],
         ),
         title: Text(task.title),
-        subtitle: Text('${task.status.name} - ${task.rewardAmount.toInt()} points'),
+        subtitle: Text('${child.name} • ${task.status.name} • ${task.rewardAmount.toInt()} points'),
         trailing: Text(_formatDate(task.updatedAt)),
       ),
     );

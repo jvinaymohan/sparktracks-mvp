@@ -227,7 +227,7 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Description',
+                        'Description (Optional)',
                         style: AppTheme.headline6,
                       ),
                       const SizedBox(height: AppTheme.spacingM),
@@ -235,19 +235,10 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
                         controller: _descriptionController,
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
-                          hintText: 'Tell us more about your experience...',
+                          hintText: 'Tell us more about your experience (optional)...',
                           alignLabelWithHint: true,
                         ),
                         maxLines: 5,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter a description';
-                          }
-                          if (value.length < 10) {
-                            return 'Please provide more details (at least 10 characters)';
-                          }
-                          return null;
-                        },
                       ),
                     ],
                   ),
