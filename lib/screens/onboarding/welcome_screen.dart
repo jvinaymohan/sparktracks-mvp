@@ -210,51 +210,48 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   Widget _buildParentWelcome(User user) {
     final firstName = user.name.split(' ').first;
     
-    return SingleChildScrollView(
+    return Container(
       padding: const EdgeInsets.all(32),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
+          constraints: const BoxConstraints(maxWidth: 600),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Celebration Icon
+              // Celebration Icon (smaller, faster)
               TweenAnimationBuilder(
-                duration: const Duration(milliseconds: 1200),
+                duration: const Duration(milliseconds: 600),
                 tween: Tween<double>(begin: 0, end: 1),
                 builder: (context, double value, child) {
                   return Transform.scale(
                     scale: value,
                     child: Container(
-                      width: 140,
-                      height: 140,
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.2),
-                            blurRadius: 40,
-                            offset: const Offset(0, 15),
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Text(
-                          '🎉',
-                          style: TextStyle(fontSize: 70),
-                        ),
+                      child: const Center(
+                        child: Text('🎉', style: TextStyle(fontSize: 50)),
                       ),
                     ),
                   );
                 },
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 32),
               
               Text(
                 'Welcome, $firstName!',
                 style: TextStyle(
-                  fontSize: 42,
+                  fontSize: 36,
                   fontWeight: FontWeight.w900,
                   color: Colors.white,
                   shadows: [

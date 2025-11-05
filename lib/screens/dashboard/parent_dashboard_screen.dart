@@ -11,7 +11,9 @@ import '../../models/payment_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/dev_utils.dart';
 import '../../screens/children/add_edit_child_screen.dart';
+import '../../screens/children/quick_add_child_dialog.dart';
 import '../../screens/tasks/create_task_wizard.dart';
+import '../../screens/tasks/quick_create_task_dialog.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -131,11 +133,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           _buildClassesTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.go('/create-task'),
-        icon: const Icon(Icons.add),
-        label: const Text('Create Task'),
-      ),
+      floatingActionButton: _buildSmartFAB(),
     );
   }
 
@@ -907,5 +905,57 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         ],
       ),
     );
+  }
+
+  // Smart FAB that changes based on tab
+  Widget? _buildSmartFAB() {
+    switch (_tabController.index) {
+      case 1: // Children tab
+        return FloatingActionButton.extended(
+          onPressed: () => _showQuickAddChildDialog(),
+          backgroundColor: AppTheme.successColor,
+          icon: const Icon(Icons.person_add),
+          label: const Text('Add Child'),
+        );
+      case 2: // Tasks tab
+        return FloatingActionButton.extended(
+          onPressed: () => _showQuickTaskDialog(),
+          backgroundColor: AppTheme.primaryColor,
+          icon: const Icon(Icons.add),
+          label: const Text('Quick Task'),
+        );
+      default:
+        return null;
+    }
+  }
+
+  // Show quick add child dialog
+  Future<void> _showQuickAddChildDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => const QuickAddChildDialog(),
+    );
+    
+    if (result == true && mounted) {
+      // Refresh children list
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+      await childrenProvider.loadChildren(authProvider.currentUser?.id ?? '');
+    }
+  }
+
+  // Show quick task creation dialog
+  Future<void> _showQuickTaskDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => const QuickCreateTaskDialog(),
+    );
+    
+    if (result == true && mounted) {
+      // Refresh tasks list
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      await tasksProvider.loadTasksForParent(authProvider.currentUser?.id ?? '');
+    }
   }
 }
