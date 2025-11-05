@@ -86,12 +86,75 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           context.go('/child-dashboard');
           break;
         case UserType.coach:
-          context.go('/coach-dashboard');
+          // For coaches, show a dialog first to guide them
+          _showCoachGuidanceDialog();
           break;
         default:
           context.go('/');
       }
     }
+  }
+  
+  void _showCoachGuidanceDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.star, color: AppTheme.primaryColor),
+            SizedBox(width: 12),
+            Text('Welcome, Coach!'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              'Let\'s get you started with the key features:',
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+            ),
+            SizedBox(height: 16),
+            Text('✅ Create and manage students'),
+            SizedBox(height: 8),
+            Text('✅ Set up your classes'),
+            SizedBox(height: 8),
+            Text('✅ Assign students to classes'),
+            SizedBox(height: 8),
+            Text('✅ Track attendance and progress'),
+            SizedBox(height: 16),
+            Text(
+              'Tip: Use "Manage Students" to create student accounts!',
+              style: TextStyle(
+                fontStyle: FontStyle.italic,
+                color: AppTheme.accentColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/coach-dashboard');
+            },
+            child: const Text('Go to Dashboard'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/manage-students');
+            },
+            icon: const Icon(Icons.person_add),
+            label: const Text('Manage Students'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

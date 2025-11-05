@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Firebase Debug Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .pass { background: #4CAF50; color: white; }
+        .fail { background: #f44336; color: white; }
+        .pending { background: #FFC107; color: black; }
+        pre {
+            background: #263238;
+            color: #aed581;
+            padding: 15px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #4f46e5;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Firebase Deployment Debug Test</h1>
+    <p>This page tests if Sparktracks is properly deployed on Firebase.</p>
+
+    <div class="test-box">
+        <h2>Test 1: Firebase Hosting Accessibility</h2>
+        <div id="test1-status" class="status pending">TESTING...</div>
+        <p id="test1-result">Checking if Firebase hosting is accessible...</p>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 2: Main Dart JS File</h2>
+        <div id="test2-status" class="status pending">TESTING...</div>
+        <p id="test2-result">Checking if main.dart.js exists...</p>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 3: Flutter Bootstrap</h2>
+        <div id="test3-status" class="status pending">TESTING...</div>
+        <p id="test3-result">Checking if flutter_bootstrap.js loads...</p>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 4: CORS & Network</h2>
+        <div id="test4-status" class="status pending">TESTING...</div>
+        <p id="test4-result">Checking for CORS or network issues...</p>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 5: Console Errors</h2>
+        <div id="test5-status" class="status pending">PENDING</div>
+        <p id="test5-result">Check browser console for errors (F12)...</p>
+        <button onclick="window.open('https://sparktracks-mvp.web.app/', '_blank')">Open Sparktracks App</button>
+    </div>
+
+    <div class="test-box">
+        <h2>📊 Results Summary</h2>
+        <div id="summary">Running tests...</div>
+    </div>
+
+    <script>
+        const BASE_URL = 'https://sparktracks-mvp.web.app';
+        
+        async function runTests() {
+            let passed = 0;
+            let failed = 0;
+
+            // Test 1: Firebase Hosting
+            try {
+                const response = await fetch(BASE_URL);
+                if (response.ok) {
+                    setStatus('test1', 'pass', 'Firebase hosting is accessible ✓');
+                    passed++;
+                } else {
+                    setStatus('test1', 'fail', `HTTP ${response.status}: ${response.statusText}`);
+                    failed++;
+                }
+            } catch (error) {
+                setStatus('test1', 'fail', `Error: ${error.message}`);
+                failed++;
+            }
+
+            // Test 2: Main Dart JS
+            try {
+                const response = await fetch(`${BASE_URL}/main.dart.js`, { method: 'HEAD' });
+                if (response.ok) {
+                    const size = response.headers.get('content-length');
+                    const sizeKB = (parseInt(size) / 1024 / 1024).toFixed(2);
+                    setStatus('test2', 'pass', `main.dart.js exists (${sizeKB} MB) ✓`);
+                    passed++;
+                } else {
+                    setStatus('test2', 'fail', `HTTP ${response.status}: File not found or inaccessible`);
+                    failed++;
+                }
+            } catch (error) {
+                setStatus('test2', 'fail', `Error: ${error.message}`);
+                failed++;
+            }
+
+            // Test 3: Flutter Bootstrap
+            try {
+                const response = await fetch(`${BASE_URL}/flutter_bootstrap.js`);
+                if (response.ok) {
+                    const content = await response.text();
+                    if (content.includes('flutter') || content.includes('main.dart')) {
+                        setStatus('test3', 'pass', `flutter_bootstrap.js loads correctly ✓`);
+                        passed++;
+                    } else {
+                        setStatus('test3', 'fail', `File exists but content seems wrong`);
+                        failed++;
+                    }
+                } else {
+                    setStatus('test3', 'fail', `HTTP ${response.status}: File not found`);
+                    failed++;
+                }
+            } catch (error) {
+                setStatus('test3', 'fail', `Error: ${error.message}`);
+                failed++;
+            }
+
+            // Test 4: CORS
+            try {
+                const response = await fetch(`${BASE_URL}/manifest.json`);
+                if (response.ok) {
+                    setStatus('test4', 'pass', `No CORS issues detected ✓`);
+                    passed++;
+                } else {
+                    setStatus('test4', 'fail', `Possible CORS or network issue`);
+                    failed++;
+                }
+            } catch (error) {
+                if (error.message.includes('CORS')) {
+                    setStatus('test4', 'fail', `CORS Error: ${error.message}`);
+                } else {
+                    setStatus('test4', 'fail', `Network Error: ${error.message}`);
+                }
+                failed++;
+            }
+
+            // Test 5: Manual check
+            setStatus('test5', 'pending', 'Manual check required: Open app and check F12 console');
+
+            // Summary
+            const total = passed + failed;
+            const summaryDiv = document.getElementById('summary');
+            summaryDiv.innerHTML = `
+                <h3>Tests Complete: ${total} tests run</h3>
+                <p style="font-size: 18px;">
+                    ✅ Passed: <strong style="color: #4CAF50;">${passed}</strong><br>
+                    ❌ Failed: <strong style="color: #f44336;">${failed}</strong>
+                </p>
+                ${failed === 0 ? 
+                    '<p style="color: #4CAF50; font-weight: bold;">All tests passed! App should be working.</p>' : 
+                    '<p style="color: #f44336; font-weight: bold;">Some tests failed. Check details above.</p>'
+                }
+                <hr>
+                <p><strong>Next Step:</strong> Click the button in Test 5 to open the app and check browser console (F12).</p>
+            `;
+        }
+
+        function setStatus(testId, status, message) {
+            const statusDiv = document.getElementById(`${testId}-status`);
+            const resultP = document.getElementById(`${testId}-result`);
+            
+            statusDiv.className = `status ${status}`;
+            statusDiv.textContent = status.toUpperCase();
+            resultP.textContent = message;
+        }
+
+        // Run tests on page load
+        runTests();
+    </script>
+</body>
+</html>
+

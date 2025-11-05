@@ -237,11 +237,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => context.go('/create-task'),
+            tooltip: 'Create Task',
           ),
         ],
       ),
       body: Consumer2<TasksProvider, ChildrenProvider>(
         builder: (context, tasksProvider, childrenProvider, _) {
+          // For now, show tasks for all users
+          // TODO: In next update, filter by user type to show classes for coaches
           final tasks = tasksProvider.tasks;
           final children = childrenProvider.children;
           final events = _getEventsFromTasks(tasks, children);
