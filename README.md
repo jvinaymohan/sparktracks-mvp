@@ -1,8 +1,11 @@
 # 🎓 Sparktracks MVP - Comprehensive Learning Management Platform
 
-## 🚀 STATUS: PRODUCTION-READY & LAUNCHING!
+## 🚀 STATUS: PRODUCTION-READY & LIVE! v2.2.0
 
 A modern, multi-tenant learning management platform built with Flutter and Firebase, designed to connect parents, children, and coaches in a seamless educational ecosystem.
+
+**🎉 LIVE NOW:** https://sparktracks-mvp.web.app/  
+**📱 Landing Page:** https://jvinaymohan.github.io/sparktracks-mvp/
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.8.1-blue.svg)
 ![Firebase](https://img.shields.io/badge/Firebase-Enabled-orange.svg)
@@ -40,9 +43,12 @@ Sparktracks MVP empowers families and educators to collaborate effectively throu
 
 #### Task Management
 - Create and assign tasks to specific children
+- **NEW: Assign to Multiple Children** - Select multiple kids with checkboxes for one task!
+- **NEW: Tasks for Today** - Prominently displayed on dashboard, grouped by child
 - **Task Grouping** - Tasks organized by child with visual headers
 - Set reward points for task completion
 - **Weekly Recurring Tasks** - Select specific days (Mon, Tue, Wed, etc.)
+- **NEW: Monthly Tasks with Day Selection** - Choose day 1st-31st for monthly recurring tasks
 - Task categories: Education, Chores, Activities, Health, Music, Sports
 - Due date and time scheduling
 - Approve or reject completed tasks
@@ -698,9 +704,10 @@ See `BETA_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
 
 ---
 
-## 🚦 Current Status: 🎉 PRODUCTION-READY!
+## 🚦 Current Status: 🎉 PRODUCTION-READY! v2.2.0 LIVE!
 
 ### ✅ ALL FEATURES COMPLETE & TESTED (100%)
+### 🆕 10 NEW FEATURES ADDED IN v2.2.0!
 
 **Core Platform:**
 - ✅ Multi-tenant user management with Firebase Auth
@@ -712,8 +719,12 @@ See `BETA_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
 
 **Task Management:**
 - ✅ Create, assign, edit, delete tasks
+- ✅ 🆕 **Assign to multiple children** - Select multiple kids with checkboxes!
+- ✅ 🆕 **Tasks for Today** - Prominently displayed on parent & child dashboards
 - ✅ Weekly recurring tasks with day selection
+- ✅ 🆕 **Monthly tasks with day selection** - Choose day 1st-31st
 - ✅ Photo upload (web & mobile compatible)
+- ✅ 🆕 **Points display** - Shows "points" not dollar values for children
 - ✅ Points tracking and approval system
 - ✅ Pending approvals on parent home screen
 - ✅ Tasks grouped by child with color coding
@@ -732,6 +743,9 @@ See `BETA_DEPLOYMENT_GUIDE.md` for complete deployment instructions.
 - ✅ Coach profile customization
 - ✅ First-time welcome dialog
 - ✅ Profile persistence to Firebase
+- ✅ 🆕 **Manage Students screen** - Search, create, manage student accounts
+- ✅ 🆕 **Create student accounts** - Auto-generate passwords, instant setup
+- ✅ 🆕 **Reset student passwords** - Instant password recovery
 - ✅ Attendance marking interface
 - ✅ Payment tracking dashboard
 - ✅ Business analytics dashboard
@@ -941,7 +955,20 @@ Built with:
 
 ## 🔄 Version History
 
-### v2.1.0 (Current - November 5, 2025) 🎉 PRODUCTION LAUNCH
+### v2.2.0 (Current - November 5, 2025) 🚀 MAJOR FEATURE UPDATE
+- **10 New Features Deployed** - Significant UX improvements across all user roles
+- 🆕 **Multi-Child Task Assignment** - Assign one task to multiple children with checkboxes
+- 🆕 **Tasks for Today** - Prominent display on parent & child dashboards
+- 🆕 **Monthly Task Day Selection** - Choose specific day (1st-31st) for monthly recurring tasks
+- 🆕 **Points Display for Children** - Shows "points" instead of dollar values
+- 🆕 **Coach Student Management** - Search, create, and manage student accounts
+- 🆕 **Student Password Reset** - Coaches can reset passwords instantly
+- 🆕 **Browse Classes for Children** - Kids can explore and enroll in classes
+- 🆕 **Better Task Grouping** - Tasks organized by child on main screen
+- 🆕 **Celebration Messages** - "All done for today!" when tasks complete
+- 🆕 **Clean Start** - No default tasks, professional experience
+
+### v2.1.0 (November 5, 2025) 🎉 PRODUCTION LAUNCH
 - **Production-Ready Release** - User-tested & bug-free
 - 🔥 **Critical Fixes:**
   - Complete Firebase data persistence (children + tasks)
