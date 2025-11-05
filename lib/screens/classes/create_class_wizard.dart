@@ -1161,23 +1161,23 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
       }
 
       if (mounted) {
-        // Show shareable link if public
-        if (_isPublic && classItem.shareableLink != null) {
-          _showShareableLinkDialog(classItem.shareableLink!);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(isEditing ? 'Class updated successfully!' : 'Class created successfully!'),
-              backgroundColor: Colors.green,
+        // Always show success and go to dashboard
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text(isEditing ? 'Class updated!' : 'Class created successfully!'),
+              ],
             ),
-          );
-          
-          if (context.canPop()) {
-            context.pop();
-          } else {
-            context.go('/coach-dashboard');
-          }
-        }
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        // Always go back to coach dashboard
+        context.go('/coach-dashboard');
       }
     } catch (e) {
       if (mounted) {
