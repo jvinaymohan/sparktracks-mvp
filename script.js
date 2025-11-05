@@ -103,11 +103,11 @@ document.getElementById('signupForm')?.addEventListener('submit', async function
             role: formData.role
         });
         
-        // Redirect to deployed app
+        // Redirect to deployed Firebase app
         alert(`🎉 Welcome to Sparktracks, ${formData.name}! Redirecting to the app...`);
         
-        // Redirect to main app with pre-filled data
-        const appUrl = 'https://jvinaymohan.github.io/sparktracks-mvp';
+        // Redirect to Firebase hosted app with pre-filled data
+        const appUrl = 'https://sparktracks-mvp.web.app';
         window.location.href = `${appUrl}/register?name=${encodeURIComponent(formData.name)}&email=${encodeURIComponent(formData.email)}&role=${formData.role}`;
         
         // Clear the form
@@ -142,11 +142,11 @@ document.getElementById('loginForm')?.addEventListener('submit', async function(
         
         console.log('Login:', formData);
         
-        // Redirect to deployed app
+        // Redirect to deployed Firebase app
         alert('🎉 Logging you in to Sparktracks...');
         
-        // Redirect to main app login
-        const appUrl = 'https://jvinaymohan.github.io/sparktracks-mvp';
+        // Redirect to Firebase hosted app login
+        const appUrl = 'https://sparktracks-mvp.web.app';
         window.location.href = `${appUrl}/login?email=${encodeURIComponent(formData.email)}`;
         
         // Clear the form
