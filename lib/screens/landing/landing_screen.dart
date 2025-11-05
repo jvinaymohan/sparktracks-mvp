@@ -290,7 +290,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
           
           // Trust Badge
           Text(
-            '✓ No credit card required  •  ✓ Free forever',
+            '✓ No credit card required  •  ✓ Early Access Offer',
             style: TextStyle(
               fontSize: 14,
               color: const Color(0xFF6B7280),

@@ -1,197 +1,153 @@
-# 🚀 Quick Test Reference Card
+# 🚀 QUICK TEST REFERENCE CARD
 
-## Test Accounts to Create
+**App URL:** http://localhost:8080
 
-### Parents
+---
+
+## 📋 TEST ACCOUNTS (Copy & Paste Ready)
+
+### Parents:
 ```
-1. sarah.johnson@test.com / test123456
-2. michael.chen@test.com / test123456
-```
-
-### Children (Created by Parents)
-```
-Sarah's Children:
-  - Emma (auto): emma.######@sparktracks.child / Emma0315
-  - Liam (custom): liam.johnson@test.com / liam123456
-
-Michael's Children:
-  - Sophia (custom): sophia.chen@test.com / sophia123
-  - Noah (auto): noah.######@sparktracks.child / Noah0105
+parent1@test.com / Password123!
+parent2@test.com / Password123!
+parent3@test.com / Password123!
+parent4@test.com / Password123!
+parent5@test.com / Password123!
 ```
 
-### Coaches
+### Children (create via parent accounts):
 ```
-1. coach.david@test.com / coach123456
-2. coach.lisa@test.com / coach123456
+child1@test.com / Password123! → parent1
+child2@test.com / Password123! → parent2
+child3@test.com / Password123! → parent3
+child4@test.com / Password123! → parent4
+child5@test.com / Password123! → parent5
+```
+
+### Coach:
+```
+coach1@test.com / Password123!
 ```
 
 ---
 
-## Quick Actions
+## ⚡ QUICK TEST FLOW
 
-### Clear All Data
-`Login as Parent → Click 🐛 icon → Clear All Tasks`
+### 1️⃣ CREATE PARENTS (5 mins)
+- Sign Up → Parent → Register 5 accounts
+- Each sees welcome screen → Dashboard
 
-### Add Child (Auto)
-`Children Tab → Add Child → Name + DOB + Color → Toggle OFF → Save`
+### 2️⃣ CREATE CHILDREN (5 mins)
+- Login as each parent
+- Children tab → Add Child
+- Enable custom credentials
+- Use child emails above
 
-### Add Child (Custom)
-`Children Tab → Add Child → Name + DOB + Color → Toggle ON → Email + Password → Save`
+### 3️⃣ CREATE TASKS (10 mins)
+- Parent 1: Daily task
+- Parent 2: **Weekly** → Select Mon, Wed, Fri ⭐
+- Parent 3: **Monthly** → Select 15th ⭐
+- Parent 4: Multi-child task ⭐
 
-### Create Task
-`Tasks Tab → Create Task → 4 Steps → Create`
+### 4️⃣ COMPLETE TASKS (5 mins)
+- Login as each child
+- Complete task
+- Add comment
+- Check "Pending Approval"
 
-### Create Weekly Task
-`Create Task → Step 2 → Recurring ON → Weekly → Select Days`
+### 5️⃣ APPROVE TASKS (5 mins)
+- Login as each parent
+- Check "Waiting for Approval"
+- Approve tasks
+- Verify points awarded
 
-### Create Class
-`Coach Dashboard → Create Class → 4 Steps → Create`
-
-### Complete Task (Child)
-`Tasks Tab → Select Task → Complete → Add Note/Photo → Confirm`
-
-### Approve Task (Parent)
-`Tasks Tab → Find Completed Task → Click APPROVE button`
-
----
-
-## Feature Checklist
-
-### ✅ What's Working:
-- Multi-parent isolation
-- Multiple children per parent
-- Custom & auto child credentials
-- Task creation & assignment
-- Tasks grouped by child
-- Weekly tasks with day selection
-- Task completion with photos (web!)
-- Task approval & points
-- Coach account creation
-- Class creation wizard
-- Public/Private classes
-- Group/Individual classes
-- Payment schedules
-- Make-up classes toggle
-- Shareable links
-- Dev tools
-
-### 🚧 Advanced Features (Future):
-- Class enrollment UI
-- Attendance marking interface
-- Payment tracking dashboard
-- Automated notifications
+### 6️⃣ COACH CLASSES (15 mins)
+- Register coach
+- Create weekly class → **Select days** ⭐
+- Create monthly class → **Select day 15th** ⭐
+- Test **currency changes** (USD→EUR→INR) ⭐
+- **Edit class** ⭐
+- **Assign students** (multi-select) ⭐
+- Create new child via Manage Students ⭐
+- Verify enrollment in child view
 
 ---
 
-## Test Flow (30 min)
+## 🎯 KEY FEATURES TO TEST
 
-```
-1. Clear Data (1 min)
-   └─ Login as parent → 🐛 → Clear All
+### ⭐ NEW FEATURES (Priority):
+- [ ] Weekly day selection (Mon, Tue, Wed, etc.)
+- [ ] Monthly day selection (1st-31st)
+- [ ] Currency symbol updates ($ → € → ₹)
+- [ ] Edit class functionality
+- [ ] Assign students with search
+- [ ] Multi-child task assignment
+- [ ] No mock transactions in ledger
 
-2. Create Parents (3 min)
-   ├─ Register Sarah → Add Emma & Liam
-   └─ Register Michael → Add Sophia & Noah
-
-3. Create Tasks (5 min)
-   ├─ Sarah: 6 tasks (3 for Emma, 3 for Liam)
-   └─ Michael: 4 tasks (2 for Sophia, 2 for Noah)
-
-4. Complete Tasks (5 min)
-   ├─ Login as Emma → Complete 2 tasks
-   ├─ Login as Liam → Complete 2 tasks
-   └─ Login as Sophia → Complete 1 task
-
-5. Approve Tasks (3 min)
-   ├─ Login as Sarah → Approve Emma & Liam's tasks
-   └─ Login as Michael → Approve Sophia's task
-
-6. Create Coaches (2 min)
-   ├─ Register David
-   └─ Register Lisa
-
-7. Create Classes (8 min)
-   ├─ David: 2 classes (public group, private 1-on-1)
-   └─ Lisa: 2 classes (online group, online 1-on-1)
-
-8. Verify (3 min)
-   ├─ Check data isolation
-   ├─ Check points calculation
-   └─ Check class creation
-```
+### ✅ Core Features:
+- [ ] Parent registration & login
+- [ ] Child creation with custom credentials
+- [ ] Task creation (daily, weekly, monthly)
+- [ ] Task completion with comments
+- [ ] Task approval & points
+- [ ] Coach registration & profile
+- [ ] Class creation & enrollment
 
 ---
 
-## 🎯 Critical Tests
+## 📱 BROWSER TOOLS
 
-**Must Verify:**
+### Open Dev Console (F12):
+- **Console tab:** Check for errors
+- **Network tab:** Check API calls
+- **Application tab:** Check local storage
 
-1. **Data Isolation:**
-   - Parent A can't see Parent B's children ✓
-   - Parent A can't see Parent B's tasks ✓
-   - Child A can't see Child B's tasks ✓
-
-2. **Points System:**
-   - Points = 0 before approval ✓
-   - Points update after approval ✓
-   - Points total shows in parent view ✓
-
-3. **Custom Credentials:**
-   - Child can login with custom email ✓
-   - Child sees correct personalized name ✓
-
-4. **Weekly Tasks:**
-   - Can select multiple days ✓
-   - Days show in review ✓
-
-5. **Class Creation:**
-   - Public gets shareable link ✓
-   - Private has no link ✓
-   - Payment options work ✓
+### Test Responsiveness:
+- Press Ctrl+Shift+M (Cmd+Shift+M on Mac)
+- Test mobile, tablet, desktop views
 
 ---
 
-## 📱 Where to Find Things
+## 🐛 IF YOU FIND BUGS:
 
-**Dev Tools:** Parent Dashboard → Top right → 🐛 icon
-
-**Add Child:** Parent Dashboard → Children tab → "Add Child" button
-
-**Create Task:** Parent Dashboard → Bottom right → "Create Task" FAB
-
-**Create Class:** Coach Dashboard → Bottom right → "Create Class" FAB
-
-**Complete Task:** Child Dashboard → Tasks tab → Click task → "Complete Task" button
-
-**Approve Task:** Parent Dashboard → Tasks tab → Completed task → "APPROVE" button
+Note down:
+1. **What you did:** Step-by-step actions
+2. **What happened:** Actual result
+3. **What you expected:** Expected result
+4. **Screenshot:** If visual issue
+5. **Console errors:** From F12 console
 
 ---
 
-## 🎨 Visual Indicators
+## ⏱️ ESTIMATED TIME
 
-**Child Colors in Parent Dashboard:**
-- 🟢 Green
-- 🔵 Blue  
-- 🟣 Purple
-- 🟠 Orange
-
-**Task Status:**
-- ⏰ Pending
-- ▶️ In Progress
-- ✓ Completed (awaiting approval)
-- ✅ Approved
-
-**Class Visibility:**
-- 🔗 Public (has shareable link)
-- 🔒 Private (invite only)
-
-**Class Type:**
-- 👥 Group (multiple students)
-- 👤 Individual (1-on-1)
+- **Full Test:** 45 minutes
+- **Quick Test:** 20 minutes (key features only)
+- **New Features Only:** 10 minutes
 
 ---
 
-**Open `COMPREHENSIVE_TEST_PLAN.md` for detailed step-by-step instructions!**
+## 📞 TEST SUPPORT
 
-**App is running in Chrome - start testing now!** 🚀
+If stuck, check:
+1. **MANUAL_TEST_GUIDE.md** - Detailed step-by-step
+2. **END_TO_END_TEST_RESULTS.md** - Test template
+3. **CLASS_MANAGEMENT_IMPROVEMENTS.md** - Feature docs
 
+---
+
+**🎯 FOCUS:** Test the 7 NEW features we deployed today!
+
+1. ✨ Weekly day selection
+2. ✨ Monthly day selection  
+3. ✨ Dynamic currency symbol
+4. ✨ Edit class
+5. ✨ Assign students
+6. ✨ Multi-child tasks
+7. ✨ Clean financial ledger
+
+---
+
+**Ready? Let's test! 🚀**
+
+Open: http://localhost:8080
