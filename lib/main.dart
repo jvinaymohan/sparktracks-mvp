@@ -32,6 +32,7 @@ import 'screens/settings/notification_settings_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
 import 'screens/calendar/coach_calendar_screen.dart';
 import 'screens/feedback/feedback_screen.dart';
+import 'screens/share/share_screen.dart';
 import 'screens/tasks/create_task_wizard.dart';
 import 'screens/tasks/child_task_view_screen.dart';
 import 'screens/children/add_edit_child_screen.dart';
@@ -200,6 +201,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/feedback',
           builder: (context, state) => const FeedbackScreen(),
+        ),
+        GoRoute(
+          path: '/share',
+          builder: (context, state) => const ShareScreen(),
         ),
         GoRoute(
           path: '/create-task',
