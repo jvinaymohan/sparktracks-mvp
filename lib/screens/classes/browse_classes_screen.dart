@@ -52,7 +52,8 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
       ),
       body: Consumer<ClassesProvider>(
         builder: (context, classesProvider, _) {
-          var publicClasses = classesProvider.getPublicClasses();
+          // Get ONLY public classes
+          var publicClasses = classesProvider.classes.where((c) => c.isPublic == true).toList();
           
           // Apply filters
           if (_searchQuery.isNotEmpty) {
