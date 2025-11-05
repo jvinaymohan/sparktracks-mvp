@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -63,15 +64,42 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
     super.dispose();
   }
 
+  int _calculateProfileCompletion() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user == null) return 0;
+    
+    int completed = 0;
+    int total = 5;
+    
+    if (user.preferences['bio'] != null && user.preferences['bio'].toString().isNotEmpty) completed++;
+    if (user.preferences['experience'] != null && user.preferences['experience'].toString().isNotEmpty) completed++;
+    if (user.preferences['yearsExperience'] != null && user.preferences['yearsExperience'] > 0) completed++;
+    if (user.preferences['certifications'] is List && (user.preferences['certifications'] as List).isNotEmpty) completed++;
+    if (user.preferences['specialties'] is List && (user.preferences['specialties'] as List).isNotEmpty) completed++;
+    
+    return ((completed / total) * 100).round();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final completion = _calculateProfileCompletion();
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Coach Profile'),
+        backgroundColor: AppTheme.successColor,
+        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveProfile,
+            tooltip: 'Save Profile',
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () => _shareProfile(context),
+            tooltip: 'Share My Page',
           ),
         ],
       ),
@@ -82,12 +110,81 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Profile Completion Card
+              Card(
+                color: completion == 100 ? AppTheme.successColor.withOpacity(0.1) : AppTheme.warningColor.withOpacity(0.1),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            completion == 100 ? Icons.check_circle : Icons.analytics,
+                            color: completion == 100 ? AppTheme.successColor : AppTheme.warningColor,
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Profile Completion',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '$completion%',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: completion == 100 ? AppTheme.successColor : AppTheme.warningColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: LinearProgressIndicator(
+                          value: completion / 100,
+                          minHeight: 12,
+                          backgroundColor: AppTheme.neutral200,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            completion == 100 ? AppTheme.successColor : AppTheme.warningColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        completion < 100
+                            ? 'Complete your profile to attract more students!'
+                            : '✓ Profile complete! Your page looks amazing!',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: completion < 100 ? AppTheme.warningColor : AppTheme.successColor,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppTheme.spacingL),
+              
               // Header
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(AppTheme.spacingL),
                 decoration: BoxDecoration(
-                  gradient: AppTheme.primaryGradient,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppTheme.successColor,
+                      AppTheme.successColor.withOpacity(0.8),
+                    ],
+                  ),
                   borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                 ),
                 child: Column(
@@ -435,6 +532,106 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
         }
       }
     }
+  }
+
+  void _shareProfile(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user == null) return;
+    
+    final link = 'https://sparktracks-mvp.web.app/coach/${user.id}';
+    final message = '🏫 Check out my coaching profile and classes on Sparktracks!\n\n$link\n\nJoin Sparktracks for free and enroll your child in my programs!';
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: const [
+            Icon(Icons.share, color: AppTheme.successColor),
+            SizedBox(width: 12),
+            Text('Share Your Profile'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Share your coach page with parents:',
+              style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.neutral100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.neutral300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: const [
+                      Icon(Icons.link, size: 18, color: AppTheme.successColor),
+                      SizedBox(width: 8),
+                      Text('Your Public Page:',
+                          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  SelectableText(
+                    link,
+                    style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.accentColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.info_outline, color: AppTheme.accentColor, size: 18),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tip: Complete your profile to attract more students!',
+                      style: TextStyle(fontSize: 12, color: AppTheme.accentColor),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: message));
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('✓ Share message copied! Paste to share.'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            },
+            icon: const Icon(Icons.copy),
+            label: const Text('Copy Message'),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.successColor),
+          ),
+        ],
+      ),
+    );
   }
 }
 

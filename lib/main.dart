@@ -42,6 +42,7 @@ import 'screens/landing/landing_screen.dart';
 import 'screens/classes/create_class_wizard.dart';
 import 'screens/coach/coach_profile_screen.dart';
 import 'screens/coach/manage_students_screen.dart';
+import 'screens/coach/public_coach_page.dart';
 import 'screens/classes/browse_classes_screen.dart';
 import 'screens/classes/class_detail_screen.dart';
 import 'screens/attendance/mark_attendance_screen.dart';
@@ -265,6 +266,15 @@ class SparktracksMVP extends StatelessWidget {
           path: '/manage-students',
           builder: (context, state) => const ManageStudentsScreen(),
         ),
+        GoRoute(
+          path: '/coach/:coachId',
+          builder: (context, state) {
+            final coachId = state.pathParameters['coachId'];
+            // In real app, fetch coach from Firestore by ID
+            // For now, show placeholder
+            return PublicCoachPage(coach: state.extra as User);
+          },
+        ),
         
         // Class Management Routes
         GoRoute(
@@ -318,9 +328,10 @@ class SparktracksMVP extends StatelessWidget {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final isLoggedIn = authProvider.isLoggedIn;
         final isOnboarding = authProvider.isOnboarding;
+        final currentUser = authProvider.currentUser;
         
         // Allow landing page and auth pages for non-logged-in users
-        final publicPaths = ['/', '/login', '/register', '/email-verification'];
+        final publicPaths = ['/', '/login', '/register', '/email-verification', '/coach/'];
         final isPublicPath = publicPaths.any((path) => state.matchedLocation.startsWith(path));
         
         // If not logged in and not on public pages, redirect to landing
@@ -331,6 +342,14 @@ class SparktracksMVP extends StatelessWidget {
         // If logged in but needs onboarding, redirect to onboarding
         if (isLoggedIn && isOnboarding && state.matchedLocation != '/onboarding') {
           return '/onboarding';
+        }
+        
+        // Check if user needs to see welcome screen (first time only)
+        if (isLoggedIn && currentUser != null && state.matchedLocation != '/welcome') {
+          final hasSeenWelcome = currentUser.preferences['hasSeenWelcome'] ?? false;
+          if (!hasSeenWelcome) {
+            return '/welcome';
+          }
         }
         
         // If logged in and on auth pages, redirect to appropriate dashboard

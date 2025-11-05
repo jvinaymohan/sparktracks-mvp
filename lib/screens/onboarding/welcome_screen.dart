@@ -65,6 +65,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           preferences: {
             ...user.preferences,
             'onboardingCompleted': true,
+            'hasSeenWelcome': true, // Mark welcome as seen
           },
         );
         await _firestoreService.updateUser(updatedUser);
