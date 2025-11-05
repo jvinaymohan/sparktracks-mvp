@@ -64,16 +64,38 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.emoji_events),
+            tooltip: 'Achievements',
+            onPressed: () => context.push('/achievements'),
+          ),
+          IconButton(
             icon: const Icon(Icons.calendar_today),
+            tooltip: 'Calendar',
             onPressed: () => context.go('/calendar'),
           ),
           IconButton(
+            icon: const Icon(Icons.feedback),
+            tooltip: 'Feedback',
+            onPressed: () => context.go('/feedback'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
+            onPressed: () => context.go('/notification-settings'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: 'Home Page',
+            onPressed: () => context.go('/'),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();
               if (context.mounted) {
-                context.go('/login');
+                context.go('/');
               }
             },
           ),
