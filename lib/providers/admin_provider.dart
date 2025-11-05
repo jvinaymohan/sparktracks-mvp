@@ -40,7 +40,9 @@ class AdminProvider with ChangeNotifier {
   // Admin authentication
   Future<bool> loginAdmin(String email, String password) async {
     // In production, verify against Firebase
-    if (email == 'admin@sparktracks.com' && password == 'admin123') {
+    // TODO: Replace with proper Firebase Admin authentication
+    // For now, this is a placeholder - change password after making repo public
+    if (email == 'admin@sparktracks.com' && password == 'ChangeThisPassword2024!') {
       _currentAdmin = AdminUser(
         id: 'admin_1',
         email: email,
