@@ -3,10 +3,13 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/classes_provider.dart';
+import '../../providers/children_provider.dart';
+import '../../providers/enrollment_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/student_model.dart';
 import '../../models/attendance_model.dart';
 import '../../models/payment_model.dart';
+import '../../models/enrollment_model.dart';
 import '../../utils/app_theme.dart';
 
 class CoachDashboardScreen extends StatefulWidget {
@@ -876,18 +879,171 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
   void _handleClassAction(String action, Class classItem) {
     switch (action) {
       case 'edit':
-        // TODO: Navigate to edit class
+        context.push('/create-class?classId=${classItem.id}');
         break;
       case 'attendance':
         // TODO: Navigate to attendance marking
         break;
       case 'students':
-        // TODO: Navigate to students list
+        _showAssignStudentsDialog(classItem);
         break;
       case 'cancel':
         _showCancelClassDialog(classItem);
         break;
     }
+  }
+
+  void _showAssignStudentsDialog(Class classItem) {
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final enrollmentProvider = Provider.of<EnrollmentProvider>(context, listen: false);
+    
+    // Get all children from all parents
+    final allChildren = childrenProvider.children;
+    
+    if (allChildren.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No students available. Students need to be created by parents first.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        Set<String> selectedStudents = {};
+        String searchQuery = '';
+        
+        return StatefulBuilder(
+          builder: (context, setState) {
+            // Filter students based on search
+            final filteredChildren = allChildren.where((child) {
+              final matchesSearch = searchQuery.isEmpty || 
+                  child.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+                  child.email.toLowerCase().contains(searchQuery.toLowerCase());
+              return matchesSearch;
+            }).toList();
+            
+            return AlertDialog(
+              title: Text('Assign Students to "${classItem.title}"'),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Search field
+                    TextField(
+                      decoration: InputDecoration(
+                        labelText: 'Search Students',
+                        prefixIcon: const Icon(Icons.search),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          searchQuery = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Students list
+                    Expanded(
+                      child: filteredChildren.isEmpty
+                          ? const Center(child: Text('No students found'))
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              itemCount: filteredChildren.length,
+                              itemBuilder: (context, index) {
+                                final child = filteredChildren[index];
+                                final isEnrolled = enrollmentProvider.isEnrolled(child.userId, classItem.id);
+                                final isSelected = selectedStudents.contains(child.userId);
+                                
+                                return CheckboxListTile(
+                                  value: isEnrolled || isSelected,
+                                  enabled: !isEnrolled,
+                                  onChanged: isEnrolled ? null : (value) {
+                                    setState(() {
+                                      if (value == true) {
+                                        selectedStudents.add(child.userId);
+                                      } else {
+                                        selectedStudents.remove(child.userId);
+                                      }
+                                    });
+                                  },
+                                  title: Text(child.name),
+                                  subtitle: Text(
+                                    isEnrolled 
+                                        ? '${child.email} (Already enrolled)' 
+                                        : child.email,
+                                  ),
+                                  secondary: CircleAvatar(
+                                    backgroundColor: AppTheme.primaryColor,
+                                    child: Text(
+                                      child.name[0].toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: selectedStudents.isEmpty
+                      ? null
+                      : () {
+                          _assignStudentsToClass(classItem, selectedStudents.toList(), enrollmentProvider);
+                          Navigator.pop(dialogContext);
+                        },
+                  child: Text('Assign ${selectedStudents.length} Student(s)'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+  
+  void _assignStudentsToClass(Class classItem, List<String> studentIds, EnrollmentProvider enrollmentProvider) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final coachId = authProvider.currentUser?.id ?? '';
+    
+    for (final studentId in studentIds) {
+      final enrollment = Enrollment(
+        id: 'enroll_${DateTime.now().millisecondsSinceEpoch}_$studentId',
+        classId: classItem.id,
+        studentId: studentId,
+        parentId: '', // Coach-assigned enrollments don't have a parent
+        status: EnrollmentStatus.active,
+        enrolledAt: DateTime.now(),
+        amountDue: classItem.price,
+        amountPaid: 0.0,
+      );
+      
+      enrollmentProvider.addEnrollment(enrollment);
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('✓ Successfully assigned ${studentIds.length} student(s) to ${classItem.title}'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   void _handleStudentAction(String action, Student student) {

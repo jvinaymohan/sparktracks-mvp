@@ -42,6 +42,10 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
   TimeOfDay _selectedStartTime = const TimeOfDay(hour: 10, minute: 0);
   TimeOfDay _selectedEndTime = const TimeOfDay(hour: 11, minute: 0);
   
+  // Schedule options for recurring classes
+  Set<int> _selectedWeekDays = {1}; // 1=Monday, 2=Tuesday, etc. Default to Monday
+  int _selectedDayOfMonth = 1; // For monthly classes, day 1-31
+  
   bool _isSubmitting = false;
 
   @override
@@ -396,6 +400,77 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
               _buildTypeChip('Monthly', ClassType.monthly),
             ],
           ),
+          
+          // Day selection for weekly classes
+          if (_classType == ClassType.weekly) ...[
+            const SizedBox(height: AppTheme.spacingL),
+            Text(
+              'Select days of the week:',
+              style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppTheme.spacingS),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildDayChip('Mon', 1),
+                _buildDayChip('Tue', 2),
+                _buildDayChip('Wed', 3),
+                _buildDayChip('Thu', 4),
+                _buildDayChip('Fri', 5),
+                _buildDayChip('Sat', 6),
+                _buildDayChip('Sun', 7),
+              ],
+            ),
+            if (_selectedWeekDays.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Please select at least one day',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+          
+          // Day selection for monthly classes
+          if (_classType == ClassType.monthly) ...[
+            const SizedBox(height: AppTheme.spacingL),
+            Text(
+              'Select day of month:',
+              style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: AppTheme.spacingM),
+            DropdownButtonFormField<int>(
+              value: _selectedDayOfMonth,
+              decoration: InputDecoration(
+                labelText: 'Day of Month',
+                prefixIcon: const Icon(Icons.calendar_today),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: AppTheme.neutral100,
+              ),
+              items: List.generate(31, (index) {
+                final day = index + 1;
+                return DropdownMenuItem(
+                  value: day,
+                  child: Text('Day $day${_getDaySuffix(day)} of each month'),
+                );
+              }),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _selectedDayOfMonth = value;
+                  });
+                }
+              },
+            ),
+          ],
+          
           const SizedBox(height: AppTheme.spacingXL),
           
           // Location Type
@@ -585,10 +660,22 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
                   decoration: InputDecoration(
                     labelText: 'Price',
                     hintText: '25.00',
-                    prefixIcon: const Icon(Icons.attach_money, color: Colors.green),
+                    prefixText: '${_getCurrencySymbol(_currency)} ',
+                    prefixStyle: TextStyle(
+                      color: AppTheme.successColor,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                    suffixText: _currency.toString().split('.').last.toUpperCase(),
+                    suffixStyle: TextStyle(
+                      color: AppTheme.neutral600,
+                      fontWeight: FontWeight.w600,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
+                    filled: true,
+                    fillColor: AppTheme.neutral100,
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 ),
@@ -839,6 +926,13 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
         if (selected) {
           setState(() {
             _classType = type;
+            // Clear day selections when changing type
+            if (type != ClassType.weekly) {
+              _selectedWeekDays = {1}; // Reset to Monday
+            }
+            if (type != ClassType.monthly) {
+              _selectedDayOfMonth = 1; // Reset to 1st
+            }
           });
         }
       },
@@ -848,6 +942,40 @@ class _CreateClassWizardState extends State<CreateClassWizard> {
         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
       ),
     );
+  }
+  
+  Widget _buildDayChip(String label, int day) {
+    final isSelected = _selectedWeekDays.contains(day);
+    
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedWeekDays.add(day);
+          } else {
+            _selectedWeekDays.remove(day);
+          }
+        });
+      },
+      selectedColor: AppTheme.primaryColor,
+      checkmarkColor: Colors.white,
+      labelStyle: TextStyle(
+        color: isSelected ? Colors.white : AppTheme.neutral700,
+        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      ),
+    );
+  }
+  
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
   }
 
   Widget _buildLocationChip(String label, LocationType type) {
