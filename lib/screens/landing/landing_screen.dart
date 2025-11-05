@@ -180,7 +180,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 ),
                 const SizedBox(width: 8),
                 const Text(
-                  '✨ Now with Firebase & Real-time Updates',
+                  '🚀 Early Access Now Available',
                   style: TextStyle(
                     color: Color(0xFF6366F1),
                     fontWeight: FontWeight.w600,
@@ -241,7 +241,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
             alignment: WrapAlignment.center,
             children: [
               ElevatedButton(
-                onPressed: () => context.go('/register'),
+                  onPressed: () => context.go('/register'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF6366F1),
                   foregroundColor: Colors.white,
@@ -258,7 +258,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Start Free Today',
+                      'Claim Your Spot',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 8),
