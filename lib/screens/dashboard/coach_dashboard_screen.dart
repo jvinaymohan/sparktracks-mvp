@@ -27,6 +27,103 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    
+    // Check if profile is complete, if not, redirect to profile setup
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.currentUser;
+      
+      // Check if this is first login (profile not completed)
+      final profileCompleted = user?.preferences['profileCompleted'] ?? false;
+      
+      if (!profileCompleted && mounted) {
+        // Show welcome dialog then redirect to profile
+        _showWelcomeDialog();
+      }
+    });
+  }
+  
+  void _showWelcomeDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.celebration, color: AppTheme.primaryColor, size: 32),
+            const SizedBox(width: 12),
+            Text('Welcome, Coach!', style: AppTheme.headline5),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'We\'re excited to have you on Sparktracks! 🎉',
+              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 16),
+            const Text('Let\'s set up your coaching profile so students and parents can learn more about you.'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppTheme.successColor, size: 16),
+                      const SizedBox(width: 8),
+                      const Expanded(child: Text('Share your experience & background')),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppTheme.successColor, size: 16),
+                      const SizedBox(width: 8),
+                      const Expanded(child: Text('Add certifications & specialties')),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      const Icon(Icons.check_circle, color: AppTheme.successColor, size: 16),
+                      const SizedBox(width: 8),
+                      const Expanded(child: Text('Build trust with families')),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // They can skip for now
+            },
+            child: const Text('I\'ll do this later'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/coach-profile');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            child: const Text('Set Up My Profile'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -68,12 +165,17 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
             onPressed: () => context.go('/notification-settings'),
           ),
           IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: 'Home Page',
+            onPressed: () => context.go('/'),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();
               if (context.mounted) {
-                context.go('/login');
+                context.go('/');
               }
             },
           ),

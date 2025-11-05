@@ -28,6 +28,18 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    
+    // Load tasks from Firebase when dashboard loads
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      final childId = authProvider.currentUser?.id;
+      
+      if (childId != null) {
+        print('🔄 Loading tasks for child: $childId');
+        tasksProvider.loadTasksForChild(childId);
+      }
+    });
   }
 
   @override

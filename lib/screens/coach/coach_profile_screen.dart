@@ -354,7 +354,7 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
     );
   }
 
-  void _saveProfile() {
+  void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final currentUser = authProvider.currentUser;
@@ -394,22 +394,32 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           updatedAt: DateTime.now(),
         );
         
-        // In a real app, you'd save to Firestore here
-        // For now, we'll just update the local state
-        authProvider.completeOnboarding(); // Placeholder
+        // Save to AuthProvider (this persists the data)
+        authProvider.setUser(updatedUser);
         
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✓ Profile saved successfully!'),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        // Save to Firebase
+        try {
+          await authProvider.updateUserProfile(updatedUser);
+          print('✓ Coach profile saved to Firebase');
+        } catch (e) {
+          print('Error saving to Firebase: $e');
+        }
         
-        if (context.canPop()) {
-          context.pop();
-        } else {
-          context.go('/coach-dashboard');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✓ Profile saved successfully!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+          
+          // Navigate back to dashboard
+          Future.delayed(const Duration(milliseconds: 500), () {
+            if (context.mounted) {
+              context.go('/coach-dashboard');
+            }
+          });
         }
       }
     }
