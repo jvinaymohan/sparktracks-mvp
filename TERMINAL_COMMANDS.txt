@@ -1,0 +1,23 @@
+🔥 Copy and paste these commands into Terminal:
+
+cd /Users/vinayhome/Documents/sparktracks_mvp
+
+firebase login
+
+firebase deploy --only hosting
+
+
+📋 What will happen:
+
+1. firebase login
+   - Opens browser
+   - Sign in with Google
+   - Returns to Terminal
+
+2. firebase deploy --only hosting
+   - Uploads your Flutter app
+   - Deploys to Firebase
+   - Shows URL: https://sparktracks-mvp.web.app
+
+🎯 After deployment, copy the URL and tell me!
+

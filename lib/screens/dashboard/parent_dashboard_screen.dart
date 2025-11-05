@@ -198,6 +198,130 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
+          // Tasks for Today Section (Prominent!)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.today, color: AppTheme.primaryColor, size: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Tasks for Today',
+                    style: AppTheme.headline5.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _tabController.index = 2; // Go to Tasks tab
+                  });
+                },
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          
+          // Show today's tasks grouped by child
+          ...() {
+            final today = DateTime.now();
+            final todaysTasks = tasks.where((task) {
+              if (task.dueDate == null) return false;
+              return task.dueDate!.year == today.year &&
+                     task.dueDate!.month == today.month &&
+                     task.dueDate!.day == today.day;
+            }).toList();
+            
+            if (todaysTasks.isEmpty) {
+              return [Card(
+                color: AppTheme.neutral100,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle_outline, color: AppTheme.successColor, size: 32),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'No tasks due today!',
+                              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Enjoy your day or create new tasks for tomorrow',
+                              style: AppTheme.bodyMedium.copyWith(color: AppTheme.neutral600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )];
+            }
+            
+            // Group today's tasks by child
+            final tasksByChild = <String, List<Task>>{};
+            for (var task in todaysTasks) {
+              tasksByChild.putIfAbsent(task.childId, () => []).add(task);
+            }
+            
+            return tasksByChild.entries.map((entry) {
+              final child = children.firstWhere(
+                (c) => c.userId == entry.key,
+                orElse: () => Student(
+                  id: entry.key,
+                  userId: entry.key,
+                  parentId: currentParentId,
+                  name: 'Unknown',
+                  email: '',
+                  dateOfBirth: DateTime.now(),
+                  enrolledAt: DateTime.now(),
+                ),
+              );
+              final childTasks = entry.value;
+              
+              return Card(
+                margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
+                child: ExpansionTile(
+                  initiallyExpanded: true,
+                  leading: CircleAvatar(
+                    backgroundColor: Color(int.parse(child.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50')),
+                    child: Text(
+                      child.name[0].toUpperCase(),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  title: Text(
+                    '${child.name} (${childTasks.length} ${childTasks.length == 1 ? "task" : "tasks"})',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  children: childTasks.map((task) => ListTile(
+                    dense: true,
+                    leading: Icon(
+                      task.status == TaskStatus.completed ? Icons.check_circle :
+                      task.status == TaskStatus.approved ? Icons.verified :
+                      Icons.pending,
+                      color: task.status == TaskStatus.completed ? AppTheme.warningColor :
+                             task.status == TaskStatus.approved ? AppTheme.successColor :
+                             AppTheme.primaryColor,
+                      size: 20,
+                    ),
+                    title: Text(task.title),
+                    subtitle: Text('${task.status.name} • ${task.rewardAmount.toInt()} points'),
+                    trailing: Text('${task.dueDate!.hour}:${task.dueDate!.minute.toString().padLeft(2, '0')}'),
+                  )).toList(),
+                ),
+              );
+            }).toList();
+          }(),
+          
+          const SizedBox(height: AppTheme.spacingXL),
+          
           // Financial Ledger Button
           SizedBox(
             width: double.infinity,

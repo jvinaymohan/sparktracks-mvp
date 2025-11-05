@@ -220,13 +220,85 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
+          // Tasks for Today Section (Prominent!)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.today, color: AppTheme.primaryColor, size: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Tasks for Today',
+                    style: AppTheme.headline5.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _tabController.index = 1; // Go to Tasks tab
+                  });
+                },
+                child: const Text('View All'),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          
+          // Show today's tasks
+          ...() {
+            final today = DateTime.now();
+            final todaysTasks = myTasks.where((task) {
+              if (task.dueDate == null) return false;
+              return task.dueDate!.year == today.year &&
+                     task.dueDate!.month == today.month &&
+                     task.dueDate!.day == today.day &&
+                     task.status == TaskStatus.pending; // Only show pending tasks
+            }).toList();
+            
+            if (todaysTasks.isEmpty) {
+              return [Card(
+                color: AppTheme.successColor.withOpacity(0.1),
+                child: Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingL),
+                  child: Row(
+                    children: [
+                      Icon(Icons.celebration, color: AppTheme.successColor, size: 32),
+                      const SizedBox(width: AppTheme.spacingM),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'All done for today!',
+                              style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              'Great job! Check back tomorrow for new tasks',
+                              style: AppTheme.bodyMedium.copyWith(color: AppTheme.neutral600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              )];
+            }
+            
+            return todaysTasks.map((task) => _buildTaskCard(task)).toList();
+          }(),
+          
+          const SizedBox(height: AppTheme.spacingXL),
+          
           // Recent Tasks
           Text(
             'Recent Tasks',
             style: AppTheme.headline6,
           ),
           const SizedBox(height: AppTheme.spacingM),
-          ...myTasks.take(3).map((task) => _buildTaskCard(task)),
+          ...myTasks.where((t) => t.status != TaskStatus.pending).take(3).map((task) => _buildTaskCard(task)),
         ],
       ),
     );
@@ -465,7 +537,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
           ),
         ),
         title: Text(task.title),
-        subtitle: Text('${task.status.name} - \$${task.rewardAmount.toStringAsFixed(2)}'),
+        subtitle: Text('${task.status.name} - ${task.rewardAmount.toInt()} points'),
         trailing: Text(_formatDate(task.updatedAt)),
       ),
     );

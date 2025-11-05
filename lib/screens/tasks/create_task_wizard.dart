@@ -28,12 +28,14 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   
   // Task data
   String? _selectedChildId;
+  Set<String> _selectedChildIds = {}; // Multiple children support
   DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 1));
   TimeOfDay _selectedDueTime = TimeOfDay(hour: 17, minute: 0); // 5 PM default
   bool _isRecurring = false;
   String _recurringPattern = 'daily';
   String _selectedCategory = 'chores';
   Set<int> _selectedWeekDays = {}; // 1=Monday, 2=Tuesday, ..., 7=Sunday
+  int _selectedDayOfMonth = 1; // For monthly tasks
   
   bool _isSubmitting = false;
 
@@ -338,9 +340,28 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
           const SizedBox(height: AppTheme.spacingXL),
           
           // Assign to child
-          Text(
-            'Assign to:',
-            style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Assign to:',
+                style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+              ),
+              if (children.isNotEmpty)
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      if (_selectedChildIds.length == children.length) {
+                        _selectedChildIds.clear();
+                      } else {
+                        _selectedChildIds = children.map((c) => c.userId).toSet();
+                      }
+                    });
+                  },
+                  icon: Icon(_selectedChildIds.length == children.length ? Icons.deselect : Icons.select_all),
+                  label: Text(_selectedChildIds.length == children.length ? 'Deselect All' : 'Select All'),
+                ),
+            ],
           ),
           const SizedBox(height: AppTheme.spacingM),
           
@@ -509,6 +530,42 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                       ],
                     ),
                     
+                    // Day selection for monthly tasks
+                    if (_recurringPattern == 'monthly') ...[
+                      const SizedBox(height: AppTheme.spacingL),
+                      Text(
+                        'Select day of month:',
+                        style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: AppTheme.spacingM),
+                      DropdownButtonFormField<int>(
+                        value: _selectedDayOfMonth,
+                        decoration: InputDecoration(
+                          labelText: 'Day of Month',
+                          prefixIcon: const Icon(Icons.calendar_today),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          filled: true,
+                          fillColor: AppTheme.neutral100,
+                        ),
+                        items: List.generate(31, (index) {
+                          final day = index + 1;
+                          return DropdownMenuItem(
+                            value: day,
+                            child: Text('Day $day${_getDaySuffix(day)} of each month'),
+                          );
+                        }),
+                        onChanged: (value) {
+                          if (value != null) {
+                            setState(() {
+                              _selectedDayOfMonth = value;
+                            });
+                          }
+                        },
+                      ),
+                    ],
+                    
                     // Day selection for weekly tasks
                     if (_recurringPattern == 'weekly') ...[
                       const SizedBox(height: AppTheme.spacingL),
@@ -553,7 +610,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   }
 
   Widget _buildChildSelectionCard(Student child) {
-    final isSelected = _selectedChildId == child.userId; // Use Firebase User ID
+    final isSelected = _selectedChildIds.contains(child.userId); // Use Firebase User ID
     final colorValue = int.parse(child.colorCode?.replaceFirst('#', '0xFF') ?? '0xFF4CAF50');
     
     return Card(
@@ -569,7 +626,13 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
       child: InkWell(
         onTap: () {
           setState(() {
-            _selectedChildId = child.userId; // Use Firebase User ID
+            if (isSelected) {
+              _selectedChildIds.remove(child.userId);
+            } else {
+              _selectedChildIds.add(child.userId);
+            }
+            // Keep backward compatibility with single selection
+            _selectedChildId = _selectedChildIds.isNotEmpty ? _selectedChildIds.first : null;
           });
         },
         borderRadius: BorderRadius.circular(12),
@@ -605,8 +668,20 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                   ],
                 ),
               ),
-              if (isSelected)
-                Icon(Icons.check_circle, color: AppTheme.primaryColor, size: 28),
+              Checkbox(
+                value: isSelected,
+                onChanged: (value) {
+                  setState(() {
+                    if (value == true) {
+                      _selectedChildIds.add(child.userId);
+                    } else {
+                      _selectedChildIds.remove(child.userId);
+                    }
+                    _selectedChildId = _selectedChildIds.isNotEmpty ? _selectedChildIds.first : null;
+                  });
+                },
+                activeColor: AppTheme.primaryColor,
+              ),
             ],
           ),
         ),
@@ -671,6 +746,16 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
     selectedDayNames.sort((a, b) => days.indexOf(a).compareTo(days.indexOf(b)));
     
     return selectedDayNames.join(', ');
+  }
+  
+  String _getDaySuffix(int day) {
+    if (day >= 11 && day <= 13) return 'th';
+    switch (day % 10) {
+      case 1: return 'st';
+      case 2: return 'nd';
+      case 3: return 'rd';
+      default: return 'th';
+    }
   }
 
   // Step 3: Category and Reward
@@ -826,10 +911,19 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
   // Step 4: Review
   Widget _buildStep4Review() {
     final childrenProvider = Provider.of<ChildrenProvider>(context);
-    final selectedChild = childrenProvider.children.firstWhere(
-      (c) => c.id == _selectedChildId,
-      orElse: () => childrenProvider.children.first,
-    );
+    
+    // Get all selected children
+    final childrenToAssign = _selectedChildIds.isNotEmpty 
+      ? childrenProvider.children.where((c) => _selectedChildIds.contains(c.userId)).toList()
+      : (_selectedChildId != null 
+        ? childrenProvider.children.where((c) => c.userId == _selectedChildId).toList()
+        : []);
+    
+    final selectedChildrenNames = childrenToAssign.isNotEmpty
+      ? childrenToAssign.map((c) => c.name).join(', ')
+      : 'No child selected';
+    
+    final selectedChild = childrenToAssign.isNotEmpty ? childrenToAssign.first : null;
     
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacingL),
@@ -874,7 +968,13 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                   const SizedBox(height: AppTheme.spacingL),
                   
                   // Details
-                  _buildReviewRow(Icons.person, 'Assigned to', selectedChild.name),
+                  _buildReviewRow(
+                    Icons.person, 
+                    'Assigned to', 
+                    childrenToAssign.length > 1 
+                      ? '${childrenToAssign.length} children: $selectedChildrenNames'
+                      : selectedChildrenNames,
+                  ),
                   const SizedBox(height: AppTheme.spacingM),
                   _buildReviewRow(
                     Icons.calendar_today,
@@ -901,7 +1001,9 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
                       'Repeats',
                       _recurringPattern.toUpperCase() + 
                         (_recurringPattern == 'weekly' && _selectedWeekDays.isNotEmpty 
-                          ? ' (${_getSelectedDaysText()})' 
+                          ? ' (${_getSelectedDaysText()})'
+                          : _recurringPattern == 'monthly'
+                          ? ' (Day $_selectedDayOfMonth${_getDaySuffix(_selectedDayOfMonth)})'
                           : ''),
                     ),
                   ],
@@ -1018,9 +1120,9 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         return;
       }
     } else if (_currentStep == 1) {
-      if (_selectedChildId == null) {
+      if (_selectedChildIds.isEmpty && _selectedChildId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a child')),
+          const SnackBar(content: Text('Please select at least one child')),
         );
         return;
       }
@@ -1083,32 +1185,62 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         _selectedDueTime.minute,
       );
 
-      final task = Task(
-        id: widget.existingTask?.id ?? 'task_${DateTime.now().millisecondsSinceEpoch}',
-        parentId: authProvider.currentUser?.id ?? 'parent1',
-        childId: _selectedChildId!,
-        title: _titleController.text.trim(),
-        description: _descriptionController.text.trim(),
-        category: _selectedCategory,
-        dueDate: dueDateTime,
-        rewardAmount: (int.tryParse(_rewardController.text) ?? 0).toDouble(),
-        status: widget.existingTask?.status ?? TaskStatus.pending,
-        isRecurring: _isRecurring,
-        recurringPattern: _isRecurring ? _recurringPattern : null,
-        createdAt: widget.existingTask?.createdAt ?? DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      // Get all children to assign to
+      final childrenToAssign = _selectedChildIds.isNotEmpty 
+        ? _selectedChildIds.toList() 
+        : (_selectedChildId != null ? [_selectedChildId!] : []);
 
       if (isEditing) {
+        // When editing, only update the single task
+        final task = Task(
+          id: widget.existingTask!.id,
+          parentId: authProvider.currentUser?.id ?? 'parent1',
+          childId: _selectedChildId!,
+          title: _titleController.text.trim(),
+          description: _descriptionController.text.trim(),
+          category: _selectedCategory,
+          dueDate: dueDateTime,
+          rewardAmount: (int.tryParse(_rewardController.text) ?? 0).toDouble(),
+          status: widget.existingTask!.status,
+          isRecurring: _isRecurring,
+          recurringPattern: _isRecurring ? _recurringPattern : null,
+          createdAt: widget.existingTask!.createdAt,
+          updatedAt: DateTime.now(),
+        );
         tasksProvider.updateTask(task);
       } else {
-        tasksProvider.addTask(task);
+        // When creating new, create one task for each selected child
+        for (var childId in childrenToAssign) {
+          final task = Task(
+            id: 'task_${DateTime.now().millisecondsSinceEpoch}_$childId',
+            parentId: authProvider.currentUser?.id ?? 'parent1',
+            childId: childId,
+            title: _titleController.text.trim(),
+            description: _descriptionController.text.trim(),
+            category: _selectedCategory,
+            dueDate: dueDateTime,
+            rewardAmount: (int.tryParse(_rewardController.text) ?? 0).toDouble(),
+            status: TaskStatus.pending,
+            isRecurring: _isRecurring,
+            recurringPattern: _isRecurring ? _recurringPattern : null,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          );
+          tasksProvider.addTask(task);
+          // Small delay between tasks to ensure unique IDs
+          await Future.delayed(const Duration(milliseconds: 10));
+        }
       }
 
       if (mounted) {
+        final tasksCreatedCount = childrenToAssign.length;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isEditing ? 'Task updated successfully!' : 'Task created successfully!'),
+            content: Text(isEditing 
+              ? 'Task updated successfully!' 
+              : tasksCreatedCount > 1 
+                ? 'Task assigned to $tasksCreatedCount children successfully!'
+                : 'Task created successfully!'),
             backgroundColor: Colors.green,
           ),
         );
