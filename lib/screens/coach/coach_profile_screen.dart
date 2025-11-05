@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../services/auth_service.dart';
 
 class CoachProfileScreen extends StatefulWidget {
   const CoachProfileScreen({super.key});
@@ -394,12 +396,22 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
           updatedAt: DateTime.now(),
         );
         
-        // Save to AuthProvider (this persists the data)
-        authProvider.setUser(updatedUser);
+        // Update AuthProvider (this persists the data in memory)
+        // The user data will be updated
         
-        // Save to Firebase
+        // Save to Firebase via AuthService
         try {
-          await authProvider.updateUserProfile(updatedUser);
+          final authService = AuthService();
+          // In production, add updateUserPreferences method to AuthService
+          // For now, we use the workaround of updating via Firestore directly
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUser.id)
+              .update({'preferences': updatedPreferences, 'updatedAt': FieldValue.serverTimestamp()});
+          
+          // Update local auth provider
+          await authProvider.refreshUser();
+          
           print('✓ Coach profile saved to Firebase');
         } catch (e) {
           print('Error saving to Firebase: $e');
