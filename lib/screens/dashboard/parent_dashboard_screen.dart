@@ -38,15 +38,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
       });
     });
     
-    // Load children from Firebase when dashboard loads
+    // Load children and tasks from Firebase when dashboard loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
       final parentId = authProvider.currentUser?.id;
       
       if (parentId != null) {
+        print('🔄 Loading data for parent: $parentId');
         childrenProvider.loadChildren(parentId);
-        print('Loading children for parent: $parentId');
+        tasksProvider.loadTasksForParent(parentId);
       }
     });
   }
