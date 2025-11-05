@@ -10,6 +10,8 @@ import '../../models/class_model.dart';
 import '../../models/payment_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/dev_utils.dart';
+import '../../screens/children/add_edit_child_screen.dart';
+import '../../screens/tasks/create_task_wizard.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -90,12 +92,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
             onPressed: () => DevUtils.showDebugMenu(context),
           ),
           IconButton(
+            icon: const Icon(Icons.home_outlined),
+            tooltip: 'Home Page',
+            onPressed: () => context.go('/'),
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();
               if (context.mounted) {
-                context.go('/login');
+                context.go('/');
               }
             },
           ),
@@ -401,7 +408,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                     ],
                     onSelected: (value) {
                       if (value == 'edit') {
-                        context.push('/edit-child');
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AddEditChildScreen(child: childItem),
+                          ),
+                        );
                       }
                     },
                   ),
