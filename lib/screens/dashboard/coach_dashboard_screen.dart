@@ -148,6 +148,11 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.school),
+            tooltip: 'Manage Students',
+            onPressed: () => context.push('/manage-students'),
+          ),
+          IconButton(
             icon: const Icon(Icons.person),
             tooltip: 'Coach Profile',
             onPressed: () => context.push('/coach-profile'),
