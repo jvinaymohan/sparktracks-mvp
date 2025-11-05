@@ -60,6 +60,28 @@ class FirestoreService {
   
   // ============ TASKS ============
   
+  Future<List<Task>> getTasksForParent(String parentId) async {
+    final snapshot = await _firestore
+        .collection('tasks')
+        .where('parentId', isEqualTo: parentId)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Task.fromJson(doc.data()))
+        .toList();
+  }
+  
+  Future<List<Task>> getTasksForChild(String childId) async {
+    final snapshot = await _firestore
+        .collection('tasks')
+        .where('childId', isEqualTo: childId)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Task.fromJson(doc.data()))
+        .toList();
+  }
+  
   Future<void> addTask(Task task) async {
     await _firestore.collection('tasks').doc(task.id).set(task.toJson());
   }
