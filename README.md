@@ -1,11 +1,13 @@
 # 🎓 Sparktracks MVP - Comprehensive Learning Management Platform
 
-## 🚀 STATUS: PRODUCTION-READY & LIVE! v2.2.0
+## 🚀 STATUS: PRODUCTION-READY & LIVE! v2.3.0
 
 A modern, multi-tenant learning management platform built with Flutter and Firebase, designed to connect parents, children, and coaches in a seamless educational ecosystem.
 
 **🎉 LIVE NOW:** https://sparktracks-mvp.web.app/  
-**📱 Landing Page:** https://jvinaymohan.github.io/sparktracks-mvp/
+**📱 Landing Page:** https://jvinaymohan.github.io/sparktracks/
+
+**🎁 Early Access Offer:** Lifetime access for early users in exchange for feedback!
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.8.1-blue.svg)
 ![Firebase](https://img.shields.io/badge/Firebase-Enabled-orange.svg)
@@ -29,7 +31,24 @@ Sparktracks MVP empowers families and educators to collaborate effectively throu
 
 ---
 
-## ✨ Key Features
+## 🎉 Latest Features (v2.3.0 - November 5, 2025)
+
+### Just Deployed Today:
+- ✨ **Coach-Specific Calendar** - Shows only classes (not child tasks)
+- ✨ **Enhanced Coach Onboarding** - Welcome dialog with quick-start guide
+- ✨ **Student Management Highlighted** - Clear path to create/manage students
+- ✨ **Multi-Child Task Assignment** - Select multiple children for one task
+- ✨ **Weekly Day Selection** - Choose specific days for weekly tasks
+- ✨ **Monthly Day Selection** - Choose day of month (1st-31st)
+- ✨ **Dynamic Currency Symbols** - Updates in real-time ($, €, ₹, etc.)
+- ✨ **Edit Class Functionality** - Modify existing classes
+- ✨ **Assign Students to Classes** - Multi-select with search
+- ✨ **Clean Financial Ledger** - No mock data, professional experience
+- ✨ **Early Access Messaging** - Clear lifetime offer positioning
+
+---
+
+## ✨ All Features
 
 ### 👨‍👩‍👧 Parent Features
 

@@ -30,6 +30,7 @@ import 'screens/dashboard/coach_dashboard_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/settings/notification_settings_screen.dart';
 import 'screens/calendar/calendar_screen.dart';
+import 'screens/calendar/coach_calendar_screen.dart';
 import 'screens/feedback/feedback_screen.dart';
 import 'screens/tasks/create_task_wizard.dart';
 import 'screens/tasks/child_task_view_screen.dart';
@@ -191,6 +192,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/calendar',
           builder: (context, state) => const CalendarScreen(),
+        ),
+        GoRoute(
+          path: '/coach-calendar',
+          builder: (context, state) => const CoachCalendarScreen(),
         ),
         GoRoute(
           path: '/feedback',

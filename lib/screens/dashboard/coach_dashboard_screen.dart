@@ -162,7 +162,8 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
-            onPressed: () => context.go('/calendar'),
+            onPressed: () => context.go('/coach-calendar'),
+            tooltip: 'My Classes Calendar',
           ),
           IconButton(
             icon: const Icon(Icons.feedback),
