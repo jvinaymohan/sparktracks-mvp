@@ -409,8 +409,8 @@ class _CoachProfileScreenState extends State<CoachProfileScreen> {
               .doc(currentUser.id)
               .update({'preferences': updatedPreferences, 'updatedAt': FieldValue.serverTimestamp()});
           
-          // Update local auth provider
-          await authProvider.refreshUser();
+          // Reload user data to reflect changes
+          await authProvider.checkAuthStatus();
           
           print('✓ Coach profile saved to Firebase');
         } catch (e) {
