@@ -15,50 +15,8 @@ class FinancialLedgerScreen extends StatefulWidget {
 class _FinancialLedgerScreenState extends State<FinancialLedgerScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   
-  // Mock data - would come from API in real app
-  final List<Payment> _allTransactions = [
-    Payment(
-      id: '1',
-      userId: 'user1',
-      classId: 'class1',
-      amount: 25.00,
-      currency: 'USD',
-      type: PaymentType.classFee,
-      status: PaymentStatus.completed,
-      method: PaymentMethod.card,
-      transactionId: 'TXN001',
-      notes: 'Soccer Training - Week 1',
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-      completedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Payment(
-      id: '2',
-      userId: 'user1',
-      amount: 15.00,
-      currency: 'USD',
-      type: PaymentType.bonus,
-      status: PaymentStatus.completed,
-      method: PaymentMethod.points,
-      notes: 'Task completion bonus - 1500 points',
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 5)),
-      completedAt: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    Payment(
-      id: '3',
-      userId: 'user1',
-      classId: 'class2',
-      amount: 30.00,
-      currency: 'USD',
-      type: PaymentType.classFee,
-      status: PaymentStatus.pending,
-      method: PaymentMethod.card,
-      notes: 'Piano Lessons - Month 1',
-      createdAt: DateTime.now().subtract(const Duration(days: 1)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-  ];
+  // Payment data - loaded from Firebase (starts empty for new users)
+  final List<Payment> _allTransactions = [];
 
   @override
   void initState() {
