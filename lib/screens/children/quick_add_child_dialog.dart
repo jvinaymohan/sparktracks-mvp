@@ -19,8 +19,11 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _ageController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   String _selectedColorCode = '#4CAF50';
   bool _isSubmitting = false;
+  bool _useCustomCredentials = false;
 
   final List<Map<String, dynamic>> _quickColors = [
     {'color': '#4CAF50', 'name': 'Green', 'emoji': '💚'},
@@ -35,6 +38,8 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
   void dispose() {
     _nameController.dispose();
     _ageController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -53,12 +58,21 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
       final age = int.tryParse(_ageController.text) ?? 10;
       final birthDate = DateTime(now.year - age, now.month, now.day);
       
-      // Auto-generate simple credentials
+      // Use custom credentials or auto-generate
       final childName = _nameController.text.trim();
-      final firstName = childName.split(' ').first.toLowerCase();
-      final randomNum = DateTime.now().millisecondsSinceEpoch % 100000;
-      final childEmail = '$firstName$randomNum@sparktracks.child';
-      final childPassword = '${firstName.substring(0, 1).toUpperCase()}${firstName.substring(1)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      String childEmail;
+      String childPassword;
+      
+      if (_useCustomCredentials) {
+        childEmail = _emailController.text.trim();
+        childPassword = _passwordController.text.trim();
+      } else {
+        // Auto-generate simple credentials
+        final firstName = childName.split(' ').first.toLowerCase();
+        final randomNum = DateTime.now().millisecondsSinceEpoch % 100000;
+        childEmail = '$firstName$randomNum@sparktracks.child';
+        childPassword = '${firstName.substring(0, 1).toUpperCase()}${firstName.substring(1)}${now.month.toString().padLeft(2, '0')}${now.day.toString().padLeft(2, '0')}';
+      }
 
       // Create Firebase user first
       final firebaseUser = await authService.register(
@@ -309,6 +323,102 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
                   ),
                   const SizedBox(height: 24),
                   
+                  // Custom Credentials Toggle
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.primaryColor.withOpacity(0.2)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Set custom login credentials',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.primaryColor,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _useCustomCredentials 
+                                    ? 'Choose email & password' 
+                                    : 'Auto-generate (recommended)',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: AppTheme.neutral600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Switch(
+                          value: _useCustomCredentials,
+                          onChanged: (value) => setState(() => _useCustomCredentials = value),
+                          activeColor: AppTheme.primaryColor,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Custom Credentials Fields (if enabled)
+                  if (_useCustomCredentials) ...[
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email, color: AppTheme.primaryColor),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: AppTheme.neutral100,
+                      ),
+                      keyboardType: TextInputType.emailAddress,
+                      validator: (value) {
+                        if (_useCustomCredentials && (value == null || value.trim().isEmpty)) {
+                          return 'Please enter an email';
+                        }
+                        if (_useCustomCredentials && !value!.contains('@')) {
+                          return 'Please enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _passwordController,
+                      decoration: InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock, color: AppTheme.primaryColor),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: AppTheme.neutral100,
+                        helperText: 'At least 6 characters',
+                      ),
+                      obscureText: true,
+                      validator: (value) {
+                        if (_useCustomCredentials && (value == null || value.trim().isEmpty)) {
+                          return 'Please enter a password';
+                        }
+                        if (_useCustomCredentials && value!.length < 6) {
+                          return 'Password must be at least 6 characters';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                  
                   // Color Selection
                   const Text(
                     'Choose a color:',
@@ -359,29 +469,30 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
                   ),
                   const SizedBox(height: 24),
                   
-                  // Info Box
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppTheme.accentColor.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.info_outline, color: AppTheme.accentColor, size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            'Login credentials will be auto-generated and shown after creation.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppTheme.accentColor.withOpacity(0.9),
+                  // Info Box (only show if auto-generating)
+                  if (!_useCustomCredentials)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: AppTheme.accentColor.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, color: AppTheme.accentColor, size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'Login credentials will be auto-generated and shown after creation.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: AppTheme.accentColor.withOpacity(0.9),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 32),
                   
                   // Action Buttons
