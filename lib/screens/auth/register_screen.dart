@@ -172,7 +172,7 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
         const SizedBox(height: AppTheme.spacingXL),
         
         // Benefits
-        _buildBenefitRow(Icons.check_circle, '100% Free Forever'),
+        _buildBenefitRow(Icons.card_giftcard, 'Early Access - Lifetime Access'),
         const SizedBox(height: AppTheme.spacingM),
         _buildBenefitRow(Icons.rocket_launch, 'Start Using Immediately'),
         const SizedBox(height: AppTheme.spacingM),

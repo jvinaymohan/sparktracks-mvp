@@ -271,6 +271,11 @@ class _QuickAddChildDialogState extends State<QuickAddChildDialog> {
                       if (value == null || value.trim().isEmpty) {
                         return 'Please enter child\'s name';
                       }
+                      // Check for special characters (allow only letters, spaces, hyphens, apostrophes)
+                      final specialCharRegex = RegExp(r"^[a-zA-Z\s\-']+$");
+                      if (!specialCharRegex.hasMatch(value.trim())) {
+                        return 'Name can only contain letters, spaces, hyphens, and apostrophes';
+                      }
                       return null;
                     },
                     autofocus: true,

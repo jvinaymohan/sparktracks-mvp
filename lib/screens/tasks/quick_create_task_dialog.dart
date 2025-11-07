@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -19,7 +20,7 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
   final _titleController = TextEditingController();
   String? _selectedChildId;
   String _selectedCategory = 'Chores';
-  double _rewardPoints = 5.0;
+  double _rewardPoints = 10.0;
   bool _isSubmitting = false;
 
   final List<Map<String, dynamic>> _quickCategories = [
@@ -301,17 +302,17 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 12),
-                  Row(
+                      Row(
                     children: [
                       Expanded(
                         child: Slider(
                           value: _rewardPoints,
-                          min: 1,
-                          max: 50,
-                          divisions: 49,
+                          min: 10,
+                          max: 100,
+                          divisions: 9,
                           label: '${_rewardPoints.toInt()} points',
                           activeColor: AppTheme.successColor,
-                          onChanged: (value) => setState(() => _rewardPoints = value),
+                          onChanged: (value) => setState(() => _rewardPoints = ((value / 10).round() * 10).toDouble()),
                         ),
                       ),
                       Container(
@@ -385,7 +386,7 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
                     child: TextButton(
                       onPressed: () {
                         Navigator.pop(context);
-                        // Navigate to full wizard for advanced options
+                        context.go('/create-task');
                       },
                       child: const Text('Need more options? Use advanced task creator →'),
                     ),

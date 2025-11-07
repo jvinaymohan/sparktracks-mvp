@@ -339,25 +339,15 @@ class SparktracksMVP extends StatelessWidget {
           return '/';
         }
         
-        // Check if user needs to see welcome screen (first time only) - CHECK THIS FIRST!
-        if (isLoggedIn && currentUser != null && 
-            state.matchedLocation != '/welcome' && 
-            state.matchedLocation != '/onboarding') {
+        // Check if user needs to see welcome screen (first time only)
+        if (isLoggedIn && currentUser != null && state.matchedLocation != '/welcome') {
           final hasSeenWelcome = currentUser.preferences['hasSeenWelcome'] ?? false;
           if (!hasSeenWelcome) {
             return '/welcome';
           }
         }
         
-        // If logged in but needs onboarding AND has seen welcome, redirect to onboarding
-        if (isLoggedIn && isOnboarding && 
-            state.matchedLocation != '/onboarding' && 
-            state.matchedLocation != '/welcome') {
-          final hasSeenWelcome = currentUser?.preferences['hasSeenWelcome'] ?? false;
-          if (hasSeenWelcome) {
-            return '/onboarding';
-          }
-        }
+        // Skip the old generic "/onboarding" screen - we use the good personalized welcome instead!
         
         // If logged in and on auth pages, redirect to appropriate dashboard
         if (isLoggedIn && !isOnboarding) {

@@ -54,30 +54,35 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
     super.dispose();
   }
 
-  Future<void> _markOnboardingComplete() async {
+  // Just mark welcome as seen (helper method)
+  Future<void> _markWelcomeAsSeen() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final user = authProvider.currentUser;
     
     if (user != null) {
-      // Mark onboarding as completed
       try {
         final updatedUser = user.copyWith(
           preferences: {
             ...user.preferences,
+            'hasSeenWelcome': true,
             'onboardingCompleted': true,
-            'hasSeenWelcome': true, // Mark welcome as seen
           },
         );
         await _firestoreService.updateUser(updatedUser);
-        
-        // Refresh auth state
         await authProvider.checkAuthStatus();
       } catch (e) {
-        print('Error updating onboarding status: $e');
+        print('Error marking welcome as seen: $e');
       }
     }
+  }
+
+  Future<void> _markOnboardingComplete() async {
+    await _markWelcomeAsSeen();
     
-    // Navigate to appropriate dashboard
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    
+    // Navigate to appropriate dashboard (no more dialogs!)
     if (mounted) {
       switch (user?.type) {
         case UserType.parent:
@@ -87,8 +92,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
           context.go('/child-dashboard');
           break;
         case UserType.coach:
-          // For coaches, show a dialog first to guide them
-          _showCoachGuidanceDialog();
+          context.go('/coach-dashboard');
           break;
         default:
           context.go('/');
@@ -739,8 +743,12 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                   if (!profileCompleted)
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          context.go('/coach-profile');
+                        onPressed: () async {
+                          // Mark welcome as seen, then go to profile
+                          await _markWelcomeAsSeen();
+                          if (mounted) {
+                            context.go('/coach-profile');
+                          }
                         },
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 18),
@@ -753,9 +761,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
+                          children: const [
                             Icon(Icons.edit, size: 20),
-                            const SizedBox(width: 8),
+                            SizedBox(width: 8),
                             Text('Complete Profile', style: TextStyle(fontWeight: FontWeight.bold)),
                           ],
                         ),
@@ -764,7 +772,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                   if (!profileCompleted) const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: _markOnboardingComplete,
+                      onPressed: () async {
+                        // Skip directly to dashboard
+                        await _markWelcomeAsSeen();
+                        if (mounted) {
+                          context.go('/coach-dashboard');
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
                         backgroundColor: Colors.white,
@@ -779,10 +793,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                         children: [
                           Text(
                             profileCompleted ? 'Go to Dashboard' : 'Skip for Now',
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                           const SizedBox(width: 8),
-                          Icon(Icons.arrow_forward, size: 20),
+                          const Icon(Icons.arrow_forward, size: 20),
                         ],
                       ),
                     ),
