@@ -1,0 +1,253 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isParent(parentId) {
+      return isAuthenticated() && request.auth.uid == parentId;
+    }
+    
+    function isCoach(coachId) {
+      return isAuthenticated() && request.auth.uid == coachId;
+    }
+    
+    function isAdmin() {
+      return isAuthenticated() && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.type == 'admin';
+    }
+    
+    // Users collection - users can only read/write their own data
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated();
+      allow update: if isOwner(userId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Children/Students collection
+    match /children/{childId} {
+      allow read: if isAuthenticated() && (
+        // Parent can read their children
+        resource.data.parentId == request.auth.uid ||
+        // Child can read their own data
+        resource.data.userId == request.auth.uid ||
+        // Coach can read students they created
+        resource.data.createdByCoachId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create: if isAuthenticated() && (
+        // Parents can create children
+        request.resource.data.parentId == request.auth.uid ||
+        // Coaches can create students
+        request.resource.data.createdByCoachId == request.auth.uid ||
+        // Admin can create
+        isAdmin()
+      );
+      
+      allow update: if isAuthenticated() && (
+        // Parent can update their children
+        resource.data.parentId == request.auth.uid ||
+        // Coach can update students they created
+        resource.data.createdByCoachId == request.auth.uid ||
+        // Admin can update
+        isAdmin()
+      );
+      
+      allow delete: if isAuthenticated() && (
+        resource.data.parentId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    // Tasks collection
+    match /tasks/{taskId} {
+      allow read: if isAuthenticated() && (
+        // Parent can read their tasks
+        resource.data.parentId == request.auth.uid ||
+        // Child can read tasks assigned to them
+        resource.data.childId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create: if isAuthenticated() && (
+        // Parents can create tasks for their children
+        request.resource.data.parentId == request.auth.uid ||
+        // Admin can create
+        isAdmin()
+      );
+      
+      allow update: if isAuthenticated() && (
+        // Parent can update their tasks
+        resource.data.parentId == request.auth.uid ||
+        // Child can update status (complete task)
+        (resource.data.childId == request.auth.uid && 
+         request.resource.data.status in ['completed']) ||
+        // Admin can update
+        isAdmin()
+      );
+      
+      allow delete: if isAuthenticated() && (
+        resource.data.parentId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    // Classes collection
+    match /classes/{classId} {
+      allow read: if isAuthenticated(); // All authenticated users can browse classes
+      
+      allow create: if isAuthenticated() && (
+        // Coaches can create classes
+        request.resource.data.coachId == request.auth.uid ||
+        // Admin can create
+        isAdmin()
+      );
+      
+      allow update: if isAuthenticated() && (
+        // Coach can update their own classes
+        resource.data.coachId == request.auth.uid ||
+        // Admin can update
+        isAdmin()
+      );
+      
+      allow delete: if isAuthenticated() && (
+        resource.data.coachId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    // Enrollments collection
+    match /enrollments/{enrollmentId} {
+      allow read: if isAuthenticated() && (
+        // Parents can read enrollments for their children
+        resource.data.parentId == request.auth.uid ||
+        // Students can read their own enrollments
+        resource.data.studentId == request.auth.uid ||
+        // Coaches can read enrollments for their classes
+        exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.coachId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create: if isAuthenticated() && (
+        // Parents can enroll their children
+        request.resource.data.parentId == request.auth.uid ||
+        // Coaches can enroll students
+        exists(/databases/$(database)/documents/classes/$(request.resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.coachId == request.auth.uid ||
+        // Admin can create
+        isAdmin()
+      );
+      
+      allow update, delete: if isAuthenticated() && (
+        resource.data.parentId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    // Attendance records
+    match /attendance/{attendanceId} {
+      allow read: if isAuthenticated() && (
+        // Parents can read attendance for their children
+        exists(/databases/$(database)/documents/children/$(resource.data.studentId)) &&
+        get(/databases/$(database)/documents/children/$(resource.data.studentId)).data.parentId == request.auth.uid ||
+        // Coaches can read attendance for their classes
+        exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.coachId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create, update: if isAuthenticated() && (
+        // Coaches can mark attendance for their classes
+        exists(/databases/$(database)/documents/classes/$(request.resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(request.resource.data.classId)).data.coachId == request.auth.uid ||
+        // Admin can manage
+        isAdmin()
+      );
+      
+      allow delete: if isAdmin();
+    }
+    
+    // Achievements collection
+    match /achievements/{achievementId} {
+      allow read: if isAuthenticated() && (
+        // Users can read their own achievements
+        resource.data.userId == request.auth.uid ||
+        // Parents can read their children's achievements
+        exists(/databases/$(database)/documents/children/$(resource.data.userId)) &&
+        get(/databases/$(database)/documents/children/$(resource.data.userId)).data.parentId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create, update, delete: if isAdmin(); // System-generated only
+    }
+    
+    // Messages collection (coach-parent messaging)
+    match /messages/{messageId} {
+      allow read: if isAuthenticated() && (
+        // Sender or recipient can read
+        resource.data.senderId == request.auth.uid ||
+        resource.data.recipientId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create: if isAuthenticated() && (
+        // Users can send messages as themselves
+        request.resource.data.senderId == request.auth.uid
+      );
+      
+      allow update, delete: if isAuthenticated() && (
+        resource.data.senderId == request.auth.uid || 
+        isAdmin()
+      );
+    }
+    
+    // Feedback collection
+    match /feedback/{feedbackId} {
+      allow read: if isAdmin(); // Only admins can read feedback
+      allow create: if isAuthenticated(); // Any user can submit feedback
+      allow update, delete: if isAdmin();
+    }
+    
+    // Payments collection
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() && (
+        // Parents can read their payments
+        resource.data.parentId == request.auth.uid ||
+        // Coaches can read payments for their classes
+        exists(/databases/$(database)/documents/classes/$(resource.data.classId)) &&
+        get(/databases/$(database)/documents/classes/$(resource.data.classId)).data.coachId == request.auth.uid ||
+        // Admin can read all
+        isAdmin()
+      );
+      
+      allow create, update: if isAuthenticated() && (
+        resource.data.parentId == request.auth.uid || 
+        isAdmin()
+      );
+      
+      allow delete: if isAdmin();
+    }
+    
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
