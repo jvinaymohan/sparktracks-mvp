@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/navigation_helper.dart';
 
 class FeedbackScreen extends StatefulWidget {
   const FeedbackScreen({super.key});
@@ -37,8 +38,12 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
         title: const Text('Feedback'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          tooltip: 'Back to Dashboard',
+          onPressed: () => NavigationHelper.goToDashboard(context),
         ),
+        actions: [
+          NavigationHelper.buildGradientHomeButton(context),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppTheme.spacingL),

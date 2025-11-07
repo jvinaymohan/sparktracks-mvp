@@ -11,6 +11,7 @@ import '../../models/attendance_model.dart';
 import '../../models/payment_model.dart';
 import '../../models/enrollment_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/navigation_helper.dart';
 
 class CoachDashboardScreen extends StatefulWidget {
   const CoachDashboardScreen({super.key});
@@ -140,6 +141,24 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
     return Scaffold(
       appBar: AppBar(
         title: const Text('Coach Dashboard'),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryColor, AppTheme.accentColor],
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.home, color: Colors.white),
+            tooltip: 'My Dashboard',
+            onPressed: () {
+              setState(() {
+                _tabController.index = 0; // Go to Overview tab
+              });
+            },
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -167,19 +186,17 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ),
           IconButton(
             icon: const Icon(Icons.feedback),
+            tooltip: 'Feedback',
             onPressed: () => context.go('/feedback'),
           ),
           IconButton(
             icon: const Icon(Icons.settings),
+            tooltip: 'Settings',
             onPressed: () => context.go('/notification-settings'),
           ),
           IconButton(
-            icon: const Icon(Icons.home_outlined),
-            tooltip: 'Home Page',
-            onPressed: () => context.go('/'),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();

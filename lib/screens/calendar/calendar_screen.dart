@@ -4,9 +4,11 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/children_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/task_model.dart';
 import '../../models/student_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/navigation_helper.dart';
 
 class CalendarScreen extends StatefulWidget {
   const CalendarScreen({super.key});
@@ -233,12 +235,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Calendar'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Back to Dashboard',
+          onPressed: () => NavigationHelper.goToDashboard(context),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => context.go('/create-task'),
             tooltip: 'Create Task',
           ),
+          NavigationHelper.buildGradientHomeButton(context),
         ],
       ),
       body: Consumer2<TasksProvider, ChildrenProvider>(

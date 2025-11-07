@@ -10,6 +10,7 @@ import '../../models/task_model.dart';
 import '../../models/class_model.dart';
 import '../../models/payment_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/navigation_helper.dart';
 
 class ChildDashboardScreen extends StatefulWidget {
   const ChildDashboardScreen({super.key});
@@ -53,6 +54,24 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Activities'),
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryColor, AppTheme.accentColor],
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.home, color: Colors.white),
+            tooltip: 'My Dashboard',
+            onPressed: () {
+              setState(() {
+                _tabController.index = 0; // Go to Overview tab
+              });
+            },
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -87,11 +106,6 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
             icon: const Icon(Icons.settings),
             tooltip: 'Settings',
             onPressed: () => context.go('/notification-settings'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            tooltip: 'Home Page',
-            onPressed: () => context.go('/'),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
