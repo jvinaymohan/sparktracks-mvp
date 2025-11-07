@@ -197,7 +197,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                               style: AppTheme.bodySmall,
                             ),
                             Text(
-                              'Password: admin123',
+                              'Password: ChangeThisPassword2024!',
                               style: AppTheme.bodySmall,
                             ),
                           ],
