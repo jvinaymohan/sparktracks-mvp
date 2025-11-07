@@ -65,7 +65,13 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parent Dashboard'),
+        title: Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            final parentName = authProvider.currentUser?.name ?? 'Parent';
+            final firstName = parentName.split(' ').first;
+            return Text('Welcome, $firstName');
+          },
+        ),
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/user_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../utils/navigation_helper.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -50,8 +51,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
         title: const Text('Notification Settings'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(),
+          tooltip: 'Back to Dashboard',
+          onPressed: () => NavigationHelper.goToDashboard(context),
         ),
+        actions: [
+          NavigationHelper.buildGradientHomeButton(context),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(AppTheme.spacingL),

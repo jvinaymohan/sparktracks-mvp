@@ -30,14 +30,16 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
     
-    // Load tasks from Firebase when dashboard loads
+    // CRITICAL: Clear any cached tasks and load fresh data for this child
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
       final childId = authProvider.currentUser?.id;
       
       if (childId != null) {
-        print('🔄 Loading tasks for child: $childId');
+        // CRITICAL: Clear all tasks first to prevent showing wrong child's tasks
+        tasksProvider.clearAllTasks();
+        print('🔄 Cleared all tasks, loading fresh for child: $childId');
         tasksProvider.loadTasksForChild(childId);
       }
     });
