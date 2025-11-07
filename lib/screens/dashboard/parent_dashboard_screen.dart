@@ -66,15 +66,24 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
     return Scaffold(
       appBar: AppBar(
         title: const Text('Parent Dashboard'),
-        leading: _selectedIndex != 0 ? IconButton(
-          icon: const Icon(Icons.home),
-          tooltip: 'Home',
-          onPressed: () {
-            setState(() {
-              _tabController.index = 0;
-            });
-          },
-        ) : null,
+        leading: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [AppTheme.primaryColor, AppTheme.accentColor],
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: IconButton(
+            icon: const Icon(Icons.home, color: Colors.white),
+            tooltip: 'Home Dashboard',
+            onPressed: () {
+              setState(() {
+                _tabController.index = 0; // Always go to Overview tab
+              });
+            },
+          ),
+        ),
         bottom: TabBar(
           controller: _tabController,
           tabs: const [
@@ -92,10 +101,12 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
+            tooltip: 'Calendar',
             onPressed: () => context.go('/calendar'),
           ),
           IconButton(
             icon: const Icon(Icons.feedback),
+            tooltip: 'Feedback',
             onPressed: () => context.go('/feedback'),
           ),
           IconButton(

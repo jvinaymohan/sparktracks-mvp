@@ -106,6 +106,7 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
         title: Text(isEditing ? 'Edit Task' : 'Create Task'),
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Cancel',
           onPressed: () {
             if (context.canPop()) {
               context.pop();
@@ -114,6 +115,22 @@ class _CreateTaskWizardState extends State<CreateTaskWizard> {
             }
           },
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [AppTheme.primaryColor, AppTheme.accentColor],
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.home, color: Colors.white),
+              tooltip: 'Back to Dashboard',
+              onPressed: () => context.go('/parent-dashboard'),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
