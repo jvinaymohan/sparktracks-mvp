@@ -17,6 +17,8 @@ A modern, multi-tenant learning management platform built with Flutter and Fireb
 
 **🎉 Built with ❤️ | User-Tested | Enterprise-Ready | 95% Production Ready!**
 
+📝 **[View Complete Release Notes](RELEASE_NOTES.md)** | 🎯 **[View In-App Release Notes](https://sparktracks-mvp.web.app/admin/dashboard)** (Admin Panel → Releases Tab)
+
 ---
 
 ## 🌟 Overview
