@@ -1,0 +1,15 @@
+{
+  "name": "sparktracks-mvp",
+  "version": "2.5.3",
+  "description": "Sparktracks Learning Management Platform",
+  "scripts": {
+    "sync-releases": "node scripts/sync_release_notes.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": ["learning", "education", "task-management"],
+  "author": "Sparktracks Team",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-admin": "^12.0.0"
+  }
+}

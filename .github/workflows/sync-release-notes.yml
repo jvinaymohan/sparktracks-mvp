@@ -1,0 +1,52 @@
+name: Sync Release Notes to Firestore
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'RELEASE_NOTES.md'
+      - 'lib/**'
+      - '.github/workflows/sync-release-notes.yml'
+  
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync-release-notes:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Get full history for git log
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          npm install firebase-admin
+      
+      - name: Create Firebase credentials
+        run: |
+          echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > serviceAccountKey.json
+      
+      - name: Sync release notes
+        run: |
+          node scripts/sync_release_notes.js
+        env:
+          GOOGLE_APPLICATION_CREDENTIALS: ./serviceAccountKey.json
+      
+      - name: Cleanup credentials
+        if: always()
+        run: |
+          rm -f serviceAccountKey.json
+      
+      - name: Summary
+        run: |
+          echo "✅ Release notes synced to Firestore"
+          echo "📝 View at: https://sparktracks-mvp.web.app/admin/dashboard"
+
