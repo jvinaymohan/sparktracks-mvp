@@ -205,6 +205,12 @@ service cloud.firestore {
       allow create, update, delete: if isAuthenticated(); // Admins can manage
     }
     
+    // Release notes collection (version tracking)
+    match /releaseNotes/{noteId} {
+      allow read: if isAuthenticated(); // Any authenticated user can read
+      allow write: if isAuthenticated(); // Admins can write (admin panel + sync script)
+    }
+    
     // Payments collection
     match /payments/{paymentId} {
       allow read: if isAuthenticated() && (
