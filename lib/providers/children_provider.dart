@@ -34,6 +34,24 @@ class ChildrenProvider extends ChangeNotifier {
     return _children.where((child) => child.parentId == parentId).toList();
   }
   
+  /// Get students visible to a specific coach (PRIVACY FILTER)
+  /// Returns only students that:
+  /// 1. Were created by this coach (createdByCoachId == coachId)
+  /// 2. OR are enrolled in this coach's classes
+  List<Student> getStudentsVisibleToCoach(String coachId, List<String> enrolledStudentIds) {
+    return _children.where((student) {
+      // Student was created by this coach
+      if (student.createdByCoachId == coachId) {
+        return true;
+      }
+      // Student is enrolled in one of this coach's classes
+      if (enrolledStudentIds.contains(student.userId)) {
+        return true;
+      }
+      return false;
+    }).toList();
+  }
+  
   // Clear all children (for testing/reset purposes)
   void clearAllChildren() {
     _children.clear();

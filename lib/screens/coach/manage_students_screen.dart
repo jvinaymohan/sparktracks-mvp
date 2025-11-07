@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../providers/enrollment_provider.dart';
+import '../../providers/classes_provider.dart';
 import '../../models/student_model.dart';
 import '../../models/user_model.dart';
 import '../../services/auth_service.dart';
@@ -55,10 +56,29 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     });
 
     try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+      final enrollmentProvider = Provider.of<EnrollmentProvider>(context, listen: false);
+      final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+      final currentCoachId = authProvider.currentUser?.id ?? '';
       
-      // Search in existing children
-      final results = childrenProvider.children
+      // Get enrolled student IDs from this coach's classes (PRIVACY FILTER)
+      final coachClassIds = classesProvider.classes
+          .where((c) => c.coachId == currentCoachId)
+          .map((c) => c.id)
+          .toSet();
+      final enrolledStudentIds = enrollmentProvider.enrollments
+          .where((e) => coachClassIds.contains(e.classId))
+          .map((e) => e.studentId)
+          .toList();
+      
+      // PRIVACY: Only search students visible to this coach
+      final visibleStudents = childrenProvider.getStudentsVisibleToCoach(
+        currentCoachId,
+        enrolledStudentIds,
+      );
+      
+      final results = visibleStudents
           .where((child) => child.email.toLowerCase().contains(email.toLowerCase()))
           .toList();
       
@@ -119,6 +139,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
         id: 'student_${DateTime.now().millisecondsSinceEpoch}',
         userId: user.id,
         parentId: coachId, // Coach acts as temporary parent
+        createdByCoachId: coachId, // PRIVACY: Track which coach created this student
         name: _nameController.text.trim(),
         email: studentEmail,
         dateOfBirth: DateTime.now().subtract(Duration(days: 365 * (int.tryParse(_ageController.text) ?? 10))),

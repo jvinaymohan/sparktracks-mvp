@@ -19,6 +19,7 @@ class Student {
   final String userId;
   final String parentId;
   final String? coachId;
+  final String? createdByCoachId; // Track which coach created this student (for privacy)
   final String name;
   final String email;
   final String? phone;
@@ -38,6 +39,7 @@ class Student {
     required this.userId,
     required this.parentId,
     this.coachId,
+    this.createdByCoachId,
     required this.name,
     required this.email,
     this.phone,
@@ -61,6 +63,7 @@ class Student {
     String? userId,
     String? parentId,
     String? coachId,
+    String? createdByCoachId,
     String? name,
     String? email,
     String? phone,
@@ -80,6 +83,7 @@ class Student {
       userId: userId ?? this.userId,
       parentId: parentId ?? this.parentId,
       coachId: coachId ?? this.coachId,
+      createdByCoachId: createdByCoachId ?? this.createdByCoachId,
       name: name ?? this.name,
       email: email ?? this.email,
       phone: phone ?? this.phone,
