@@ -9,6 +9,7 @@ import '../../utils/app_theme.dart';
 import 'admin_users_tab.dart';
 import 'admin_feedback_tab.dart';
 import 'admin_roadmap_tab.dart';
+import 'admin_release_notes_tab.dart';
 import 'admin_settings_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     const AdminUsersTab(),
     const AdminFeedbackTab(),
     const AdminRoadmapTab(),
+    const AdminReleaseNotesTab(),
     const AdminSettingsTab(),
   ];
 
@@ -107,6 +109,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               NavigationRailDestination(
                 icon: Icon(Icons.map),
                 label: Text('Roadmap'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.assignment),
+                label: Text('Releases'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.settings),
