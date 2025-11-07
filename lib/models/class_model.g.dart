@@ -47,6 +47,53 @@ Class _$ClassFromJson(Map<String, dynamic> json) => Class(
   paymentSchedule: json['paymentSchedule'] as String? ?? 'per_class',
   makeUpClassesAllowed: json['makeUpClassesAllowed'] as bool? ?? false,
   shareableLink: json['shareableLink'] as String?,
+  subcategory: json['subcategory'] as String?,
+  skillLevel: $enumDecodeNullable(_$SkillLevelEnumMap, json['skillLevel']),
+  minAge: (json['minAge'] as num?)?.toInt(),
+  maxAge: (json['maxAge'] as num?)?.toInt(),
+  minStudents: (json['minStudents'] as num?)?.toInt(),
+  currentEnrollment: (json['currentEnrollment'] as num?)?.toInt() ?? 0,
+  locationOption: $enumDecodeNullable(
+    _$ClassLocationOptionEnumMap,
+    json['locationOption'],
+  ),
+  facilityName: json['facilityName'] as String?,
+  outdoorLocation: json['outdoorLocation'] as String?,
+  travelFee: (json['travelFee'] as num?)?.toDouble(),
+  maxTravelDistance: (json['maxTravelDistance'] as num?)?.toInt(),
+  pricingModel: $enumDecodeNullable(
+    _$PricingModelEnumMap,
+    json['pricingModel'],
+  ),
+  monthlyPrice: (json['monthlyPrice'] as num?)?.toDouble(),
+  packagePrice: (json['packagePrice'] as num?)?.toDouble(),
+  packageSessions: (json['packageSessions'] as num?)?.toInt(),
+  offersTrial: json['offersTrial'] as bool? ?? false,
+  trialPrice: (json['trialPrice'] as num?)?.toDouble(),
+  trialDuration: (json['trialDuration'] as num?)?.toInt(),
+  materials:
+      (json['materials'] as List<dynamic>?)?.map((e) => e as String).toList() ??
+      const [],
+  prerequisites:
+      (json['prerequisites'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList() ??
+      const [],
+  includesProgressReports: json['includesProgressReports'] as bool? ?? false,
+  includesHomework: json['includesHomework'] as bool? ?? false,
+  includesCertificate: json['includesCertificate'] as bool? ?? false,
+  includesRecordings: json['includesRecordings'] as bool? ?? false,
+  cancellationHoursNotice:
+      (json['cancellationHoursNotice'] as num?)?.toInt() ?? 24,
+  cancellationFeePercent:
+      (json['cancellationFeePercent'] as num?)?.toDouble() ?? 0.0,
+  recurringWeekDays: (json['recurringWeekDays'] as List<dynamic>?)
+      ?.map((e) => (e as num).toInt())
+      .toList(),
+  dayOfMonth: (json['dayOfMonth'] as num?)?.toInt(),
+  totalSessionsHeld: (json['totalSessionsHeld'] as num?)?.toInt(),
+  averageAttendance: (json['averageAttendance'] as num?)?.toDouble(),
+  studentRating: (json['studentRating'] as num?)?.toDouble(),
 );
 
 Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
@@ -80,6 +127,37 @@ Map<String, dynamic> _$ClassToJson(Class instance) => <String, dynamic>{
   'paymentSchedule': instance.paymentSchedule,
   'makeUpClassesAllowed': instance.makeUpClassesAllowed,
   'shareableLink': instance.shareableLink,
+  'subcategory': instance.subcategory,
+  'skillLevel': _$SkillLevelEnumMap[instance.skillLevel],
+  'minAge': instance.minAge,
+  'maxAge': instance.maxAge,
+  'minStudents': instance.minStudents,
+  'currentEnrollment': instance.currentEnrollment,
+  'locationOption': _$ClassLocationOptionEnumMap[instance.locationOption],
+  'facilityName': instance.facilityName,
+  'outdoorLocation': instance.outdoorLocation,
+  'travelFee': instance.travelFee,
+  'maxTravelDistance': instance.maxTravelDistance,
+  'pricingModel': _$PricingModelEnumMap[instance.pricingModel],
+  'monthlyPrice': instance.monthlyPrice,
+  'packagePrice': instance.packagePrice,
+  'packageSessions': instance.packageSessions,
+  'offersTrial': instance.offersTrial,
+  'trialPrice': instance.trialPrice,
+  'trialDuration': instance.trialDuration,
+  'materials': instance.materials,
+  'prerequisites': instance.prerequisites,
+  'includesProgressReports': instance.includesProgressReports,
+  'includesHomework': instance.includesHomework,
+  'includesCertificate': instance.includesCertificate,
+  'includesRecordings': instance.includesRecordings,
+  'cancellationHoursNotice': instance.cancellationHoursNotice,
+  'cancellationFeePercent': instance.cancellationFeePercent,
+  'recurringWeekDays': instance.recurringWeekDays,
+  'dayOfMonth': instance.dayOfMonth,
+  'totalSessionsHeld': instance.totalSessionsHeld,
+  'averageAttendance': instance.averageAttendance,
+  'studentRating': instance.studentRating,
 };
 
 const _$ClassTypeEnumMap = {
@@ -107,4 +185,27 @@ const _$ClassStatusEnumMap = {
   ClassStatus.ongoing: 'ongoing',
   ClassStatus.completed: 'completed',
   ClassStatus.cancelled: 'cancelled',
+};
+
+const _$SkillLevelEnumMap = {
+  SkillLevel.beginner: 'beginner',
+  SkillLevel.intermediate: 'intermediate',
+  SkillLevel.advanced: 'advanced',
+  SkillLevel.expert: 'expert',
+  SkillLevel.allLevels: 'all_levels',
+};
+
+const _$ClassLocationOptionEnumMap = {
+  ClassLocationOption.coachLocation: 'coach_location',
+  ClassLocationOption.studentLocation: 'student_location',
+  ClassLocationOption.online: 'online',
+  ClassLocationOption.outdoor: 'outdoor',
+  ClassLocationOption.flexible: 'flexible',
+};
+
+const _$PricingModelEnumMap = {
+  PricingModel.perSession: 'per_session',
+  PricingModel.monthly: 'monthly',
+  PricingModel.package: 'package',
+  PricingModel.flexible: 'flexible',
 };

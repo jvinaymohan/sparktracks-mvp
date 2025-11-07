@@ -3,6 +3,7 @@ import '../models/student_model.dart';
 import '../models/task_model.dart';
 import '../models/class_model.dart';
 import '../models/user_model.dart';
+import '../models/coach_profile_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -165,6 +166,49 @@ class FirestoreService {
     return query.snapshots().map((snapshot) => snapshot.docs
         .map((doc) => Class.fromJson(doc.data() as Map<String, dynamic>))
         .toList());
+  }
+  
+  // ============ COACH PROFILES (v3.0) ============
+  
+  Future<void> saveCoachProfile(CoachProfile profile) async {
+    await _firestore.collection('coachProfiles').doc(profile.id).set(profile.toJson());
+  }
+  
+  Future<CoachProfile?> getCoachProfile(String coachId) async {
+    final doc = await _firestore.collection('coachProfiles').doc(coachId).get();
+    if (!doc.exists) return null;
+    return CoachProfile.fromJson(doc.data()!);
+  }
+  
+  Future<void> updateCoachProfile(CoachProfile profile) async {
+    await _firestore.collection('coachProfiles').doc(profile.id).update(profile.toJson());
+  }
+  
+  Future<List<CoachProfile>> getAllCoachProfiles() async {
+    final snapshot = await _firestore
+        .collection('coachProfiles')
+        .where('isActive', isEqualTo: true)
+        .get();
+    return snapshot.docs.map((doc) => CoachProfile.fromJson(doc.data())).toList();
+  }
+  
+  Future<List<CoachProfile>> searchCoaches({
+    String? city,
+    String? specialization,
+    List<String>? categories,
+  }) async {
+    Query query = _firestore.collection('coachProfiles').where('isActive', isEqualTo: true);
+    
+    if (city != null) {
+      query = query.where('location.city', isEqualTo: city);
+    }
+    
+    if (categories != null && categories.isNotEmpty) {
+      query = query.where('categories', arrayContainsAny: categories);
+    }
+    
+    final snapshot = await query.get();
+    return snapshot.docs.map((doc) => CoachProfile.fromJson(doc.data() as Map<String, dynamic>)).toList();
   }
 }
 
