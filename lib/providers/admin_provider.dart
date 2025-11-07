@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/admin_user_model.dart';
 import '../models/user_model.dart';
 
@@ -39,10 +40,21 @@ class AdminProvider with ChangeNotifier {
 
   // Admin authentication
   Future<bool> loginAdmin(String email, String password) async {
-    // In production, verify against Firebase
-    // TODO: Replace with proper Firebase Admin authentication
-    // For now, this is a placeholder - change password after making repo public
+    // Check hardcoded admin credentials
     if (email == 'admin@sparktracks.com' && password == 'ChangeThisPassword2024!') {
+      try {
+        // ALSO authenticate with Firebase to get access token for Firestore
+        await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+        print('✓ Admin authenticated with Firebase');
+      } catch (e) {
+        print('⚠️ Firebase auth failed (admin user may not exist): $e');
+        print('ℹ️ Admin can login but may have permission issues with Firestore');
+        // Continue anyway - admin can still access UI, just not Firestore data
+      }
+      
       _currentAdmin = AdminUser(
         id: 'admin_1',
         email: email,
