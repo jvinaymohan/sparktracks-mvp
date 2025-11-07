@@ -14,19 +14,31 @@ class _AdminReleaseNotesTabState extends State<AdminReleaseNotesTab> {
   @override
   void initState() {
     super.initState();
+    // Force create release notes on first load
     _ensureReleaseNotesExist();
   }
 
   Future<void> _ensureReleaseNotesExist() async {
-    // Check if release notes exist, if not, create initial ones
-    final snapshot = await FirebaseFirestore.instance.collection('releaseNotes').limit(1).get();
-    
-    if (snapshot.docs.isEmpty) {
-      await _createInitialReleaseNotes();
+    try {
+      // Check if release notes exist, if not, create initial ones
+      final snapshot = await FirebaseFirestore.instance.collection('releaseNotes').limit(1).get();
+      
+      print('🔍 Checking release notes: ${snapshot.docs.length} found');
+      
+      if (snapshot.docs.isEmpty) {
+        print('📝 No release notes found, creating...');
+        await _createInitialReleaseNotes();
+        print('✅ Release notes created!');
+      } else {
+        print('✅ Release notes exist');
+      }
+    } catch (e) {
+      print('❌ Error checking release notes: $e');
     }
   }
 
   Future<void> _createInitialReleaseNotes() async {
+    print('🚀 Starting to create initial release notes...');
     final batch = FirebaseFirestore.instance.batch();
     
     // v2.5.3 - Current Release
@@ -140,7 +152,18 @@ class _AdminReleaseNotesTabState extends State<AdminReleaseNotesTab> {
     );
 
     await batch.commit();
-    print('✓ Initial release notes created');
+    print('✓ Initial release notes created successfully');
+    
+    // Show success message
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ Release notes initialized!'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   @override

@@ -46,3 +46,4 @@ app.*.map.json
 
 # Landing page managed in separate repo
 web_landing/
+serviceAccountKey.json
