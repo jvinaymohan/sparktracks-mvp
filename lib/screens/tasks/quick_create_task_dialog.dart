@@ -374,6 +374,75 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 24),
+                  
+                  // Recurring Task Option
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppTheme.accentColor.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppTheme.accentColor.withOpacity(0.2)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Repeating Task',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppTheme.accentColor,
+                                ),
+                              ),
+                            ),
+                            Switch(
+                              value: _isRecurring,
+                              onChanged: (value) => setState(() => _isRecurring = value),
+                              activeColor: AppTheme.accentColor,
+                            ),
+                          ],
+                        ),
+                        if (_isRecurring) ...[
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<String>(
+                            value: _recurringPattern,
+                            decoration: const InputDecoration(
+                              labelText: 'Repeat',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            items: const [
+                              DropdownMenuItem(value: 'daily', child: Text('Every Day')),
+                              DropdownMenuItem(value: 'weekly', child: Text('Every Week')),
+                              DropdownMenuItem(value: 'monthly', child: Text('Every Month')),
+                            ],
+                            onChanged: (value) => setState(() => _recurringPattern = value!),
+                          ),
+                          if (_recurringPattern == 'weekly') ...[
+                            const SizedBox(height: 12),
+                            Text('Days:', style: TextStyle(fontSize: 12, color: AppTheme.neutral600)),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                _buildDayChip('Mon', 1),
+                                _buildDayChip('Tue', 2),
+                                _buildDayChip('Wed', 3),
+                                _buildDayChip('Thu', 4),
+                                _buildDayChip('Fri', 5),
+                                _buildDayChip('Sat', 6),
+                                _buildDayChip('Sun', 7),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ],
+                    ),
+                  ),
                   const SizedBox(height: 32),
                   
                   // Create Button
