@@ -22,6 +22,10 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
   String _selectedCategory = 'Chores';
   double _rewardPoints = 10.0;
   bool _isSubmitting = false;
+  bool _isRecurring = false;
+  String _recurringPattern = 'daily';
+  Set<int> _selectedWeekDays = {1}; // Monday default
+  DateTime _selectedDueDate = DateTime.now().add(const Duration(days: 1));
 
   final List<Map<String, dynamic>> _quickCategories = [
     {'name': 'Chores', 'icon': Icons.cleaning_services, 'color': '#4CAF50'},
@@ -36,6 +40,30 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
   void dispose() {
     _titleController.dispose();
     super.dispose();
+  }
+  
+  Widget _buildDayChip(String label, int day) {
+    final isSelected = _selectedWeekDays.contains(day);
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedWeekDays.add(day);
+          } else {
+            _selectedWeekDays.remove(day);
+          }
+        });
+      },
+      selectedColor: AppTheme.accentColor.withOpacity(0.3),
+      checkmarkColor: AppTheme.accentColor,
+      labelStyle: TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        color: isSelected ? AppTheme.accentColor : AppTheme.neutral600,
+      ),
+    );
   }
 
   Future<void> _createTask() async {
@@ -63,7 +91,9 @@ class _QuickCreateTaskDialogState extends State<QuickCreateTaskDialog> {
         status: TaskStatus.pending,
         priority: TaskPriority.medium,
         category: _selectedCategory,
-        dueDate: DateTime.now().add(const Duration(days: 1)),
+        dueDate: _selectedDueDate,
+        isRecurring: _isRecurring,
+        recurringPattern: _isRecurring ? _recurringPattern : null,
         createdAt: DateTime.now(),
         updatedAt: DateTime.now(),
       );
