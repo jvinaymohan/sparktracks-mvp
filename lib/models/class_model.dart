@@ -44,6 +44,43 @@ enum Currency {
   inr,
 }
 
+enum SkillLevel {
+  @JsonValue('beginner')
+  beginner,
+  @JsonValue('intermediate')
+  intermediate,
+  @JsonValue('advanced')
+  advanced,
+  @JsonValue('expert')
+  expert,
+  @JsonValue('all_levels')
+  allLevels,
+}
+
+enum ClassLocationOption {
+  @JsonValue('coach_location')
+  coachLocation,
+  @JsonValue('student_location')
+  studentLocation,
+  @JsonValue('online')
+  online,
+  @JsonValue('outdoor')
+  outdoor,
+  @JsonValue('flexible')
+  flexible,
+}
+
+enum PricingModel {
+  @JsonValue('per_session')
+  perSession,
+  @JsonValue('monthly')
+  monthly,
+  @JsonValue('package')
+  package,
+  @JsonValue('flexible')
+  flexible,
+}
+
 @JsonSerializable()
 class Class {
   final String id;
@@ -72,12 +109,65 @@ class Class {
   final Map<String, dynamic> requirements;
   final Map<String, dynamic> metadata;
   
-  // New fields for enhanced class management
+  // New fields for enhanced class management (v3.0)
   final bool isPublic; // Public (anyone can join) vs Private (invite only)
   final bool isGroupClass; // Group class vs Individual 1-on-1
   final String paymentSchedule; // 'per_class', 'monthly', 'term'
   final bool makeUpClassesAllowed; // Allow students to schedule make-up classes
   final String? shareableLink; // Link to share for enrollment
+  
+  // v3.0: Category & Skill Level
+  final String? subcategory; // e.g., 'Tennis', 'Piano', 'Math'
+  final SkillLevel? skillLevel;
+  
+  // v3.0: Age Range
+  final int? minAge;
+  final int? maxAge;
+  
+  // v3.0: Class Size Management
+  final int? minStudents; // Minimum to run class
+  final int currentEnrollment; // Current enrolled count
+  
+  // v3.0: Location Options
+  final ClassLocationOption? locationOption;
+  final String? facilityName; // e.g., "Austin Tennis Center"
+  final String? outdoorLocation; // e.g., "City Park Courts"
+  final double? travelFee; // If coach travels to student
+  final int? maxTravelDistance; // In miles
+  
+  // v3.0: Pricing Models
+  final PricingModel? pricingModel;
+  final double? monthlyPrice; // For monthly unlimited
+  final double? packagePrice; // For package deals
+  final int? packageSessions; // Number of sessions in package
+  
+  // v3.0: Trial Options
+  final bool offersTrial;
+  final double? trialPrice;
+  final int? trialDuration; // In minutes
+  
+  // v3.0: Materials & Requirements
+  final List<String> materials; // What students need to bring
+  final List<String> prerequisites; // Required skills/experience
+  
+  // v3.0: What's Included
+  final bool includesProgressReports;
+  final bool includesHomework;
+  final bool includesCertificate;
+  final bool includesRecordings; // Video recordings of sessions
+  
+  // v3.0: Cancellation Policy
+  final int cancellationHoursNotice; // Hours notice required
+  final double cancellationFeePercent; // Percentage fee
+  
+  // v3.0: Recurring Schedule (enhanced)
+  final List<int>? recurringWeekDays; // [1=Mon, 2=Tue, ..., 7=Sun]
+  final int? dayOfMonth; // For monthly classes
+  
+  // v3.0: Performance Tracking
+  final int? totalSessionsHeld;
+  final double? averageAttendance;
+  final double? studentRating;
 
   Class({
     required this.id,
@@ -110,6 +200,38 @@ class Class {
     this.paymentSchedule = 'per_class',
     this.makeUpClassesAllowed = false,
     this.shareableLink,
+    // v3.0 fields
+    this.subcategory,
+    this.skillLevel,
+    this.minAge,
+    this.maxAge,
+    this.minStudents,
+    this.currentEnrollment = 0,
+    this.locationOption,
+    this.facilityName,
+    this.outdoorLocation,
+    this.travelFee,
+    this.maxTravelDistance,
+    this.pricingModel,
+    this.monthlyPrice,
+    this.packagePrice,
+    this.packageSessions,
+    this.offersTrial = false,
+    this.trialPrice,
+    this.trialDuration,
+    this.materials = const [],
+    this.prerequisites = const [],
+    this.includesProgressReports = false,
+    this.includesHomework = false,
+    this.includesCertificate = false,
+    this.includesRecordings = false,
+    this.cancellationHoursNotice = 24,
+    this.cancellationFeePercent = 0.0,
+    this.recurringWeekDays,
+    this.dayOfMonth,
+    this.totalSessionsHeld,
+    this.averageAttendance,
+    this.studentRating,
   });
 
   factory Class.fromJson(Map<String, dynamic> json) => _$ClassFromJson(json);
