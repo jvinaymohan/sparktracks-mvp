@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
 
@@ -442,21 +443,49 @@ class _FeedbackScreenState extends State<FeedbackScreen> {
     }
   }
 
-  void _submitFeedback() async {
+  Future<void> _submitFeedback() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
         _isSubmitting = true;
       });
 
       try {
-        // Simulate API call
-        await Future.delayed(const Duration(seconds: 2));
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final user = authProvider.currentUser;
+        
+        if (user == null) {
+          throw Exception('User not logged in');
+        }
+
+        // Create feedback submission
+        final feedbackId = 'feedback_${DateTime.now().millisecondsSinceEpoch}';
+        final feedback = {
+          'id': feedbackId,
+          'userId': user.id,
+          'userName': user.name,
+          'userEmail': user.email,
+          'userType': user.type.toString().split('.').last,
+          'title': _titleController.text.trim(),
+          'description': _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
+          'category': _selectedCategory.toString().split('.').last,
+          'rating': _rating,
+          'status': 'pending',
+          'submittedAt': FieldValue.serverTimestamp(),
+          'metadata': {},
+        };
+
+        // Save to Firestore
+        await FirebaseFirestore.instance
+            .collection('feedback')
+            .doc(feedbackId)
+            .set(feedback);
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Thank you for your feedback! We\'ll review it soon.'),
               backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
             ),
           );
           

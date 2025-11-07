@@ -7,6 +7,7 @@ import '../../providers/tasks_provider.dart';
 import '../../providers/classes_provider.dart';
 import '../../utils/app_theme.dart';
 import 'admin_users_tab.dart';
+import 'admin_feedback_tab.dart';
 import 'admin_settings_tab.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final List<Widget> _screens = [
     const AdminOverviewTab(),
     const AdminUsersTab(),
+    const AdminFeedbackTab(),
     const AdminSettingsTab(),
   ];
 
@@ -95,6 +97,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               NavigationRailDestination(
                 icon: Icon(Icons.people),
                 label: Text('Users'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.feedback),
+                label: Text('Feedback'),
               ),
               NavigationRailDestination(
                 icon: Icon(Icons.settings),
