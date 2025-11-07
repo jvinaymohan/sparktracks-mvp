@@ -53,7 +53,12 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
       body: Consumer<ClassesProvider>(
         builder: (context, classesProvider, _) {
           // Get ONLY public classes
-          var publicClasses = classesProvider.classes.where((c) => c.isPublic == true).toList();
+          // v3.0: Only show classes created by coaches (not test/default data)
+          var publicClasses = classesProvider.classes.where((c) => 
+            c.isPublic == true && 
+            c.coachId.isNotEmpty &&
+            c.category != null // Ensures it's a properly created class
+          ).toList();
           
           // Apply filters
           if (_searchQuery.isNotEmpty) {
