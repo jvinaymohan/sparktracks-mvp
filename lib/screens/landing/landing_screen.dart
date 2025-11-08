@@ -777,6 +777,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                   'About',
                   [
                     _buildFooterLink('Our Story', () => context.go('/about')),
+                    _buildFooterLink('Timeline & Roadmap', () => context.go('/timeline')),
                     _buildFooterLink('Browse Classes', () => context.go('/browse-classes')),
                   ],
                 ),

@@ -226,14 +226,28 @@ class AboutScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () => context.go('/browse-classes'),
-                      icon: const Icon(Icons.explore),
-                      label: const Text('Explore Classes'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.primaryColor,
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => context.go('/browse-classes'),
+                          icon: const Icon(Icons.explore),
+                          label: const Text('Explore Classes'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        OutlinedButton.icon(
+                          onPressed: () => context.go('/timeline'),
+                          icon: const Icon(Icons.timeline),
+                          label: const Text('View Timeline'),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
