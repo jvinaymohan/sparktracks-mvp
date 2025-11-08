@@ -32,6 +32,14 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
     
+    // Coach Profiles collection - PUBLIC READ for marketplace
+    match /coach_profiles/{coachId} {
+      allow read: if true; // Public read for marketplace and public coach pages
+      allow create: if isAuthenticated() && request.auth.uid == coachId;
+      allow update: if isAuthenticated() && request.auth.uid == coachId;
+      allow delete: if isAuthenticated() && request.auth.uid == coachId;
+    }
+    
     // Children/Students collection
     match /children/{childId} {
       // Allow read if:
@@ -78,7 +86,7 @@ service cloud.firestore {
     
     // Classes collection
     match /classes/{classId} {
-      allow read: if isAuthenticated(); // All authenticated users can browse classes
+      allow read: if true; // PUBLIC READ - anyone can browse classes (marketplace feature)
       
       allow create: if isAuthenticated() && (
         // Coaches can create classes

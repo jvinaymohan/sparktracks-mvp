@@ -6,6 +6,7 @@ import '../../providers/enrollment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/user_model.dart';
+import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
 import 'class_detail_screen.dart';
 
@@ -252,6 +253,19 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
                           style: AppTheme.headline6.copyWith(fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 4),
+                        FutureBuilder<String>(
+                          future: _getCoachName(classItem.coachId),
+                          builder: (context, snapshot) {
+                            return Text(
+                              'by ${snapshot.data ?? 'Coach'}',
+                              style: AppTheme.bodySmall.copyWith(
+                                color: AppTheme.primaryColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 4),
                         Row(
                           children: [
                             Icon(
@@ -261,7 +275,7 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              classItem.isGroupClass ? 'Group Class' : 'Individual (1-on-1)',
+                              classItem.isGroupClass ? 'Group Class' : '1-on-1 Private',
                               style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600),
                             ),
                           ],
@@ -380,6 +394,20 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
         return 'A\$';
       case Currency.inr:
         return '₹';
+    }
+  }
+
+  Future<String> _getCoachName(String coachId) async {
+    try {
+      final profile = await FirestoreService().getCoachProfile(coachId);
+      if (profile != null) {
+        return profile.name;
+      }
+      // Fallback: try to get user name
+      final user = await FirestoreService().getUser(coachId);
+      return user?.name ?? 'Coach';
+    } catch (e) {
+      return 'Coach';
     }
   }
 }
