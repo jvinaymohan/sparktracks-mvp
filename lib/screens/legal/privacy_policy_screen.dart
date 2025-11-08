@@ -27,6 +27,47 @@ class PrivacyPolicyScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             
+            // Privacy Highlights Box
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppTheme.successColor.withOpacity(0.1),
+                    AppTheme.primaryColor.withOpacity(0.1),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppTheme.successColor.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.verified_user, color: AppTheme.successColor, size: 32),
+                      const SizedBox(width: 12),
+                      Text('Privacy-First Platform', style: AppTheme.headline5.copyWith(color: AppTheme.successColor)),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Sparktracks is built with your privacy and security in mind:',
+                    style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildPrivacyHighlight('🔒 Encrypted data transmission (HTTPS/TLS)'),
+                  _buildPrivacyHighlight('🛡️ Role-based access control (parents, children, coaches)'),
+                  _buildPrivacyHighlight('👨‍👩‍👧 Parents have full control over children\'s data'),
+                  _buildPrivacyHighlight('🚫 No data selling - ever'),
+                  _buildPrivacyHighlight('🔐 Secure authentication with Firebase'),
+                  _buildPrivacyHighlight('👁️ Children\'s safety is our top priority'),
+                  _buildPrivacyHighlight('📊 Transparent data practices'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 32),
+            
             _buildSection(
               title: '1. Introduction',
               content: 'Welcome to Sparktracks. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you about how we look after your personal data when you visit our website or use our app.',
@@ -160,6 +201,16 @@ class PrivacyPolicyScreen extends StatelessWidget {
             style: AppTheme.bodyMedium,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPrivacyHighlight(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: AppTheme.bodyMedium,
       ),
     );
   }

@@ -282,22 +282,23 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                   ],
                 ),
               ),
-              OutlinedButton(
-                onPressed: () => _tabController.animateTo(1),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/marketplace'),
+                icon: const Icon(Icons.explore, size: 20),
+                label: const Text(
+                  'Explore Marketplace',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF6366F1),
                   side: const BorderSide(color: Color(0xFF6366F1), width: 2),
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 32 : 40,
+                    horizontal: isMobile ? 24 : 32,
                     vertical: isMobile ? 16 : 20,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                ),
-                child: const Text(
-                  'Watch Demo',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -765,38 +766,127 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
       color: const Color(0xFF1F2937),
       child: Column(
         children: [
-          Text(
-            '© 2025 SparkTracks • Made with ❤️',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.7),
-              fontSize: 14,
+          if (!isMobile) ...[
+            // Desktop Footer - Multi-column
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // About Column
+                _buildFooterColumn(
+                  'About',
+                  [
+                    _buildFooterLink('Our Story', () => context.go('/about')),
+                    _buildFooterLink('Marketplace', () => context.go('/marketplace')),
+                    _buildFooterLink('Browse Classes', () => context.go('/browse-classes')),
+                  ],
+                ),
+                // Legal Column
+                _buildFooterColumn(
+                  'Legal',
+                  [
+                    _buildFooterLink('Privacy Policy', () => context.go('/privacy')),
+                    _buildFooterLink('Terms of Service', () => context.go('/terms')),
+                  ],
+                ),
+                // Get Started Column
+                _buildFooterColumn(
+                  'Get Started',
+                  [
+                    _buildFooterLink('Sign Up', () => context.go('/register')),
+                    _buildFooterLink('Login', () => context.go('/login')),
+                  ],
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 24,
-            runSpacing: 12,
-            alignment: WrapAlignment.center,
+            const SizedBox(height: 32),
+            const Divider(color: Colors.white24),
+            const SizedBox(height: 24),
+          ],
+          
+          // Copyright and Creator
+          Column(
             children: [
-              TextButton(
-                onPressed: () => context.go('/login'),
-                child: Text('Login', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              Text(
+                'Created with ❤️ by Vinay Jonnakuti',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.9),
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
               ),
-              TextButton(
-                onPressed: () => context.go('/register'),
-                child: Text('Sign Up', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              const SizedBox(height: 8),
+              Text(
+                'Built by a father for his child, enhanced for families everywhere',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.6),
+                  fontSize: 13,
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
               ),
-              TextButton(
-                onPressed: () {},
-                child: Text('About', style: TextStyle(color: Colors.white.withOpacity(0.9))),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text('Privacy', style: TextStyle(color: Colors.white.withOpacity(0.9))),
+              const SizedBox(height: 16),
+              Text(
+                '© 2025 Sparktracks. All rights reserved.',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
+          
+          // Mobile Footer Links
+          if (isMobile) ...[
+            const SizedBox(height: 24),
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.center,
+              children: [
+                _buildFooterLink('About', () => context.go('/about')),
+                _buildFooterLink('Marketplace', () => context.go('/marketplace')),
+                _buildFooterLink('Privacy', () => context.go('/privacy')),
+                _buildFooterLink('Terms', () => context.go('/terms')),
+              ],
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _buildFooterColumn(String title, List<Widget> links) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+        ),
+        const SizedBox(height: 16),
+        ...links,
+      ],
+    );
+  }
+
+  Widget _buildFooterLink(String text, VoidCallback onPressed) {
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: Colors.white.withOpacity(0.7),
+          fontSize: 14,
+        ),
       ),
     );
   }
