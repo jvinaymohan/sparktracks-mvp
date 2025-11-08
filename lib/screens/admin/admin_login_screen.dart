@@ -83,7 +83,7 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Admin Portal',
+                        '🔐 Admin Portal',
                         style: AppTheme.headline4.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
@@ -91,11 +91,28 @@ class _AdminLoginScreenState extends State<AdminLoginScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Sparktracks Management',
+                        'Sparktracks Management Console',
                         style: AppTheme.bodyLarge.copyWith(
                           color: AppTheme.neutral600,
                         ),
                         textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: AppTheme.warningColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: AppTheme.warningColor.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          'This is NOT the regular user login',
+                          style: AppTheme.bodySmall.copyWith(
+                            color: AppTheme.warningColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
                       ),
                       const SizedBox(height: 32),
 

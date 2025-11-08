@@ -435,8 +435,27 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
+      // Check if this is an admin trying to login
+      final email = _emailController.text.trim();
+      if (email == 'admin@sparktracks.com') {
+        // Redirect to admin login page
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('⚠️ Admin users must use the Admin Portal login'),
+              backgroundColor: AppTheme.warningColor,
+            ),
+          );
+          await Future.delayed(const Duration(seconds: 1));
+          if (mounted) {
+            context.go('/admin/login');
+          }
+        }
+        return;
+      }
+      
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.login(_emailController.text, _passwordController.text);
+      await authProvider.login(email, _passwordController.text);
       
       if (authProvider.isLoggedIn) {
         if (mounted) {
