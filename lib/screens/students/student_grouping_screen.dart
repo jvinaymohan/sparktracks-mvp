@@ -5,6 +5,7 @@ import '../../models/student_progress_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../providers/classes_provider.dart';
+import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
 
@@ -455,9 +456,189 @@ class _StudentGroupingScreenState extends State<StudentGroupingScreen> {
   }
 
   void _showAddStudentDialog() {
-    // Show existing add student dialog
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Use Manage Students screen to add students')),
+    final nameController = TextEditingController();
+    final emailController = TextEditingController();
+    final phoneController = TextEditingController();
+    DateTime? dateOfBirth;
+    String? selectedGender;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.person_add, color: AppTheme.primaryColor),
+              SizedBox(width: 12),
+              Text('Add New Student'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: SizedBox(
+              width: 500,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Student Name *',
+                      prefixIcon: Icon(Icons.person),
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(
+                      labelText: 'Email *',
+                      prefixIcon: Icon(Icons.email),
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: phoneController,
+                    decoration: const InputDecoration(
+                      labelText: 'Phone (Optional)',
+                      prefixIcon: Icon(Icons.phone),
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 16),
+                  InkWell(
+                    onTap: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+                        firstDate: DateTime(1950),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) {
+                        setDialogState(() {
+                          dateOfBirth = picked;
+                        });
+                      }
+                    },
+                    child: InputDecorator(
+                      decoration: const InputDecoration(
+                        labelText: 'Date of Birth *',
+                        prefixIcon: Icon(Icons.cake),
+                        border: OutlineInputBorder(),
+                      ),
+                      child: Text(
+                        dateOfBirth != null
+                            ? '${dateOfBirth!.month}/${dateOfBirth!.day}/${dateOfBirth!.year}'
+                            : 'Select date of birth',
+                        style: TextStyle(
+                          color: dateOfBirth != null ? Colors.black : Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: selectedGender,
+                    decoration: const InputDecoration(
+                      labelText: 'Gender (Optional)',
+                      prefixIcon: Icon(Icons.wc),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: 'Male', child: Text('Male')),
+                      DropdownMenuItem(value: 'Female', child: Text('Female')),
+                      DropdownMenuItem(value: 'Other', child: Text('Other')),
+                      DropdownMenuItem(value: 'Prefer not to say', child: Text('Prefer not to say')),
+                    ],
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedGender = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                // Validate required fields
+                if (nameController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter student name')),
+                  );
+                  return;
+                }
+                if (emailController.text.trim().isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please enter email')),
+                  );
+                  return;
+                }
+                if (dateOfBirth == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select date of birth')),
+                  );
+                  return;
+                }
+
+                // Create student
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final coachId = authProvider.currentUser?.id ?? '';
+                
+                final newStudent = Student(
+                  id: 'student_${DateTime.now().millisecondsSinceEpoch}',
+                  userId: 'user_${DateTime.now().millisecondsSinceEpoch}',
+                  name: nameController.text.trim(),
+                  email: emailController.text.trim(),
+                  dateOfBirth: dateOfBirth!,
+                  parentId: coachId, // Coach becomes the "parent" for coach-added students
+                  enrolledAt: DateTime.now(),
+                  colorCode: '#${(DateTime.now().millisecondsSinceEpoch % 0xFFFFFF).toRadixString(16).padLeft(6, '0')}',
+                );
+
+                // Save to Firestore
+                try {
+                  await FirestoreService().addChild(newStudent);
+                  
+                  if (mounted) {
+                    Navigator.pop(dialogContext);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('✅ ${newStudent.name} added successfully!'),
+                        backgroundColor: AppTheme.successColor,
+                      ),
+                    );
+                    
+                    // Refresh the list
+                    setState(() {});
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error adding student: $e'),
+                        backgroundColor: AppTheme.errorColor,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.primaryColor,
+              ),
+              child: const Text('Add Student'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
