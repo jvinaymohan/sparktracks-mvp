@@ -6,6 +6,7 @@ import '../../models/coach_profile_model.dart';
 import '../../models/class_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/coach_reviews_section.dart';
 import 'package:intl/intl.dart';
 
 /// Enhanced Public Coach Webpage (v3.0)
@@ -62,6 +63,7 @@ class _EnhancedPublicCoachPageState extends State<EnhancedPublicCoachPage> {
                 _buildExpertiseSection(profile, isMobile),
                 _buildClassesSection(profile, isMobile),
                 _buildTestimonialsSection(profile, isMobile),
+                _buildReviewsSection(profile, isMobile),
                 _buildContactSection(profile, isMobile),
                 _buildFooter(isMobile),
               ],
@@ -531,6 +533,36 @@ class _EnhancedPublicCoachPageState extends State<EnhancedPublicCoachPage> {
                   ),
                 );
               }),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReviewsSection(CoachProfile profile, bool isMobile) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 24 : 48),
+      color: Colors.white,
+      child: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: isMobile ? double.infinity : 900),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.star, color: Colors.amber, size: 32),
+                  const SizedBox(width: 12),
+                  Text('Reviews & Ratings', style: AppTheme.headline4),
+                ],
+              ),
+              const SizedBox(height: 32),
+              CoachReviewsSection(
+                coachId: profile.id,
+                coachName: profile.name,
+              ),
             ],
           ),
         ),

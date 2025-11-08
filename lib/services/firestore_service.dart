@@ -4,6 +4,7 @@ import '../models/task_model.dart';
 import '../models/class_model.dart';
 import '../models/user_model.dart';
 import '../models/coach_profile_model.dart';
+import '../models/review_model.dart';
 
 class FirestoreService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -209,6 +210,129 @@ class FirestoreService {
     
     final snapshot = await query.get();
     return snapshot.docs.map((doc) => CoachProfile.fromJson(doc.data() as Map<String, dynamic>)).toList();
+  }
+
+  // ============ REVIEWS ============
+  
+  /// Add a new review for a coach
+  Future<void> addReview(Review review) async {
+    await _firestore.collection('reviews').doc(review.id).set(review.toJson());
+  }
+  
+  /// Get all reviews for a specific coach
+  Future<List<Review>> getCoachReviews(String coachId) async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .where('coachId', isEqualTo: coachId)
+        .where('isFlagged', isEqualTo: false) // Only show non-flagged reviews
+        .orderBy('createdAt', descending: true)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Review.fromJson(doc.data()))
+        .toList();
+  }
+  
+  /// Get reviews by a specific parent
+  Future<List<Review>> getParentReviews(String parentId) async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .where('parentId', isEqualTo: parentId)
+        .orderBy('createdAt', descending: true)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Review.fromJson(doc.data()))
+        .toList();
+  }
+  
+  /// Check if a parent has already reviewed a coach
+  Future<bool> hasParentReviewedCoach(String parentId, String coachId) async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .where('parentId', isEqualTo: parentId)
+        .where('coachId', isEqualTo: coachId)
+        .limit(1)
+        .get();
+    
+    return snapshot.docs.isNotEmpty;
+  }
+  
+  /// Get a parent's review for a specific coach
+  Future<Review?> getParentReviewForCoach(String parentId, String coachId) async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .where('parentId', isEqualTo: parentId)
+        .where('coachId', isEqualTo: coachId)
+        .limit(1)
+        .get();
+    
+    if (snapshot.docs.isEmpty) return null;
+    return Review.fromJson(snapshot.docs.first.data());
+  }
+  
+  /// Update an existing review
+  Future<void> updateReview(Review review) async {
+    await _firestore.collection('reviews').doc(review.id).update(review.toJson());
+  }
+  
+  /// Delete a review
+  Future<void> deleteReview(String reviewId) async {
+    await _firestore.collection('reviews').doc(reviewId).delete();
+  }
+  
+  /// Flag a review for moderation
+  Future<void> flagReview(String reviewId, String reason) async {
+    await _firestore.collection('reviews').doc(reviewId).update({
+      'isFlagged': true,
+      'flagReason': reason,
+      'updatedAt': DateTime.now().toIso8601String(),
+    });
+  }
+  
+  /// Calculate rating statistics for a coach
+  Future<CoachRatingStats> getCoachRatingStats(String coachId) async {
+    final reviews = await getCoachReviews(coachId);
+    return CoachRatingStats.fromReviews(coachId, reviews);
+  }
+  
+  /// Stream reviews for a coach (real-time updates)
+  Stream<List<Review>> watchCoachReviews(String coachId) {
+    return _firestore
+        .collection('reviews')
+        .where('coachId', isEqualTo: coachId)
+        .where('isFlagged', isEqualTo: false)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Review.fromJson(doc.data()))
+            .toList());
+  }
+  
+  /// Get recent reviews across all coaches (for admin)
+  Future<List<Review>> getAllRecentReviews({int limit = 50}) async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .orderBy('createdAt', descending: true)
+        .limit(limit)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Review.fromJson(doc.data()))
+        .toList();
+  }
+  
+  /// Get flagged reviews (for moderation)
+  Future<List<Review>> getFlaggedReviews() async {
+    final snapshot = await _firestore
+        .collection('reviews')
+        .where('isFlagged', isEqualTo: true)
+        .orderBy('updatedAt', descending: true)
+        .get();
+    
+    return snapshot.docs
+        .map((doc) => Review.fromJson(doc.data()))
+        .toList();
   }
 }
 

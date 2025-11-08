@@ -14,6 +14,7 @@ import '../../screens/children/add_edit_child_screen.dart';
 import '../../screens/children/quick_add_child_dialog.dart';
 import '../../screens/tasks/create_task_wizard.dart';
 import '../../screens/tasks/quick_create_task_dialog.dart';
+import '../../widgets/bulk_task_creation_dialog.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -963,12 +964,70 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
 
   // Show quick task creation dialog
   Future<void> _showQuickTaskDialog() async {
-    final result = await showDialog<bool>(
+    // Show options: Quick Task or Bulk Create
+    final choice = await showDialog<String>(
       context: context,
-      builder: (context) => const QuickCreateTaskDialog(),
+      builder: (context) => AlertDialog(
+        title: const Text('Create Task'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.add_task, color: AppTheme.primaryColor),
+              title: const Text('Quick Task'),
+              subtitle: const Text('Create a single task for one child'),
+              onTap: () => Navigator.pop(context, 'quick'),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.playlist_add, color: AppTheme.accentColor),
+              title: const Text('Bulk Create'),
+              subtitle: const Text('Assign the same task to multiple children'),
+              onTap: () => Navigator.pop(context, 'bulk'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (choice == 'quick') {
+      final result = await showDialog<bool>(
+        context: context,
+        builder: (context) => const QuickCreateTaskDialog(),
+      );
+      
+      if (result == true && mounted) {
+        // Refresh tasks list
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+        await tasksProvider.loadTasksForParent(authProvider.currentUser?.id ?? '');
+      }
+    } else if (choice == 'bulk') {
+      await _showBulkCreateDialog();
+    }
+  }
+
+  // Show bulk task creation dialog
+  Future<void> _showBulkCreateDialog() async {
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final children = childrenProvider.children;
+
+    if (children.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Please add children first before creating tasks'),
+          backgroundColor: AppTheme.warningColor,
+        ),
+      );
+      return;
+    }
+
+    final result = await showDialog<int>(
+      context: context,
+      builder: (context) => BulkTaskCreationDialog(children: children),
     );
     
-    if (result == true && mounted) {
+    if (result != null && result > 0 && mounted) {
       // Refresh tasks list
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final tasksProvider = Provider.of<TasksProvider>(context, listen: false);

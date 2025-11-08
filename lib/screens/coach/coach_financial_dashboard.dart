@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:csv/csv.dart';
 import '../../models/invoice_model.dart';
+import '../../models/expense_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
+import '../../services/csv_export_service.dart';
+import '../../widgets/csv_export_button.dart';
 
 /// Coach Financial Dashboard (v3.0)
 /// Comprehensive business management for coaches
@@ -35,6 +39,11 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
           onPressed: () => NavigationHelper.goToDashboard(context),
         ),
         actions: [
+          IconButton(
+            onPressed: () => _showExportDialog(),
+            icon: const Icon(Icons.download),
+            tooltip: 'Export Financial Data',
+          ),
           NavigationHelper.buildGradientHomeButton(context),
         ],
         bottom: TabBar(
@@ -656,6 +665,90 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
         content: Text('✅ Invoice marked as paid!'),
         backgroundColor: Colors.green,
       ),
+    );
+  }
+
+  void _showExportDialog() {
+    final csvService = CsvExportService();
+    final now = DateTime.now();
+    final startOfMonth = DateTime(now.year, now.month, 1);
+    final endOfMonth = DateTime(now.year, now.month + 1, 0);
+
+    showExportOptionsDialog(
+      context: context,
+      options: [
+        ExportOption(
+          title: 'Financial Report',
+          description: 'Export monthly income, expenses, and profit summary',
+          icon: Icons.assessment,
+          fileName: csvService.getCsvFileName('financial_report'),
+          generateCsv: () async {
+            // Mock data - in production, fetch from Firestore
+            final invoices = <Invoice>[
+              // Sample invoices
+            ];
+            final expenses = <Expense>[
+              // Sample expenses
+            ];
+            return csvService.exportFinancialReport(
+              invoices: invoices,
+              expenses: expenses,
+              startDate: startOfMonth,
+              endDate: endOfMonth,
+            );
+          },
+        ),
+        ExportOption(
+          title: 'All Invoices',
+          description: 'Export complete invoice history',
+          icon: Icons.receipt_long,
+          fileName: csvService.getCsvFileName('invoices'),
+          generateCsv: () async {
+            // Mock data - in production, fetch from Firestore
+            final invoices = <Invoice>[
+              // Sample invoices
+            ];
+            final csvRows = [
+              ['Invoice ID', 'Student', 'Class', 'Amount', 'Status', 'Issue Date', 'Due Date', 'Paid Date'],
+              ...invoices.map((inv) => [
+                inv.id,
+                inv.studentName,
+                inv.className,
+                inv.amount.toStringAsFixed(2),
+                inv.status.name,
+                DateFormat('yyyy-MM-dd').format(inv.issueDate),
+                DateFormat('yyyy-MM-dd').format(inv.dueDate),
+                inv.paidDate != null ? DateFormat('yyyy-MM-dd').format(inv.paidDate!) : 'N/A',
+              ]),
+            ];
+            return const ListToCsvConverter().convert(csvRows);
+          },
+        ),
+        ExportOption(
+          title: 'Expenses',
+          description: 'Export all business expenses',
+          icon: Icons.money_off,
+          fileName: csvService.getCsvFileName('expenses'),
+          generateCsv: () async {
+            // Mock data - in production, fetch from Firestore
+            final expenses = <Expense>[
+              // Sample expenses
+            ];
+            final csvRows = [
+              ['Expense ID', 'Category', 'Description', 'Amount', 'Date', 'Payment Method'],
+              ...expenses.map((exp) => [
+                exp.id,
+                exp.category,
+                exp.description,
+                exp.amount.toStringAsFixed(2),
+                DateFormat('yyyy-MM-dd').format(exp.date),
+                exp.paymentMethod,
+              ]),
+            ];
+            return const ListToCsvConverter().convert(csvRows);
+          },
+        ),
+      ],
     );
   }
 
