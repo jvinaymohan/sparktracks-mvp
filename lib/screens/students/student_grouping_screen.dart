@@ -4,6 +4,7 @@ import '../../models/student_model.dart';
 import '../../models/student_progress_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
+import '../../providers/classes_provider.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
 
@@ -26,7 +27,8 @@ class _StudentGroupingScreenState extends State<StudentGroupingScreen> {
     final childrenProvider = Provider.of<ChildrenProvider>(context);
     final coachId = authProvider.currentUser?.id ?? '';
     
-    final students = childrenProvider.getStudentsVisibleToCoach(coachId, context);
+    // For now, just get all students visible to coach (enrolled in classes or created by coach)
+    final students = childrenProvider.getStudentsVisibleToCoach(coachId, []);
 
     return Scaffold(
       appBar: AppBar(
@@ -199,23 +201,33 @@ class _StudentGroupingScreenState extends State<StudentGroupingScreen> {
     ];
   }
 
+  // Helper method to calculate age from dateOfBirth
+  int _calculateAge(DateTime dateOfBirth) {
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth.year;
+    if (now.month < dateOfBirth.month || (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+      age--;
+    }
+    return age;
+  }
+
   List<Map<String, dynamic>> _groupByAge(List<Student> students) {
     return [
       {
         'title': '👶 Kids (5-10)',
-        'students': students.where((s) => s.age != null && s.age! >= 5 && s.age! <= 10).toList(),
+        'students': students.where((s) => _calculateAge(s.dateOfBirth) >= 5 && _calculateAge(s.dateOfBirth) <= 10).toList(),
       },
       {
         'title': '🧒 Tweens (11-13)',
-        'students': students.where((s) => s.age != null && s.age! >= 11 && s.age! <= 13).toList(),
+        'students': students.where((s) => _calculateAge(s.dateOfBirth) >= 11 && _calculateAge(s.dateOfBirth) <= 13).toList(),
       },
       {
         'title': '👦 Teens (14-17)',
-        'students': students.where((s) => s.age != null && s.age! >= 14 && s.age! <= 17).toList(),
+        'students': students.where((s) => _calculateAge(s.dateOfBirth) >= 14 && _calculateAge(s.dateOfBirth) <= 17).toList(),
       },
       {
         'title': '👨 Adults (18+)',
-        'students': students.where((s) => s.age != null && s.age! >= 18).toList(),
+        'students': students.where((s) => _calculateAge(s.dateOfBirth) >= 18).toList(),
       },
     ];
   }
@@ -301,8 +313,7 @@ class _StudentGroupingScreenState extends State<StudentGroupingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(height: 4),
-            if (student.age != null)
-              Text('Age: ${student.age}', style: AppTheme.bodySmall),
+            Text('Age: ${_calculateAge(student.dateOfBirth)}', style: AppTheme.bodySmall),
             _buildProgressBar(student),
           ],
         ),
@@ -471,6 +482,16 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
     _tabController = TabController(length: 4, vsync: this);
   }
 
+  // Helper method to calculate age from dateOfBirth
+  int _calculateAge(DateTime dateOfBirth) {
+    final now = DateTime.now();
+    int age = now.year - dateOfBirth.year;
+    if (now.month < dateOfBirth.month || (now.month == dateOfBirth.month && now.day < dateOfBirth.day)) {
+      age--;
+    }
+    return age;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -527,10 +548,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(widget.student.name, style: AppTheme.headline4),
-                  if (widget.student.age != null) ...[
-                    const SizedBox(height: 4),
-                    Text('Age: ${widget.student.age}', style: AppTheme.bodyMedium),
-                  ],
+                  const SizedBox(height: 4),
+                  Text('Age: ${_calculateAge(widget.student.dateOfBirth)}', style: AppTheme.bodyMedium),
                   const SizedBox(height: 8),
                   Text(
                     'Joined: Jan 2025', // TODO: Get actual join date

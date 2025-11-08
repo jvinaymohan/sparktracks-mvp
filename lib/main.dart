@@ -41,6 +41,12 @@ import 'screens/ledger/financial_ledger_screen.dart';
 import 'screens/landing/landing_screen.dart';
 import 'screens/classes/create_class_wizard.dart';
 import 'screens/coach/coach_profile_screen.dart';
+import 'screens/coach/enhanced_coach_profile_wizard.dart';
+import 'screens/classes/intelligent_class_wizard.dart';
+import 'screens/students/student_grouping_screen.dart';
+import 'screens/coach/coach_financial_dashboard.dart';
+import 'screens/communication/coach_updates_screen.dart';
+import 'screens/coach/enhanced_public_coach_page.dart';
 import 'screens/coach/manage_students_screen.dart';
 import 'screens/coach/public_coach_page.dart';
 import 'screens/classes/browse_classes_screen.dart';
@@ -255,16 +261,48 @@ class SparktracksMVP extends StatelessWidget {
                 // Class not found, will create new
               }
             }
-            return CreateClassWizard(existingClass: existingClass);
+            return IntelligentClassWizard(existingClass: existingClass);
+          },
+        ),
+        GoRoute(
+          path: '/create-class-old',
+          builder: (context, state) {
+            final classId = state.uri.queryParameters['classId'];
+            Class? existingClass;
+            if (classId != null) {
+              final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+              try {
+                existingClass = classesProvider.classes.firstWhere((c) => c.id == classId);
+              } catch (e) {
+                // Class not found
+              }
+            }
+            return CreateClassWizard(existingClass: existingClass); // Keep old as backup
           },
         ),
         GoRoute(
           path: '/coach-profile',
-          builder: (context, state) => const CoachProfileScreen(),
+          builder: (context, state) => const EnhancedCoachProfileWizard(),
+        ),
+        GoRoute(
+          path: '/coach-profile-old',
+          builder: (context, state) => const CoachProfileScreen(), // Keep old as backup
         ),
         GoRoute(
           path: '/manage-students',
-          builder: (context, state) => const ManageStudentsScreen(),
+          builder: (context, state) => const StudentGroupingScreen(),
+        ),
+        GoRoute(
+          path: '/manage-students-old',
+          builder: (context, state) => const ManageStudentsScreen(), // Keep old as backup
+        ),
+        GoRoute(
+          path: '/coach-business',
+          builder: (context, state) => const CoachFinancialDashboard(),
+        ),
+        GoRoute(
+          path: '/coach-updates',
+          builder: (context, state) => const CoachUpdatesScreen(),
         ),
         GoRoute(
           path: '/coach/:coachId',

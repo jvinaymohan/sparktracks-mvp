@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/coach_profile_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
@@ -1157,11 +1158,20 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
       // Save to Firestore
       await FirestoreService().saveCoachProfile(profile);
       
-      // Update user preferences
-      await authProvider.updateUserPreferences({
-        'profileCompleted': true,
-        'profileCompletionPercentage': profile.getProfileCompletionPercentage(),
-      });
+      // Update user preferences in Firestore
+      final user = authProvider.currentUser;
+      if (user != null) {
+        final updatedPreferences = Map<String, dynamic>.from(user.preferences);
+        updatedPreferences['profileCompleted'] = true;
+        updatedPreferences['profileCompletionPercentage'] = profile.getProfileCompletionPercentage();
+        
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .update({'preferences': updatedPreferences});
+        
+        await authProvider.checkAuthStatus();
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

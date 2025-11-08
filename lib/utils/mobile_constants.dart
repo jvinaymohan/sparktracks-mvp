@@ -1,6 +1,8 @@
 /// Mobile Design Constants (v3.0)
 /// iOS and Android specific design guidelines
 
+import 'package:flutter/material.dart';
+
 class MobileConstants {
   // Touch Targets (iOS Human Interface Guidelines & Material Design)
   static const double minTouchTarget = 48.0; // Minimum for both iOS and Android

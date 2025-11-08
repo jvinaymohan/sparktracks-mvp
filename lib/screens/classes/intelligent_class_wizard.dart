@@ -939,10 +939,15 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
             const SizedBox(height: 12),
             TextFormField(
               initialValue: _travelFee.toStringAsFixed(2),
-              decoration: AppTheme.inputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Travel Fee (per session)',
-                prefixText: '\$ ',
+                prefix: const Text('\$ '),
                 prefixIcon: const Icon(Icons.local_gas_station),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                filled: true,
+                fillColor: AppTheme.neutral50,
               ),
               keyboardType: TextInputType.number,
               onChanged: (v) => _travelFee = double.tryParse(v) ?? 0,
@@ -1091,10 +1096,15 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
           if (_pricingModel == PricingModel.perSession) ...[
             TextFormField(
               initialValue: _sessionPrice.toStringAsFixed(2),
-              decoration: AppTheme.inputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Price Per Session *',
                 prefixText: _getCurrencySymbol() + ' ',
                 prefixIcon: const Icon(Icons.attach_money),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                filled: true,
+                fillColor: AppTheme.neutral50,
               ),
               keyboardType: TextInputType.number,
               onChanged: (v) => _sessionPrice = double.tryParse(v) ?? _sessionPrice,
@@ -1104,11 +1114,16 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
           if (_pricingModel == PricingModel.monthly) ...[
             TextFormField(
               initialValue: _monthlyPrice.toStringAsFixed(2),
-              decoration: AppTheme.inputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Monthly Price *',
-                prefixText: _getCurrencySymbol() + ' ',
+                prefix: Text(_getCurrencySymbol() + ' '),
                 prefixIcon: const Icon(Icons.calendar_today),
                 helperText: 'Unlimited sessions per month',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                filled: true,
+                fillColor: AppTheme.neutral50,
               ),
               keyboardType: TextInputType.number,
               onChanged: (v) => _monthlyPrice = double.tryParse(v) ?? _monthlyPrice,
@@ -1132,9 +1147,14 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
                 Expanded(
                   child: TextFormField(
                     initialValue: _packagePrice.toStringAsFixed(2),
-                    decoration: AppTheme.inputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Package Price',
-                      prefixText: _getCurrencySymbol() + ' ',
+                      prefix: Text(_getCurrencySymbol() + ' '),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                      ),
+                      filled: true,
+                      fillColor: AppTheme.neutral50,
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (v) => _packagePrice = double.tryParse(v) ?? _packagePrice,
@@ -1184,16 +1204,21 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
                   Row(
                     children: [
                       Expanded(
-                        child: TextFormField(
-                          initialValue: _trialPrice.toStringAsFixed(2),
-                          decoration: AppTheme.inputDecoration(
-                            labelText: 'Trial Price',
-                            prefixText: _getCurrencySymbol() + ' ',
-                            helperText: '0 for free trial',
-                          ),
-                          keyboardType: TextInputType.number,
-                          onChanged: (v) => _trialPrice = double.tryParse(v) ?? 0,
+                    child: TextFormField(
+                      initialValue: _trialPrice.toStringAsFixed(2),
+                      decoration: InputDecoration(
+                        labelText: 'Trial Price',
+                        prefix: Text(_getCurrencySymbol() + ' '),
+                        helperText: '0 for free trial',
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                         ),
+                        filled: true,
+                        fillColor: AppTheme.neutral50,
+                      ),
+                      keyboardType: TextInputType.number,
+                      onChanged: (v) => _trialPrice = double.tryParse(v) ?? 0,
+                    ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -1358,9 +1383,14 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
               Expanded(
                 child: TextFormField(
                   initialValue: _cancellationFeePercent.toStringAsFixed(0),
-                  decoration: AppTheme.inputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Fee (%)',
-                    suffixText: '%',
+                    suffix: const Text('%'),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.neutral50,
                   ),
                   keyboardType: TextInputType.number,
                   onChanged: (v) => _cancellationFeePercent = double.tryParse(v) ?? 0,
@@ -1676,9 +1706,9 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       );
 
       if (widget.existingClass == null) {
-        await classesProvider.createClass(newClass);
+        classesProvider.addClass(newClass);
       } else {
-        await classesProvider.updateClass(newClass);
+        classesProvider.updateClass(newClass);
       }
 
       if (mounted) {
