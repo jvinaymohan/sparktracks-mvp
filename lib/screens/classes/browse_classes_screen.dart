@@ -6,6 +6,7 @@ import '../../providers/enrollment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/class_model.dart';
 import '../../models/user_model.dart';
+import '../../models/coach_profile_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
 import 'class_detail_screen.dart';
@@ -17,11 +18,24 @@ class BrowseClassesScreen extends StatefulWidget {
   State<BrowseClassesScreen> createState() => _BrowseClassesScreenState();
 }
 
-class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
+class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTickerProviderStateMixin {
   String _searchQuery = '';
   String _selectedCategory = 'all';
   ClassType? _selectedType;
   LocationType? _selectedLocation;
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +44,7 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Browse Classes'),
+        title: const Text('Browse Classes & Coaches'),
         actions: [
           if (!isLoggedIn) ...[
             TextButton(
@@ -74,20 +88,29 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
             ),
           ],
         ],
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Padding(
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(icon: Icon(Icons.school), text: 'Classes'),
+            Tab(icon: Icon(Icons.person), text: 'Coaches'),
+          ],
+        ),
+      ),
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
             padding: const EdgeInsets.all(AppTheme.spacingM),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Search classes...',
+                hintText: 'Search classes or coaches...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: AppTheme.neutral100,
               ),
               onChanged: (value) {
                 setState(() {
@@ -96,124 +119,138 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
               },
             ),
           ),
-        ),
+          
+          // Tabs Content
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildClassesTab(),
+                _buildCoachesTab(),
+              ],
+            ),
+          ),
+        ],
       ),
-      body: Consumer<ClassesProvider>(
-        builder: (context, classesProvider, _) {
-          // Get ONLY public classes
-          // v3.0: Only show classes created by coaches (not test/default data)
-          var publicClasses = classesProvider.classes.where((c) => 
-            c.isPublic == true && 
-            c.coachId.isNotEmpty &&
-            c.category != null // Ensures it's a properly created class
+    );
+  }
+
+  Widget _buildClassesTab() {
+    return Consumer<ClassesProvider>(
+      builder: (context, classesProvider, _) {
+        // Get ONLY public classes
+        // v3.0: Only show classes created by coaches (not test/default data)
+        var publicClasses = classesProvider.classes.where((c) => 
+          c.isPublic == true && 
+          c.coachId.isNotEmpty &&
+          c.category != null // Ensures it's a properly created class
+        ).toList();
+        
+        // Apply filters
+        if (_searchQuery.isNotEmpty) {
+          publicClasses = publicClasses.where((c) =>
+            c.title.toLowerCase().contains(_searchQuery) ||
+            c.description.toLowerCase().contains(_searchQuery)
           ).toList();
-          
-          // Apply filters
-          if (_searchQuery.isNotEmpty) {
-            publicClasses = publicClasses.where((c) =>
-              c.title.toLowerCase().contains(_searchQuery) ||
-              c.description.toLowerCase().contains(_searchQuery)
-            ).toList();
-          }
-          
-          if (_selectedType != null) {
-            publicClasses = publicClasses.where((c) => c.type == _selectedType).toList();
-          }
-          
-          if (_selectedLocation != null) {
-            publicClasses = publicClasses.where((c) => c.locationType == _selectedLocation).toList();
-          }
-          
-          return Column(
-            children: [
-              // Filters
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-                child: Row(
-                  children: [
-                    FilterChip(
-                      label: const Text('All'),
-                      selected: _selectedType == null && _selectedLocation == null,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedType = null;
-                          _selectedLocation = null;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Weekly'),
-                      selected: _selectedType == ClassType.weekly,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedType = selected ? ClassType.weekly : null;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Monthly'),
-                      selected: _selectedType == ClassType.monthly,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedType = selected ? ClassType.monthly : null;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('In-Person'),
-                      selected: _selectedLocation == LocationType.inPerson,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedLocation = selected ? LocationType.inPerson : null;
-                        });
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    FilterChip(
-                      label: const Text('Online'),
-                      selected: _selectedLocation == LocationType.online,
-                      onSelected: (selected) {
-                        setState(() {
-                          _selectedLocation = selected ? LocationType.online : null;
-                        });
-                      },
-                    ),
-                  ],
-                ),
+        }
+        
+        if (_selectedType != null) {
+          publicClasses = publicClasses.where((c) => c.type == _selectedType).toList();
+        }
+        
+        if (_selectedLocation != null) {
+          publicClasses = publicClasses.where((c) => c.locationType == _selectedLocation).toList();
+        }
+        
+        return Column(
+          children: [
+            // Filters
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: const Text('All'),
+                    selected: _selectedType == null && _selectedLocation == null,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedType = null;
+                        _selectedLocation = null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Weekly'),
+                    selected: _selectedType == ClassType.weekly,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedType = selected ? ClassType.weekly : null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Monthly'),
+                    selected: _selectedType == ClassType.monthly,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedType = selected ? ClassType.monthly : null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('In-Person'),
+                    selected: _selectedLocation == LocationType.inPerson,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedLocation = selected ? LocationType.inPerson : null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    label: const Text('Online'),
+                    selected: _selectedLocation == LocationType.online,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedLocation = selected ? LocationType.online : null;
+                      });
+                    },
+                  ),
+                ],
               ),
-              
-              // Class list
-              Expanded(
-                child: publicClasses.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.school_outlined, size: 64, color: AppTheme.neutral400),
-                            const SizedBox(height: AppTheme.spacingL),
-                            Text('No classes found', style: AppTheme.headline6),
-                            const SizedBox(height: AppTheme.spacingS),
-                            Text('Try adjusting your filters', style: AppTheme.bodyMedium),
-                          ],
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(AppTheme.spacingL),
-                        itemCount: publicClasses.length,
-                        itemBuilder: (context, index) {
-                          final classItem = publicClasses[index];
-                          return _buildClassCard(classItem);
-                        },
+            ),
+            
+            // Class list
+            Expanded(
+              child: publicClasses.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.school_outlined, size: 64, color: AppTheme.neutral400),
+                          const SizedBox(height: AppTheme.spacingL),
+                          Text('No classes found', style: AppTheme.headline6),
+                          const SizedBox(height: AppTheme.spacingS),
+                          Text('Try adjusting your filters', style: AppTheme.bodyMedium),
+                        ],
                       ),
-              ),
-            ],
-          );
-        },
-      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.all(AppTheme.spacingL),
+                      itemCount: publicClasses.length,
+                      itemBuilder: (context, index) {
+                        final classItem = publicClasses[index];
+                        return _buildClassCard(classItem);
+                      },
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -412,6 +449,155 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
     } catch (e) {
       return 'Coach';
     }
+  }
+
+  Widget _buildCoachesTab() {
+    return FutureBuilder<List<CoachProfile>>(
+      future: FirestoreService().getAllCoachProfiles(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_search, size: 64, color: AppTheme.neutral400),
+                const SizedBox(height: 16),
+                Text(
+                  'No coaches available yet',
+                  style: AppTheme.headline6.copyWith(color: AppTheme.neutral600),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Check back soon for amazing coaches!',
+                  style: AppTheme.bodyMedium.copyWith(color: AppTheme.neutral500),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        var coaches = snapshot.data!;
+        
+        // Apply search filter
+        if (_searchQuery.isNotEmpty) {
+          coaches = coaches.where((coach) =>
+            coach.name.toLowerCase().contains(_searchQuery) ||
+            (coach.headline?.toLowerCase().contains(_searchQuery) ?? false) ||
+            coach.categories.any((cat) => cat.toLowerCase().contains(_searchQuery))
+          ).toList();
+        }
+        
+        if (coaches.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 64, color: AppTheme.neutral400),
+                const SizedBox(height: 16),
+                Text(
+                  'No coaches found matching "$_searchQuery"',
+                  style: AppTheme.headline6.copyWith(color: AppTheme.neutral600),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        return GridView.builder(
+          padding: const EdgeInsets.all(16),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: AppTheme.getCrossAxisCount(context, mobile: 1, tablet: 2, desktop: 3),
+            childAspectRatio: 0.85,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: coaches.length,
+          itemBuilder: (context, index) {
+            return _buildCoachCard(coaches[index]);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCoachCard(CoachProfile coach) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: () {
+          context.push('/coach/${coach.id}');
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppTheme.primaryColor,
+                backgroundImage: coach.photoUrl != null ? NetworkImage(coach.photoUrl!) : null,
+                child: coach.photoUrl == null
+                    ? Text(
+                        coach.name.isNotEmpty ? coach.name[0].toUpperCase() : 'C',
+                        style: const TextStyle(fontSize: 32, color: Colors.white),
+                      )
+                    : null,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                coach.name,
+                style: AppTheme.headline6,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                coach.headline ?? 'Coach',
+                style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              if (coach.yearsExperience != null)
+                Text(
+                  '${coach.yearsExperience} years experience',
+                  style: AppTheme.bodySmall.copyWith(color: AppTheme.successColor),
+                ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                alignment: WrapAlignment.center,
+                children: coach.categories.take(2).map((cat) => Chip(
+                  label: Text(
+                    cat,
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                  backgroundColor: AppTheme.accentColor.withOpacity(0.2),
+                  padding: EdgeInsets.zero,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                )).toList(),
+              ),
+              const Spacer(),
+              ElevatedButton(
+                onPressed: () {
+                  context.push('/coach/${coach.id}');
+                },
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 40),
+                ),
+                child: const Text('View Profile'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

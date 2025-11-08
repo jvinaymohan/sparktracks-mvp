@@ -283,10 +283,10 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 ),
               ),
               OutlinedButton.icon(
-                onPressed: () => context.go('/marketplace'),
-                icon: const Icon(Icons.explore, size: 20),
+                onPressed: () => context.go('/browse-classes'),
+                icon: const Icon(Icons.school, size: 20),
                 label: const Text(
-                  'Explore Marketplace',
+                  'Browse Classes',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
@@ -777,7 +777,6 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                   'About',
                   [
                     _buildFooterLink('Our Story', () => context.go('/about')),
-                    _buildFooterLink('Marketplace', () => context.go('/marketplace')),
                     _buildFooterLink('Browse Classes', () => context.go('/browse-classes')),
                   ],
                 ),
@@ -846,7 +845,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
               alignment: WrapAlignment.center,
               children: [
                 _buildFooterLink('About', () => context.go('/about')),
-                _buildFooterLink('Marketplace', () => context.go('/marketplace')),
+                _buildFooterLink('Browse Classes', () => context.go('/browse-classes')),
                 _buildFooterLink('Privacy', () => context.go('/privacy')),
                 _buildFooterLink('Terms', () => context.go('/terms')),
               ],

@@ -198,7 +198,7 @@ class AboutScreen extends StatelessWidget {
               ),
             ),
             
-            // Marketplace Section
+            // Browse Classes Section
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(48),
@@ -216,9 +216,9 @@ class AboutScreen extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: 800),
                 child: Column(
                   children: [
-                    const Icon(Icons.storefront, size: 64, color: AppTheme.primaryColor),
+                    const Icon(Icons.school, size: 64, color: AppTheme.primaryColor),
                     const SizedBox(height: 24),
-                    Text('Marketplace', style: AppTheme.headline3),
+                    Text('Browse Classes', style: AppTheme.headline3),
                     const SizedBox(height: 16),
                     Text(
                       'Discover amazing coaches and classes in your area',
@@ -226,29 +226,14 @@ class AboutScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    Wrap(
-                      spacing: 16,
-                      runSpacing: 16,
-                      alignment: WrapAlignment.center,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () => context.go('/marketplace'),
-                          icon: const Icon(Icons.explore),
-                          label: const Text('Explore Marketplace'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppTheme.primaryColor,
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                          ),
-                        ),
-                        OutlinedButton.icon(
-                          onPressed: () => context.go('/browse-classes'),
-                          icon: const Icon(Icons.school),
-                          label: const Text('Browse Classes'),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                          ),
-                        ),
-                      ],
+                    ElevatedButton.icon(
+                      onPressed: () => context.go('/browse-classes'),
+                      icon: const Icon(Icons.explore),
+                      label: const Text('Explore Classes'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryColor,
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
+                      ),
                     ),
                   ],
                 ),
@@ -344,14 +329,14 @@ class AboutScreen extends StatelessWidget {
                         child: const Text('Sign Up Free'),
                       ),
                       OutlinedButton(
-                        onPressed: () => context.go('/marketplace'),
+                        onPressed: () => context.go('/browse-classes'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: Colors.white,
                           side: const BorderSide(color: Colors.white, width: 2),
                           padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
                           textStyle: const TextStyle(fontSize: 18),
                         ),
-                        child: const Text('Explore Marketplace'),
+                        child: const Text('Browse Classes'),
                       ),
                     ],
                   ),
