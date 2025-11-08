@@ -57,6 +57,8 @@ import 'screens/achievements/achievements_screen.dart';
 import 'screens/messaging/messages_screen.dart';
 import 'screens/admin/admin_login_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/legal/privacy_policy_screen.dart';
+import 'screens/legal/terms_of_service_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -349,6 +351,16 @@ class SparktracksMVP extends StatelessWidget {
           builder: (context, state) => const MessagesScreen(),
         ),
         
+        // Legal Routes
+        GoRoute(
+          path: '/privacy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        GoRoute(
+          path: '/terms',
+          builder: (context, state) => const TermsOfServiceScreen(),
+        ),
+        
         // Admin Routes
         GoRoute(
           path: '/admin/login',
@@ -366,7 +378,7 @@ class SparktracksMVP extends StatelessWidget {
         final currentUser = authProvider.currentUser;
         
         // Allow landing page and auth pages for non-logged-in users
-        final publicPaths = ['/', '/login', '/register', '/email-verification', '/coach/', '/admin/'];
+        final publicPaths = ['/', '/login', '/register', '/email-verification', '/coach/', '/admin/', '/privacy', '/terms'];
         final isPublicPath = publicPaths.any((path) => state.matchedLocation.startsWith(path));
         
         // If not logged in and not on public pages, redirect to landing

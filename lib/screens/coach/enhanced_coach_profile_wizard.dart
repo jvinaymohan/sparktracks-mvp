@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../models/coach_profile_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/firestore_service.dart';
+import '../../services/image_upload_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
 
@@ -1191,17 +1193,120 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
   }
 
   Future<void> _uploadPhoto() async {
-    // TODO: Implement photo upload
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo upload coming soon!')),
-    );
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.currentUser?.id ?? '';
+      
+      if (userId.isEmpty) {
+        throw Exception('User not logged in');
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final imageService = ImageUploadService();
+      double uploadProgress = 0.0;
+
+      final imageUrl = await imageService.pickAndUploadProfilePhoto(
+        userId: userId,
+        onProgress: (progress) {
+          uploadProgress = progress;
+        },
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+      }
+
+      if (imageUrl != null) {
+        setState(() {
+          _photoUrl = imageUrl;
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Photo uploaded successfully!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog if open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload photo: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _addGalleryPhoto() async {
-    // TODO: Implement gallery photo upload
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Gallery upload coming soon!')),
-    );
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.currentUser?.id ?? '';
+      
+      if (userId.isEmpty) {
+        throw Exception('User not logged in');
+      }
+
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      final imageService = ImageUploadService();
+
+      final imageUrl = await imageService.pickAndUploadGalleryPhoto(
+        userId: userId,
+        onProgress: (progress) {
+          // Could show progress if needed
+        },
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+      }
+
+      if (imageUrl != null) {
+        setState(() {
+          _galleryUrls.add(imageUrl);
+        });
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Photo added to gallery!'),
+              backgroundColor: AppTheme.successColor,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog if open
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload gallery photo: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
   }
 
   String _capitalize(String text) {
