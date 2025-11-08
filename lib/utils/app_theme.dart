@@ -36,6 +36,11 @@ class AppTheme {
   static const double spacingL = 24.0;
   static const double spacingXL = 32.0;
   static const double spacingXXL = 48.0;
+  
+  // Mobile Touch Targets (48dp minimum per Material Design)
+  static const double minTouchTarget = 48.0;
+  static const double mobileBreakpoint = 768.0;
+  static const double tabletBreakpoint = 1024.0;
 
   // Border Radius
   static const double radiusSmall = 4.0;
@@ -139,7 +144,7 @@ class AppTheme {
     height: 1.3,
   );
 
-  // Button Styles
+  // Button Styles (with 48dp minimum touch target)
   static ButtonStyle primaryButtonStyle = ElevatedButton.styleFrom(
     backgroundColor: primaryColor,
     foregroundColor: Colors.white,
@@ -147,6 +152,7 @@ class AppTheme {
       horizontal: spacingL,
       vertical: spacingM,
     ),
+    minimumSize: const Size(64, minTouchTarget),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radiusMedium),
     ),
@@ -160,6 +166,7 @@ class AppTheme {
       horizontal: spacingL,
       vertical: spacingM,
     ),
+    minimumSize: const Size(64, minTouchTarget),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(radiusMedium),
     ),
@@ -171,6 +178,7 @@ class AppTheme {
       horizontal: spacingM,
       vertical: spacingS,
     ),
+    minimumSize: const Size(64, minTouchTarget),
   );
 
   // Input Decoration
@@ -213,7 +221,7 @@ class AppTheme {
       fillColor: neutral50,
       contentPadding: const EdgeInsets.symmetric(
         horizontal: spacingM,
-        vertical: spacingS,
+        vertical: spacingM, // Increased for better touch target
       ),
     );
   }
@@ -244,4 +252,28 @@ class AppTheme {
     end: Alignment.bottomRight,
     colors: [accentColor, warningColor],
   );
+  
+  // Responsive Helpers
+  static bool isMobile(BuildContext context) {
+    return MediaQuery.of(context).size.width < mobileBreakpoint;
+  }
+  
+  static bool isTablet(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return width >= mobileBreakpoint && width < tabletBreakpoint;
+  }
+  
+  static bool isDesktop(BuildContext context) {
+    return MediaQuery.of(context).size.width >= tabletBreakpoint;
+  }
+  
+  static double getResponsivePadding(BuildContext context) {
+    return isMobile(context) ? spacingM : spacingL;
+  }
+  
+  static int getCrossAxisCount(BuildContext context, {int mobile = 1, int tablet = 2, int desktop = 3}) {
+    if (isMobile(context)) return mobile;
+    if (isTablet(context)) return tablet;
+    return desktop;
+  }
 }

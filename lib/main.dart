@@ -48,7 +48,6 @@ import 'screens/coach/coach_financial_dashboard.dart';
 import 'screens/communication/coach_updates_screen.dart';
 import 'screens/coach/enhanced_public_coach_page.dart';
 import 'screens/coach/manage_students_screen.dart';
-import 'screens/coach/public_coach_page.dart';
 import 'screens/classes/browse_classes_screen.dart';
 import 'screens/classes/class_detail_screen.dart';
 import 'screens/attendance/mark_attendance_screen.dart';
@@ -307,10 +306,8 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/coach/:coachId',
           builder: (context, state) {
-            final coachId = state.pathParameters['coachId'];
-            // In real app, fetch coach from Firestore by ID
-            // For now, show placeholder
-            return PublicCoachPage(coach: state.extra as User);
+            final coachId = state.pathParameters['coachId']!;
+            return EnhancedPublicCoachPage(coachId: coachId);
           },
         ),
         

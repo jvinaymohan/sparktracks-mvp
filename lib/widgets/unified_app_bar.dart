@@ -136,8 +136,8 @@ class UnifiedAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           tooltip: 'Profile Menu',
           offset: const Offset(0, 50),
-          itemBuilder: (context) => [
-            PopupMenuItem(
+          itemBuilder: (context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
               child: Row(
                 children: [
                   CircleAvatar(
@@ -166,7 +166,7 @@ class UnifiedAppBar extends StatelessWidget implements PreferredSizeWidget {
               enabled: false,
             ),
             const PopupMenuDivider(),
-            const PopupMenuItem(
+            const PopupMenuItem<String>(
               value: 'profile',
               child: Row(
                 children: [
@@ -176,7 +176,7 @@ class UnifiedAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            const PopupMenuItem(
+            const PopupMenuItem<String>(
               value: 'settings',
               child: Row(
                 children: [
@@ -186,7 +186,7 @@ class UnifiedAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ],
               ),
             ),
-            const PopupMenuItem(
+            const PopupMenuItem<String>(
               value: 'feedback',
               child: Row(
                 children: [
@@ -197,7 +197,7 @@ class UnifiedAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
             const PopupMenuDivider(),
-            const PopupMenuItem(
+            const PopupMenuItem<String>(
               value: 'logout',
               child: Row(
                 children: [

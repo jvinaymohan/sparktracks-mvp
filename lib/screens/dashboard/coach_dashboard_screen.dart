@@ -12,6 +12,8 @@ import '../../models/payment_model.dart';
 import '../../models/enrollment_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
+import '../coach/coach_financial_dashboard.dart';
+import '../communication/coach_updates_screen.dart';
 
 class CoachDashboardScreen extends StatefulWidget {
   const CoachDashboardScreen({super.key});
@@ -30,7 +32,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     
     // Check if profile is complete, if not, redirect to profile setup
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -161,11 +163,14 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
         ),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.dashboard), text: 'Overview'),
             Tab(icon: Icon(Icons.school), text: 'Classes'),
             Tab(icon: Icon(Icons.people), text: 'Students'),
             Tab(icon: Icon(Icons.account_balance_wallet), text: 'Finance'),
+            Tab(icon: Icon(Icons.business), text: 'Business'),
+            Tab(icon: Icon(Icons.chat), text: 'Updates'),
           ],
         ),
         actions: [
@@ -214,6 +219,8 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           _buildClassesTab(),
           _buildStudentsTab(),
           _buildFinanceTab(),
+          _buildBusinessTab(),
+          _buildUpdatesTab(),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -1204,6 +1211,20 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           ),
         ],
       ),
+    );
+  }
+
+  // New Business Tab - Full Financial Dashboard
+  Widget _buildBusinessTab() {
+    return const Center(
+      child: CoachFinancialDashboard(),
+    );
+  }
+
+  // New Updates Tab - Communication Feed
+  Widget _buildUpdatesTab() {
+    return const Center(
+      child: CoachUpdatesScreen(),
     );
   }
 }

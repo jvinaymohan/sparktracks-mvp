@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -1174,15 +1175,8 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('✅ Profile saved successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        // Navigate to coach dashboard
-        context.go('/coach-dashboard');
+        // Show success dialog with share profile option
+        _showProfileSuccessDialog(userId);
       }
     } catch (e) {
       if (mounted) {
@@ -1212,6 +1206,124 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
 
   String _capitalize(String text) {
     return text[0].toUpperCase() + text.substring(1);
+  }
+
+  void _showProfileSuccessDialog(String userId) {
+    final profileUrl = 'https://sparktracks-mvp.web.app/coach/$userId';
+    
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.successColor.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle, color: AppTheme.successColor, size: 32),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text('Profile Complete!', style: AppTheme.headline5),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your coaching profile is now live! Share it with parents and students.',
+              style: AppTheme.bodyLarge,
+            ),
+            const SizedBox(height: 24),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.neutral100,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.neutral300),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.link, color: AppTheme.primaryColor, size: 20),
+                      const SizedBox(width: 8),
+                      Text('Your Profile Link', style: AppTheme.bodySmall.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.neutral600,
+                      )),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          profileUrl,
+                          style: AppTheme.bodySmall.copyWith(color: AppTheme.primaryColor),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        icon: const Icon(Icons.copy, size: 20),
+                        onPressed: () {
+                          Clipboard.setData(ClipboardData(text: profileUrl));
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('✅ Link copied to clipboard!'),
+                              backgroundColor: AppTheme.successColor,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        tooltip: 'Copy link',
+                        color: AppTheme.primaryColor,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '💡 Tip: Add this link to your email signature, social media, and business cards!',
+              style: AppTheme.bodySmall.copyWith(
+                color: AppTheme.neutral600,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.push('/coach/$userId');
+            },
+            icon: const Icon(Icons.visibility),
+            label: const Text('Preview Profile'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              context.go('/coach-dashboard');
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.primaryColor,
+            ),
+            icon: const Icon(Icons.dashboard),
+            label: const Text('Go to Dashboard'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
