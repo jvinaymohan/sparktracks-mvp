@@ -93,27 +93,85 @@ class TimelineScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Latest Release
+                    // Latest Release - v1.0.0
                     _buildVersionCard(
-                      version: 'v1.0.0',
-                      date: 'November 8, 2025',
-                      status: 'Released',
+                      version: 'v1.0.0 - Production Launch 🚀',
+                      date: 'November 8, 2025 (Evening)',
+                      status: 'Live Now',
                       statusColor: AppTheme.successColor,
                       features: [
-                        'Complete coach business platform with 6 integrated features',
-                        'Enhanced coach profile wizard (7-step guided setup)',
-                        'Intelligent class creation with AI-powered templates',
-                        'Student grouping and management tools',
-                        'Financial dashboard with revenue tracking',
-                        'Communication feed for updates and announcements',
-                        'Public coach pages with shareable URLs',
-                        'Photo upload system with Firebase Storage',
-                        'Public marketplace for browsing classes and coaches',
-                        'Location-based class search',
-                        'Mobile-optimized design (48dp touch targets)',
-                        'Privacy Policy and Terms of Service',
-                        'About page with creator story',
-                        '28 comprehensive unit and widget tests',
+                        'Timeline & Roadmap page with version history',
+                        'Enhanced Browse Classes with dual tabs (Classes & Coaches)',
+                        'Location-based search for finding nearby classes',
+                        'Admin Portal with auto-user creation',
+                        'Consolidated navigation (removed duplicate Marketplace)',
+                        'Enhanced filters: Online, In-Person, 1-on-1, Group',
+                        'About page with creator story (Vinay Jonnakuti)',
+                        'Privacy Policy with security highlights',
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // v0.9.0 - Evening Session
+                    _buildVersionCard(
+                      version: 'v0.9.0 - Coach Platform Complete',
+                      date: 'November 8, 2025 (Afternoon)',
+                      status: 'Released',
+                      statusColor: AppTheme.primaryColor,
+                      features: [
+                        'Photo upload system with Firebase Storage integration',
+                        'Privacy Policy and Terms of Service pages',
+                        'Admin security: Hidden from public, direct URL access only',
+                        'Unit tests: 28 comprehensive tests created',
+                        'Widget tests for landing screen',
+                        'Service tests with mocking framework',
+                        'Image upload service with progress tracking',
+                        'Firebase Storage security rules',
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // v0.8.0 - Coach Features
+                    _buildVersionCard(
+                      version: 'v0.8.0 - Coach Business Tools',
+                      date: 'November 8, 2025 (Morning)',
+                      status: 'Released',
+                      statusColor: AppTheme.primaryColor,
+                      features: [
+                        'Enhanced Coach Profile Wizard (7-step guided setup)',
+                        'Intelligent Class Creation with AI-powered templates',
+                        'Student Grouping Screen (by skill, age, payment)',
+                        'Financial Dashboard for coaches',
+                        'Communication Feed for updates and announcements',
+                        'Public Coach Pages with shareable URLs',
+                        'Share Profile dialog with copy-to-clipboard',
+                        'Business and Updates tabs in Coach Dashboard',
+                      ],
+                    ),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // v0.7.0 - Foundation
+                    _buildVersionCard(
+                      version: 'v0.7.0 - Core Platform',
+                      date: 'November 1-7, 2025',
+                      status: 'Released',
+                      statusColor: AppTheme.primaryColor,
+                      features: [
+                        'Parent Dashboard with task management',
+                        'Child Dashboard with rewards and achievements',
+                        'Coach Dashboard with class management',
+                        'Multi-child support for parents',
+                        'Task creation, assignment, and tracking',
+                        'Rewards and points system',
+                        'Class scheduling and calendar',
+                        'Enrollment management',
+                        'Attendance tracking',
+                        'Firebase Authentication and Firestore',
+                        'Mobile-responsive design (48dp touch targets)',
+                        'Role-based access control',
                       ],
                     ),
                     
