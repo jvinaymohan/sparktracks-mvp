@@ -42,7 +42,59 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
   final _zipCodeController = TextEditingController();
   String _country = 'United States';
   int _serviceRadius = 10;
+  String _distanceUnit = 'miles'; // 'miles' or 'kilometers'
   List<String> _travelOptions = ['coach_location'];
+  
+  // Common countries list
+  static const List<String> _countries = [
+    'United States',
+    'United Kingdom',
+    'Canada',
+    'Australia',
+    'India',
+    'Singapore',
+    'United Arab Emirates',
+    'Germany',
+    'France',
+    'Spain',
+    'Italy',
+    'Netherlands',
+    'Belgium',
+    'Switzerland',
+    'Austria',
+    'Sweden',
+    'Norway',
+    'Denmark',
+    'Finland',
+    'Ireland',
+    'New Zealand',
+    'South Africa',
+    'Japan',
+    'South Korea',
+    'China',
+    'Hong Kong',
+    'Malaysia',
+    'Thailand',
+    'Philippines',
+    'Indonesia',
+    'Vietnam',
+    'Mexico',
+    'Brazil',
+    'Argentina',
+    'Chile',
+    'Colombia',
+    'Other',
+  ];
+  
+  // Countries that use states/provinces
+  static const List<String> _countriesWithStates = [
+    'United States',
+    'Canada',
+    'Australia',
+    'India',
+    'Brazil',
+    'Mexico',
+  ];
   
   // Step 3: Languages
   List<LanguageSkill> _languages = [
@@ -354,39 +406,83 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
           ),
           const SizedBox(height: 32),
           
+          // Country
+          DropdownButtonFormField<String>(
+            value: _country,
+            decoration: AppTheme.inputDecoration(
+              labelText: 'Country *',
+              prefixIcon: const Icon(Icons.public),
+            ),
+            items: _countries.map((country) {
+              return DropdownMenuItem(
+                value: country,
+                child: Text(country),
+              );
+            }).toList(),
+            onChanged: (value) {
+              setState(() {
+                _country = value ?? 'United States';
+                // Auto-switch distance unit based on country
+                if (_country == 'United States' || _country == 'United Kingdom') {
+                  _distanceUnit = 'miles';
+                } else {
+                  _distanceUnit = 'kilometers';
+                }
+                // Clear state if country doesn't use states
+                if (!_countriesWithStates.contains(_country)) {
+                  _stateController.clear();
+                }
+              });
+            },
+          ),
+          const SizedBox(height: 20),
+          
           // City
           TextFormField(
             controller: _cityController,
             decoration: AppTheme.inputDecoration(
               labelText: 'City *',
-              hintText: 'Austin',
+              hintText: 'Enter your city',
               prefixIcon: const Icon(Icons.location_city),
             ),
           ),
           const SizedBox(height: 20),
           
-          // State & Zip Code
+          // State & Postal Code Row
           Row(
             children: [
-              Expanded(
-                flex: 2,
-                child: TextFormField(
-                  controller: _stateController,
-                  decoration: AppTheme.inputDecoration(
-                    labelText: 'State *',
-                    hintText: 'TX',
+              // State/Province (only for certain countries)
+              if (_countriesWithStates.contains(_country))
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _stateController,
+                    decoration: AppTheme.inputDecoration(
+                      labelText: _country == 'United States' ? 'State *' : 
+                                 _country == 'Canada' ? 'Province *' : 
+                                 _country == 'Australia' ? 'State/Territory *' :
+                                 'State/Province *',
+                      hintText: _country == 'United States' ? 'TX' :
+                                _country == 'Canada' ? 'ON' :
+                                _country == 'Australia' ? 'NSW' :
+                                'Enter state',
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
+              if (_countriesWithStates.contains(_country))
+                const SizedBox(width: 16),
+              // Postal Code
               Expanded(
                 child: TextFormField(
                   controller: _zipCodeController,
                   decoration: AppTheme.inputDecoration(
-                    labelText: 'Zip Code',
-                    hintText: '78701',
+                    labelText: _country == 'United States' ? 'Zip Code' : 'Postal Code',
+                    hintText: _country == 'United States' ? '78701' :
+                              _country == 'United Kingdom' ? 'SW1A 1AA' :
+                              _country == 'Canada' ? 'M5H 2N2' :
+                              'Enter code',
                   ),
-                  keyboardType: TextInputType.number,
+                  keyboardType: _country == 'United States' ? TextInputType.number : TextInputType.text,
                 ),
               ),
             ],
@@ -404,7 +500,7 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
                   min: 0,
                   max: 50,
                   divisions: 10,
-                  label: '$_serviceRadius miles',
+                  label: '$_serviceRadius $_distanceUnit',
                   activeColor: AppTheme.primaryColor,
                   onChanged: (value) => setState(() => _serviceRadius = value.toInt()),
                 ),
@@ -416,7 +512,7 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  '$_serviceRadius miles',
+                  '$_serviceRadius $_distanceUnit',
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -995,8 +1091,9 @@ class _EnhancedCoachProfileWizardState extends State<EnhancedCoachProfileWizard>
             'Experience: ${_yearsExperience ?? 0} years',
           ]),
           _buildSummaryCard('Location', [
-            'City: ${_cityController.text}, ${_stateController.text}',
-            'Service Radius: $_serviceRadius miles',
+            'Country: $_country',
+            'City: ${_cityController.text}${_stateController.text.isNotEmpty ? ', ${_stateController.text}' : ''}',
+            'Service Radius: $_serviceRadius $_distanceUnit',
             'Options: ${_travelOptions.join(', ')}',
           ]),
           _buildSummaryCard('Languages', 
