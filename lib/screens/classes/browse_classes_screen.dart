@@ -63,6 +63,9 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
                   case UserType.coach:
                     context.go('/coach-dashboard');
                     break;
+                  case UserType.admin:
+                    context.go('/admin/dashboard');
+                    break;
                   default:
                     context.go('/');
                 }

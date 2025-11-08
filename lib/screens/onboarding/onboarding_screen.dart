@@ -50,6 +50,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         return '/child-dashboard';
       case UserType.coach:
         return '/coach-dashboard';
+      case UserType.admin:
+        return '/admin/dashboard';
     }
   }
 

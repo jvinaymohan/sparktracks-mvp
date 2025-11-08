@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
+import 'package:cloud_firestore/cloud_firestore.dart' as firebase_firestore;
 import '../models/admin_user_model.dart';
 import '../models/user_model.dart';
 
@@ -43,16 +44,60 @@ class AdminProvider with ChangeNotifier {
     // Check hardcoded admin credentials
     if (email == 'admin@sparktracks.com' && password == 'ChangeThisPassword2024!') {
       try {
-        // ALSO authenticate with Firebase to get access token for Firestore
-        await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(
+        // Try to authenticate with Firebase
+        final userCredential = await firebase_auth.FirebaseAuth.instance.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
         print('✓ Admin authenticated with Firebase');
+        
+        // Check if user document exists, if not create it
+        final firestore = firebase_firestore.FirebaseFirestore.instance;
+        final userDoc = await firestore.collection('users').doc(userCredential.user!.uid).get();
+        
+        if (!userDoc.exists) {
+          // Create admin user document
+          await firestore.collection('users').doc(userCredential.user!.uid).set({
+            'id': userCredential.user!.uid,
+            'email': email,
+            'name': 'Super Admin',
+            'type': 'admin',
+            'createdAt': DateTime.now().toIso8601String(),
+            'updatedAt': DateTime.now().toIso8601String(),
+            'preferences': {},
+          });
+          print('✓ Admin user document created');
+        }
       } catch (e) {
-        print('⚠️ Firebase auth failed (admin user may not exist): $e');
-        print('ℹ️ Admin can login but may have permission issues with Firestore');
-        // Continue anyway - admin can still access UI, just not Firestore data
+        print('⚠️ Firebase auth failed: $e');
+        // If user doesn't exist, provide helpful error
+        if (e.toString().contains('user-not-found')) {
+          print('ℹ️ Admin user not found. Creating via registration...');
+          try {
+            final userCredential = await firebase_auth.FirebaseAuth.instance.createUserWithEmailAndPassword(
+              email: email,
+              password: password,
+            );
+            
+            // Create admin user document
+            final firestore = firebase_firestore.FirebaseFirestore.instance;
+            await firestore.collection('users').doc(userCredential.user!.uid).set({
+              'id': userCredential.user!.uid,
+              'email': email,
+              'name': 'Super Admin',
+              'type': 'admin',
+              'createdAt': DateTime.now().toIso8601String(),
+              'updatedAt': DateTime.now().toIso8601String(),
+              'preferences': {},
+            });
+            print('✓ Admin user created and authenticated');
+          } catch (createError) {
+            print('⚠️ Failed to create admin user: $createError');
+            return false;
+          }
+        } else {
+          return false;
+        }
       }
       
       _currentAdmin = AdminUser(

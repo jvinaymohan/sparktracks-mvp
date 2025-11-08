@@ -75,6 +75,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> with SingleTicker
                   case UserType.coach:
                     context.go('/coach-dashboard');
                     break;
+                  case UserType.admin:
+                    context.go('/admin/dashboard');
+                    break;
                   default:
                     context.go('/');
                 }

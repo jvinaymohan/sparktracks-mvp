@@ -419,6 +419,8 @@ class SparktracksMVP extends StatelessWidget {
                 return '/child-dashboard';
               case UserType.coach:
                 return '/coach-dashboard';
+              case UserType.admin:
+                return '/admin/dashboard';
               default:
                 return '/onboarding';
             }

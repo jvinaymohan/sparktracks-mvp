@@ -70,6 +70,7 @@ const _$UserTypeEnumMap = {
   UserType.parent: 'parent',
   UserType.child: 'child',
   UserType.coach: 'coach',
+  UserType.admin: 'admin',
 };
 
 NotificationPreferences _$NotificationPreferencesFromJson(

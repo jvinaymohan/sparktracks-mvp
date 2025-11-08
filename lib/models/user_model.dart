@@ -9,6 +9,8 @@ enum UserType {
   child,
   @JsonValue('coach')
   coach,
+  @JsonValue('admin')
+  admin,
 }
 
 enum NotificationType {

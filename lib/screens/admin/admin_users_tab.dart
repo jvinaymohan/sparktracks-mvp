@@ -269,6 +269,8 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
         return AppTheme.warningColor;
       case UserType.coach:
         return AppTheme.successColor;
+      case UserType.admin:
+        return AppTheme.errorColor;
     }
   }
 
