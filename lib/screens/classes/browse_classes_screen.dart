@@ -23,6 +23,8 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
   String _selectedCategory = 'all';
   ClassType? _selectedType;
   LocationType? _selectedLocation;
+  bool _showNearbyOnly = false;
+  String? _userCity; // For location-based search
   late TabController _tabController;
 
   @override
@@ -101,22 +103,54 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
           // Search Bar
           Padding(
             padding: const EdgeInsets.all(AppTheme.spacingM),
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Search classes or coaches...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide.none,
+            child: Column(
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search classes or coaches...',
+                    prefixIcon: const Icon(Icons.search),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.neutral100,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value.toLowerCase();
+                    });
+                  },
                 ),
-                filled: true,
-                fillColor: AppTheme.neutral100,
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
+                const SizedBox(height: 12),
+                TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Enter city or location...',
+                    prefixIcon: const Icon(Icons.location_city),
+                    suffixIcon: _userCity != null
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _userCity = null;
+                              });
+                            },
+                          )
+                        : null,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: AppTheme.neutral100,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _userCity = value.isEmpty ? null : value.toLowerCase();
+                    });
+                  },
+                ),
+              ],
             ),
           ),
           
@@ -139,18 +173,25 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
     return Consumer<ClassesProvider>(
       builder: (context, classesProvider, _) {
         // Get ONLY public classes
-        // v3.0: Only show classes created by coaches (not test/default data)
+        // Show all public classes created by coaches
         var publicClasses = classesProvider.classes.where((c) => 
           c.isPublic == true && 
-          c.coachId.isNotEmpty &&
-          c.category != null // Ensures it's a properly created class
+          c.coachId.isNotEmpty
         ).toList();
         
         // Apply filters
         if (_searchQuery.isNotEmpty) {
           publicClasses = publicClasses.where((c) =>
             c.title.toLowerCase().contains(_searchQuery) ||
-            c.description.toLowerCase().contains(_searchQuery)
+            c.description.toLowerCase().contains(_searchQuery) ||
+            (c.category?.toLowerCase().contains(_searchQuery) ?? false)
+          ).toList();
+        }
+        
+        // Location-based filtering
+        if (_userCity != null && _userCity!.isNotEmpty) {
+          publicClasses = publicClasses.where((c) =>
+            c.location?.toLowerCase().contains(_userCity!) ?? false
           ).toList();
         }
         
@@ -171,7 +212,7 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
               child: Row(
                 children: [
                   FilterChip(
-                    label: const Text('All'),
+                    label: const Text('All Classes'),
                     selected: _selectedType == null && _selectedLocation == null,
                     onSelected: (selected) {
                       setState(() {
@@ -182,26 +223,18 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Weekly'),
-                    selected: _selectedType == ClassType.weekly,
+                    avatar: const Icon(Icons.computer, size: 18),
+                    label: const Text('Online Only'),
+                    selected: _selectedLocation == LocationType.online,
                     onSelected: (selected) {
                       setState(() {
-                        _selectedType = selected ? ClassType.weekly : null;
+                        _selectedLocation = selected ? LocationType.online : null;
                       });
                     },
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Monthly'),
-                    selected: _selectedType == ClassType.monthly,
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedType = selected ? ClassType.monthly : null;
-                      });
-                    },
-                  ),
-                  const SizedBox(width: 8),
-                  FilterChip(
+                    avatar: const Icon(Icons.location_on, size: 18),
                     label: const Text('In-Person'),
                     selected: _selectedLocation == LocationType.inPerson,
                     onSelected: (selected) {
@@ -212,12 +245,42 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> with SingleTi
                   ),
                   const SizedBox(width: 8),
                   FilterChip(
-                    label: const Text('Online'),
-                    selected: _selectedLocation == LocationType.online,
+                    avatar: const Icon(Icons.calendar_today, size: 18),
+                    label: const Text('Weekly'),
+                    selected: _selectedType == ClassType.weekly,
                     onSelected: (selected) {
                       setState(() {
-                        _selectedLocation = selected ? LocationType.online : null;
+                        _selectedType = selected ? ClassType.weekly : null;
                       });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    avatar: const Icon(Icons.event, size: 18),
+                    label: const Text('Monthly'),
+                    selected: _selectedType == ClassType.monthly,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedType = selected ? ClassType.monthly : null;
+                      });
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    avatar: const Icon(Icons.person, size: 18),
+                    label: const Text('1-on-1'),
+                    selected: publicClasses.any((c) => !c.isGroupClass),
+                    onSelected: (selected) {
+                      // Filter handled in the list
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  FilterChip(
+                    avatar: const Icon(Icons.groups, size: 18),
+                    label: const Text('Group'),
+                    selected: publicClasses.any((c) => c.isGroupClass),
+                    onSelected: (selected) {
+                      // Filter handled in the list
                     },
                   ),
                 ],
