@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/class_model.dart';
 
 class ClassesProvider with ChangeNotifier {
   final List<Class> _classes = [];
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isLoading = false;
+  String? _error;
 
   List<Class> get classes => _classes;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
   
   // Get classes for a specific coach
   List<Class> getClassesForCoach(String coachId) {
@@ -21,15 +27,89 @@ class ClassesProvider with ChangeNotifier {
     return _classes.where((cls) => cls.enrolledStudentIds.contains(studentId)).toList();
   }
   
+  // Load all classes from Firestore
+  Future<void> loadClasses() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final snapshot = await _firestore.collection('classes').get();
+      _classes.clear();
+      
+      for (var doc in snapshot.docs) {
+        try {
+          final classItem = Class.fromJson({
+            ...doc.data(),
+            'id': doc.id,
+          });
+          _classes.add(classItem);
+        } catch (e) {
+          print('Error parsing class ${doc.id}: $e');
+        }
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Load classes for a specific coach
+  Future<void> loadClassesForCoach(String coachId) async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final snapshot = await _firestore
+          .collection('classes')
+          .where('coachId', isEqualTo: coachId)
+          .get();
+      
+      _classes.clear();
+      
+      for (var doc in snapshot.docs) {
+        try {
+          final classItem = Class.fromJson({
+            ...doc.data(),
+            'id': doc.id,
+          });
+          _classes.add(classItem);
+        } catch (e) {
+          print('Error parsing class ${doc.id}: $e');
+        }
+      }
+      
+      _isLoading = false;
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
   // Clear all classes (for testing)
   void clearAllClasses() {
     _classes.clear();
     notifyListeners();
   }
 
-  void addClass(Class classItem) {
-    _classes.add(classItem);
-    notifyListeners();
+  // Add class to Firestore
+  Future<void> addClass(Class classItem) async {
+    try {
+      await _firestore.collection('classes').doc(classItem.id).set(classItem.toJson());
+      _classes.add(classItem);
+      notifyListeners();
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
   void updateClass(Class updatedClass) {

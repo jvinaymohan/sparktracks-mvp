@@ -579,7 +579,7 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
           SizedBox(height: isMobile ? 32 : 40),
           
           ElevatedButton(
-            onPressed: () => context.go('/register'),
+            onPressed: () => context.go('/browse-classes'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFF59E0B),
               foregroundColor: Colors.white,

@@ -84,7 +84,7 @@ class SparktracksMVP extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()),
         ChangeNotifierProvider(create: (_) => ChildrenProvider()),
         ChangeNotifierProvider(create: (_) => TasksProvider()),
-        ChangeNotifierProvider(create: (_) => ClassesProvider()),
+        ChangeNotifierProvider(create: (_) => ClassesProvider()..loadClasses()),
         ChangeNotifierProvider(create: (_) => EnrollmentProvider()),
         ChangeNotifierProvider(create: (_) => AttendanceProvider()),
         ChangeNotifierProvider(create: (_) => AchievementsProvider()),
