@@ -85,21 +85,22 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
                 onPressed: () => context.go('/login'),
                 child: const Text('Sign In'),
               ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: () => context.go('/admin/login'),
-                style: TextButton.styleFrom(
-                  foregroundColor: const Color(0xFF8B5CF6),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.admin_panel_settings, size: 16),
-                    SizedBox(width: 4),
-                    Text('Admin'),
-                  ],
-                ),
-              ),
+              // Admin portal hidden - access directly via /admin/login URL
+              // const SizedBox(width: 8),
+              // TextButton(
+              //   onPressed: () => context.go('/admin/login'),
+              //   style: TextButton.styleFrom(
+              //     foregroundColor: const Color(0xFF8B5CF6),
+              //   ),
+              //   child: Row(
+              //     mainAxisSize: MainAxisSize.min,
+              //     children: const [
+              //       Icon(Icons.admin_panel_settings, size: 16),
+              //       SizedBox(width: 4),
+              //       Text('Admin'),
+              //     ],
+              //   ),
+              // ),
               const SizedBox(width: 8),
               Padding(
                 padding: const EdgeInsets.only(right: 16),
