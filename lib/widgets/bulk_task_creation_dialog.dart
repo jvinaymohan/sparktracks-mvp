@@ -26,8 +26,7 @@ class _BulkTaskCreationDialogState extends State<BulkTaskCreationDialog> {
   final Set<String> _selectedChildrenIds = {};
   DateTime? _dueDate;
   TaskPriority _priority = TaskPriority.medium;
-  bool _isRecurring = false;
-  RecurrenceFrequency? _recurrenceFrequency;
+  String? _recurringPattern; // 'daily', 'weekly', 'monthly'
   String? _category;
   bool _isCreating = false;
 
@@ -75,10 +74,10 @@ class _BulkTaskCreationDialogState extends State<BulkTaskCreationDialog> {
           parentId: parentId,
           status: TaskStatus.pending,
           createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
           dueDate: _dueDate,
           priority: _priority,
-          isRecurring: _isRecurring,
-          recurrenceFrequency: _recurrenceFrequency,
+          recurringPattern: _recurringPattern,
           category: _category,
         );
 
@@ -234,44 +233,25 @@ class _BulkTaskCreationDialogState extends State<BulkTaskCreationDialog> {
                 ),
                 const SizedBox(height: 16),
                 
-                // Recurring
-                SwitchListTile(
-                  title: const Text('Recurring Task'),
-                  value: _isRecurring,
+                // Recurring Pattern
+                DropdownButtonFormField<String>(
+                  value: _recurringPattern,
+                  decoration: const InputDecoration(
+                    labelText: 'Recurring (optional)',
+                    prefixIcon: Icon(Icons.repeat),
+                    border: OutlineInputBorder(),
+                    hintText: 'Select if task repeats',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Not recurring')),
+                    DropdownMenuItem(value: 'daily', child: Text('Daily')),
+                    DropdownMenuItem(value: 'weekly', child: Text('Weekly')),
+                    DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+                  ],
                   onChanged: (value) {
-                    setState(() {
-                      _isRecurring = value;
-                      if (!value) _recurrenceFrequency = null;
-                    });
+                    setState(() => _recurringPattern = value);
                   },
                 ),
-                
-                if (_isRecurring) ...[
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<RecurrenceFrequency>(
-                    value: _recurrenceFrequency,
-                    decoration: const InputDecoration(
-                      labelText: 'Frequency',
-                      prefixIcon: Icon(Icons.repeat),
-                      border: OutlineInputBorder(),
-                    ),
-                    items: RecurrenceFrequency.values.map((freq) {
-                      return DropdownMenuItem(
-                        value: freq,
-                        child: Text(freq.name.toUpperCase()),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() => _recurrenceFrequency = value);
-                    },
-                    validator: (value) {
-                      if (_isRecurring && value == null) {
-                        return 'Please select a frequency';
-                      }
-                      return null;
-                    },
-                  ),
-                ],
                 
                 const SizedBox(height: 24),
                 const Divider(),
