@@ -5,6 +5,7 @@ import '../../providers/classes_provider.dart';
 import '../../providers/enrollment_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/class_model.dart';
+import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
 import 'class_detail_screen.dart';
 
@@ -23,9 +24,52 @@ class _BrowseClassesScreenState extends State<BrowseClassesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final isLoggedIn = authProvider.isLoggedIn;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Browse Classes'),
+        actions: [
+          if (!isLoggedIn) ...[
+            TextButton(
+              onPressed: () => context.go('/login'),
+              child: const Text('Login', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(width: 8),
+            ElevatedButton(
+              onPressed: () => context.go('/register'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.primaryColor,
+              ),
+              child: const Text('Sign Up'),
+            ),
+            const SizedBox(width: 16),
+          ] else ...[
+            IconButton(
+              icon: const Icon(Icons.home),
+              onPressed: () {
+                // Navigate to appropriate dashboard
+                final userType = authProvider.currentUser?.type;
+                switch (userType) {
+                  case UserType.parent:
+                    context.go('/parent-dashboard');
+                    break;
+                  case UserType.child:
+                    context.go('/child-dashboard');
+                    break;
+                  case UserType.coach:
+                    context.go('/coach-dashboard');
+                    break;
+                  default:
+                    context.go('/');
+                }
+              },
+              tooltip: 'Back to Dashboard',
+            ),
+          ],
+        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Padding(
