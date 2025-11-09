@@ -154,9 +154,9 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       'AI Suggestions',
       'Details',
       'Location',
+      'Schedule',
       'Pricing',
       'Materials',
-      'Schedule',
       'Review'
     ];
     
@@ -228,11 +228,11 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       case 3:
         return _buildStep4Location();
       case 4:
-        return _buildStep5Pricing();
+        return _buildStep5Schedule();
       case 5:
-        return _buildStep6Materials();
+        return _buildStep6Pricing();
       case 6:
-        return _buildStep7Schedule();
+        return _buildStep7Materials();
       case 7:
         return _buildStep8Review();
       default:
@@ -1044,7 +1044,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
     );
   }
 
-  Widget _buildStep5Pricing() {
+  Widget _buildStep6Pricing() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -1308,7 +1308,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
     }
   }
 
-  Widget _buildStep6Materials() {
+  Widget _buildStep7Materials() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -1482,7 +1482,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
     );
   }
 
-  Widget _buildStep7Schedule() {
+  Widget _buildStep5Schedule() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(

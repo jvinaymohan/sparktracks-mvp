@@ -91,11 +91,6 @@ class LandingScreenV2 extends StatelessWidget {
             child: _buildHowItWorks(isMobile),
           ),
           
-          // Testimonials
-          SliverToBoxAdapter(
-            child: _buildTestimonials(isMobile),
-          ),
-          
           // Final CTA
           SliverToBoxAdapter(
             child: _buildFinalCTA(isMobile),
@@ -152,23 +147,23 @@ class LandingScreenV2 extends StatelessWidget {
     return Column(
       crossAxisAlignment: isMobile ? CrossAxisAlignment.center : CrossAxisAlignment.start,
       children: [
-        // Emotional Badge
+        // Beta Badge
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFEBF0),
+            color: const Color(0xFFDCFCE7),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFFF6B9D).withOpacity(0.3)),
+            border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
           ),
           child: const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('💛', style: TextStyle(fontSize: 16)),
+              Text('🎉', style: TextStyle(fontSize: 16)),
               SizedBox(width: 8),
               Text(
-                'Loved by 1,000+ families',
+                'Early Beta - Help us improve!',
                 style: TextStyle(
-                  color: Color(0xFFD91656),
+                  color: Color(0xFF166534),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -693,7 +688,7 @@ class LandingScreenV2 extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               Text(
-                'Join 1,000+ families already growing with Sparktracks',
+                'Be part of our early community and shape the future!',
                 style: TextStyle(
                   fontSize: isMobile ? 16 : 20,
                   color: const Color(0xFF6B7280),
