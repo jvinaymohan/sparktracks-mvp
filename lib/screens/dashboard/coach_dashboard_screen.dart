@@ -14,6 +14,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
 import '../coach/coach_financial_dashboard.dart';
 import '../communication/coach_updates_screen.dart';
+import '../../widgets/post_update_dialog.dart';
 
 class CoachDashboardScreen extends StatefulWidget {
   const CoachDashboardScreen({super.key});
@@ -312,6 +313,51 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
                   _recentPayments.where((p) => p.status == PaymentStatus.pending).length.toString(),
                   Icons.payment,
                   AppTheme.infoColor,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppTheme.spacingXL),
+          
+          // Quick Actions
+          Text(
+            'Quick Actions',
+            style: AppTheme.headline6,
+          ),
+          const SizedBox(height: AppTheme.spacingM),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 2.5,
+            children: [
+              _buildQuickActionCard(
+                'Enrollment Requests',
+                Icons.pending_actions,
+                AppTheme.warningColor,
+                () => context.go('/coach-enrollments'),
+              ),
+              _buildQuickActionCard(
+                'My Students',
+                Icons.people,
+                AppTheme.primaryColor,
+                () => context.go('/coach-students'),
+              ),
+              _buildQuickActionCard(
+                'Manage Reviews',
+                Icons.star,
+                AppTheme.accentColor,
+                () => context.go('/coach-reviews'),
+              ),
+              _buildQuickActionCard(
+                'Post Update',
+                Icons.campaign,
+                AppTheme.successColor,
+                () => showDialog(
+                  context: context,
+                  builder: (context) => const PostUpdateDialog(),
                 ),
               ),
             ],
@@ -825,6 +871,39 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
               textAlign: TextAlign.center,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+    return Card(
+      elevation: 2,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: color, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.neutral400),
+            ],
+          ),
         ),
       ),
     );

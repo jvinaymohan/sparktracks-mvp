@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../providers/tasks_provider.dart';
@@ -18,6 +19,7 @@ import '../../screens/tasks/create_task_wizard.dart';
 import '../../screens/tasks/quick_create_task_dialog.dart';
 import '../../widgets/bulk_task_creation_dialog.dart';
 import '../../widgets/quick_booking_dialog.dart';
+import '../../widgets/edit_task_dialog.dart';
 import '../../services/firestore_service.dart';
 import 'package:intl/intl.dart';
 
@@ -1248,7 +1250,81 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         ),
         title: Text(task.title),
         subtitle: Text('${child.name} • ${task.status.name} • ${task.rewardAmount.toInt()} points'),
-        trailing: Text(_formatDate(task.updatedAt)),
+        trailing: PopupMenuButton(
+          itemBuilder: (context) => [
+            const PopupMenuItem(
+              value: 'edit',
+              child: Row(
+                children: [
+                  Icon(Icons.edit, size: 20),
+                  SizedBox(width: 8),
+                  Text('Edit Task'),
+                ],
+              ),
+            ),
+            if (task.status == TaskStatus.pending || task.status == TaskStatus.inProgress)
+              const PopupMenuItem(
+                value: 'complete',
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, size: 20),
+                    SizedBox(width: 8),
+                    Text('Mark Complete'),
+                  ],
+                ),
+              ),
+            const PopupMenuItem(
+              value: 'delete',
+              child: Row(
+                children: [
+                  Icon(Icons.delete, size: 20, color: Colors.red),
+                  SizedBox(width: 8),
+                  Text('Delete', style: TextStyle(color: Colors.red)),
+                ],
+              ),
+            ),
+          ],
+          onSelected: (value) async {
+            if (value == 'edit') {
+              final result = await showDialog<bool>(
+                context: context,
+                builder: (context) => EditTaskDialog(task: task),
+              );
+              // Task will auto-refresh via provider
+            } else if (value == 'complete') {
+              // Update via Firestore directly
+              await FirebaseFirestore.instance
+                  .collection('tasks')
+                  .doc(task.id)
+                  .update({'status': 'completed', 'completedAt': FieldValue.serverTimestamp()});
+            } else if (value == 'delete') {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Task?'),
+                  content: const Text('This action cannot be undone.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context, false),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => Navigator.pop(context, true),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                      child: const Text('Delete'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) {
+                await FirebaseFirestore.instance
+                    .collection('tasks')
+                    .doc(task.id)
+                    .delete();
+              }
+            }
+          },
+        ),
       ),
     );
   }
