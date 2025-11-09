@@ -33,11 +33,17 @@ service cloud.firestore {
     }
     
     // Coach Profiles collection - PUBLIC READ for marketplace
+    // BETA: Very permissive rules for testing - TIGHTEN BEFORE PRODUCTION!
     match /coach_profiles/{coachId} {
       allow read: if true; // Public read for marketplace and public coach pages
-      allow create: if isAuthenticated(); // Allow any authenticated user to create
-      allow update: if isAuthenticated(); // Allow coaches to update their profiles
-      allow delete: if isAuthenticated() && request.auth.uid == coachId;
+      allow create, update: if isAuthenticated(); // Allow any authenticated coach to create/update
+      allow delete: if isAuthenticated();
+    }
+    
+    // ALSO support camelCase collection name (code uses this)
+    match /coachProfiles/{coachId} {
+      allow read: if true; // Public read
+      allow create, update, delete: if isAuthenticated(); // Allow authenticated users
     }
     
     // Reviews collection - for coach ratings

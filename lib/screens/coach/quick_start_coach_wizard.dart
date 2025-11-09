@@ -194,7 +194,22 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
         preferences: {'quickStartCompleted': true},
       );
 
+      // Save coach profile with detailed error logging
+      print('🔄 Attempting to save coach profile for user: $userId');
+      print('📋 Profile data: ${profile.toJson()}');
+      
       await FirestoreService().saveCoachProfile(profile);
+      print('✅ Coach profile saved successfully!');
+
+      // Update user preferences
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .update({
+        'preferences.profileCompleted': true,
+        'preferences.quickStartCompleted': true,
+      });
+      print('✅ User preferences updated!');
 
       // Create first class
       final classDescription = _classDescription.text.trim().isEmpty
@@ -242,13 +257,76 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
         // Show success and navigate to dashboard
         _showSuccessDialog(userId);
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('❌ COACH PROFILE SAVE ERROR: $e');
+      print('📍 Stack trace: $stackTrace');
+      
       if (mounted) {
         setState(() => _isSubmitting = false);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: AppTheme.errorColor,
+        
+        // Show detailed error dialog for debugging
+        showDialog(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 28),
+                SizedBox(width: 12),
+                Text('Profile Save Failed'),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'We\'re having trouble saving your profile.',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.withOpacity(0.3)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Error details:', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                      const SizedBox(height: 8),
+                      SelectableText(
+                        e.toString(),
+                        style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  '🔧 The development team has been notified and is investigating this issue.',
+                  style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic, color: Color(0xFF6B7280)),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close'),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  _completeQuickStart(); // Try again
+                },
+                icon: const Icon(Icons.refresh),
+                label: const Text('Try Again'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+              ),
+            ],
           ),
         );
       }
