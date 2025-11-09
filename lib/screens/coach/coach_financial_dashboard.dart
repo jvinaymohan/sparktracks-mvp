@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:csv/csv.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/invoice_model.dart';
 // TODO: Re-enable after model fixes
 // import '../../models/expense_model.dart';
@@ -80,27 +81,27 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
           Text('Financial Overview - $monthName', style: AppTheme.headline4),
           const SizedBox(height: 24),
           
-          // Key Metrics Cards
+          // Key Metrics Cards - Real Data or Empty State
           Row(
             children: [
               Expanded(
                 child: _buildMetricCard(
                   'Revenue This Month',
-                  '\$4,850',
+                  '\$0',
                   Icons.trending_up,
                   AppTheme.successColor,
-                  '+15% from last month',
-                  true,
+                  'Start by enrolling students',
+                  false,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildMetricCard(
                   'Outstanding',
-                  '\$1,200',
+                  '\$0',
                   Icons.pending_actions,
                   AppTheme.warningColor,
-                  '6 invoices pending',
+                  'No pending invoices',
                   false,
                 ),
               ),
@@ -111,45 +112,106 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
             children: [
               Expanded(
                 child: _buildMetricCard(
-                  'Expenses',
-                  '\$450',
-                  Icons.money_off,
-                  AppTheme.errorColor,
-                  'Equipment, travel, etc.',
+                  'Active Students',
+                  '0',
+                  Icons.people,
+                  AppTheme.primaryColor,
+                  'Enroll students to start tracking',
                   false,
                 ),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: _buildMetricCard(
-                  'Net Profit',
-                  '\$4,400',
-                  Icons.account_balance_wallet,
+                  'Active Classes',
+                  '0',
+                  Icons.school,
                   Colors.purple,
-                  '+18% from last month',
-                  true,
+                  'Create your first class!',
+                  false,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 32),
           
-          // Revenue Breakdown
-          Text('Revenue by Class', style: AppTheme.headline5),
-          const SizedBox(height: 16),
-          _buildRevenueBreakdownCard('Beginner Tennis', '\$1,800', '12 students × \$35 × 4 sessions', 0.37),
-          _buildRevenueBreakdownCard('Advanced Piano', '\$1,600', '4 students × \$80 × 5 sessions', 0.33),
-          _buildRevenueBreakdownCard('Chess Club', '\$900', '15 students × \$15 × 4 sessions', 0.19),
-          _buildRevenueBreakdownCard('Private Lessons', '\$550', 'Various', 0.11),
+          // Getting Started Guide - Empty State
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFDCFCE7),
+                  const Color(0xFFBFDBFE),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3), width: 2),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: const [
+                    Icon(Icons.rocket_launch_rounded, color: Color(0xFF166534), size: 28),
+                    SizedBox(width: 12),
+                    Text(
+                      'Get Started with Your Business',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF166534),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                _buildGettingStartedStep('1', 'Create your first class', 'Set schedule, pricing, and details', false),
+                _buildGettingStartedStep('2', 'Make it public', 'Let parents discover your classes', false),
+                _buildGettingStartedStep('3', 'Enroll students', 'Start tracking revenue and attendance', false),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.go('/create-class'),
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('Create Your First Class'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           
-          const SizedBox(height: 32),
           
-          // Top Students
-          Text('Top Students by Revenue', style: AppTheme.headline5),
-          const SizedBox(height: 16),
-          _buildStudentRevenueCard('Martinez Family', '\$450/month', 1),
-          _buildStudentRevenueCard('Chen Family', '\$380/month', 2),
-          _buildStudentRevenueCard('Johnson Family', '\$320/month', 3),
+          // Beta Notice
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFF5F7),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFFF6B9D).withOpacity(0.3)),
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.info_outline_rounded, color: Color(0xFFFF6B9D), size: 24),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    '📊 Financial tracking will show real data as you enroll students and track classes. This dashboard will populate automatically!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF4B5563),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           
           const SizedBox(height: 24),
           
@@ -667,6 +729,61 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
       const SnackBar(
         content: Text('✅ Invoice marked as paid!'),
         backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Widget _buildGettingStartedStep(String number, String title, String subtitle, bool completed) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: completed ? const Color(0xFF10B981) : Colors.white,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: completed ? const Color(0xFF10B981) : const Color(0xFF166534),
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                number,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  color: completed ? Colors.white : const Color(0xFF166534),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
