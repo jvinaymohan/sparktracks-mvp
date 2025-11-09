@@ -48,19 +48,34 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
       });
     });
     
-    // Load children and tasks from Firebase when dashboard loads
+    // Load children, tasks, and classes from Firebase when dashboard loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
-      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-      final parentId = authProvider.currentUser?.id;
-      
-      if (parentId != null) {
-        print('🔄 Loading data for parent: $parentId');
-        childrenProvider.loadChildren(parentId);
-        tasksProvider.loadTasksForParent(parentId);
-      }
+      _loadAllData();
     });
+  }
+
+  Future<void> _loadAllData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+    final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+    final parentId = authProvider.currentUser?.id;
+    
+    if (parentId != null) {
+      print('🔄 Loading all data for parent: $parentId');
+      
+      // Load children
+      await childrenProvider.loadChildren(parentId);
+      print('✅ Loaded ${childrenProvider.children.length} children');
+      
+      // Load tasks
+      await tasksProvider.loadTasksForParent(parentId);
+      print('✅ Loaded ${tasksProvider.tasks.length} tasks');
+      
+      // Load all classes (for browse/enroll)
+      await classesProvider.loadClasses();
+      print('✅ Loaded ${classesProvider.classes.length} classes');
+    }
   }
 
   @override
@@ -109,9 +124,22 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.stars),
-            tooltip: 'Points Settings',
-            onPressed: () => context.push('/points-settings'),
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Data',
+            onPressed: () {
+              _loadAllData();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🔄 Refreshing...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notifications',
+            onPressed: () => context.push('/notifications'),
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -119,26 +147,18 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
             onPressed: () => context.go('/calendar'),
           ),
           IconButton(
-            icon: const Icon(Icons.feedback),
+            icon: const Icon(Icons.feedback_outlined),
             tooltip: 'Feedback',
             onPressed: () => context.go('/feedback'),
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Settings',
             onPressed: () => context.go('/notification-settings'),
           ),
           IconButton(
-            icon: const Icon(Icons.bug_report),
-            tooltip: 'Dev Tools (Clear Data)',
-            onPressed: () => DevUtils.showDebugMenu(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.home_outlined),
-            tooltip: 'Home Page',
-            onPressed: () => context.go('/'),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
             onPressed: () async {
               final authProvider = Provider.of<AuthProvider>(context, listen: false);
               await authProvider.logout();

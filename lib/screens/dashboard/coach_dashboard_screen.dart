@@ -39,17 +39,28 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
     
     // Check if profile is complete, if not, redirect to profile setup
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final user = authProvider.currentUser;
-      
-      // Check if this is first login (profile not completed)
-      final profileCompleted = user?.preferences['profileCompleted'] ?? false;
-      
-      if (!profileCompleted && mounted) {
-        // Show welcome dialog then redirect to profile
-        _showWelcomeDialog();
-      }
+      _initializeCoachData();
     });
+  }
+
+  Future<void> _initializeCoachData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    final coachId = user?.id;
+    
+    // Check if profile is complete
+    final profileCompleted = user?.preferences['profileCompleted'] ?? false;
+    
+    if (!profileCompleted && mounted) {
+      // Show welcome dialog then redirect to profile
+      _showWelcomeDialog();
+    } else if (coachId != null) {
+      // Load coach's classes
+      print('🔄 Loading classes for coach: $coachId');
+      await classesProvider.loadClassesForCoach(coachId);
+      print('✅ Loaded ${classesProvider.classes.length} classes');
+    }
   }
   
   void _showWelcomeDialog() {
@@ -184,27 +195,40 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.school),
-            tooltip: 'Manage Students',
-            onPressed: () => context.push('/manage-students'),
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh Data',
+            onPressed: () {
+              _initializeCoachData();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('🔄 Refreshing...'),
+                  duration: Duration(seconds: 1),
+                ),
+              );
+            },
           ),
           IconButton(
-            icon: const Icon(Icons.person),
+            icon: const Icon(Icons.person_outline),
             tooltip: 'Coach Profile',
             onPressed: () => context.push('/coach-profile'),
           ),
           IconButton(
-            icon: const Icon(Icons.calendar_today),
-            onPressed: () => context.go('/coach-calendar'),
-            tooltip: 'My Classes Calendar',
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notifications',
+            onPressed: () => context.push('/notifications'),
           ),
           IconButton(
-            icon: const Icon(Icons.feedback),
+            icon: const Icon(Icons.calendar_today),
+            tooltip: 'Calendar',
+            onPressed: () => context.go('/coach-calendar'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.feedback_outlined),
             tooltip: 'Feedback',
             onPressed: () => context.go('/feedback'),
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
             onPressed: () => context.go('/notification-settings'),
           ),

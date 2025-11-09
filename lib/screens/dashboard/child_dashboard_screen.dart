@@ -91,14 +91,28 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.explore),
-            tooltip: 'Browse Classes',
-            onPressed: () => context.push('/browse-classes'),
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: () {
+              final authProvider = Provider.of<AuthProvider>(context, listen: false);
+              final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+              final childId = authProvider.currentUser?.id;
+              if (childId != null) {
+                tasksProvider.clearAllTasks();
+                tasksProvider.loadTasksForChild(childId);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('🔄 Refreshing...'),
+                    duration: Duration(seconds: 1),
+                  ),
+                );
+              }
+            },
           ),
           IconButton(
-            icon: const Icon(Icons.emoji_events),
-            tooltip: 'Achievements',
-            onPressed: () => context.push('/achievements'),
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Notifications',
+            onPressed: () => context.push('/notifications'),
           ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
@@ -106,12 +120,12 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
             onPressed: () => context.go('/calendar'),
           ),
           IconButton(
-            icon: const Icon(Icons.feedback),
+            icon: const Icon(Icons.feedback_outlined),
             tooltip: 'Feedback',
             onPressed: () => context.go('/feedback'),
           ),
           IconButton(
-            icon: const Icon(Icons.settings),
+            icon: const Icon(Icons.settings_outlined),
             tooltip: 'Settings',
             onPressed: () => context.go('/notification-settings'),
           ),
