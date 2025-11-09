@@ -15,6 +15,9 @@ class LandingScreenV3 extends StatefulWidget {
 class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   bool _showMobileMenu = false;
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _howItWorksKey = GlobalKey();
+  final GlobalKey _faqKey = GlobalKey();
 
   @override
   void initState() {
@@ -28,6 +31,7 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
   @override
   void dispose() {
     _animationController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -70,6 +74,7 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
           
           // How It Works (Clear Steps)
           SliverToBoxAdapter(
+            key: _howItWorksKey,
             child: _buildHowItWorksSection(isMobile),
           ),
           
@@ -81,6 +86,7 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
           
           // FAQ Section
           SliverToBoxAdapter(
+            key: _faqKey,
             child: _buildFAQSection(isMobile),
           ),
           
@@ -1125,10 +1131,17 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
   }
 
   void _scrollToSection(String section) {
-    // Scroll implementation would go here
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Scrolling to $section...')),
-    );
+    final GlobalKey? key = section == 'how-it-works' ? _howItWorksKey : 
+                           section == 'faq' ? _faqKey : null;
+    
+    if (key?.currentContext != null) {
+      Scrollable.ensureVisible(
+        key!.currentContext!,
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+        alignment: 0.1, // Position near top of viewport
+      );
+    }
   }
 
   void _showAccessibilityOptions(BuildContext context) {
