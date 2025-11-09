@@ -38,7 +38,7 @@ import 'screens/tasks/child_task_view_screen.dart';
 import 'screens/children/add_edit_child_screen.dart';
 import 'screens/settings/points_settings_screen.dart';
 import 'screens/ledger/financial_ledger_screen.dart';
-import 'screens/landing/landing_screen_v2.dart';
+import 'screens/landing/landing_screen_v3.dart';
 import 'screens/classes/create_class_wizard.dart';
 import 'screens/coach/coach_profile_screen.dart';
 import 'screens/coach/enhanced_coach_profile_wizard.dart';
@@ -150,7 +150,7 @@ class SparktracksMVP extends StatelessWidget {
         // Public routes
         GoRoute(
           path: '/',
-          builder: (context, state) => const LandingScreenV2(),
+          builder: (context, state) => const LandingScreenV3(),
         ),
         GoRoute(
           path: '/splash',
