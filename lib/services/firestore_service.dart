@@ -334,5 +334,30 @@ class FirestoreService {
         .map((doc) => Review.fromJson(doc.data()))
         .toList();
   }
+
+  // ============ GENERIC HELPERS ============
+  
+  /// Add a document to any collection (generic helper)
+  Future<String> addDocument(String collection, Map<String, dynamic> data) async {
+    final docRef = await _firestore.collection(collection).add(data);
+    return docRef.id;
+  }
+  
+  /// Update a document in any collection
+  Future<void> updateDocument(String collection, String docId, Map<String, dynamic> data) async {
+    await _firestore.collection(collection).doc(docId).update(data);
+  }
+  
+  /// Delete a document from any collection
+  Future<void> deleteDocument(String collection, String docId) async {
+    await _firestore.collection(collection).doc(docId).delete();
+  }
+  
+  /// Get a document from any collection
+  Future<Map<String, dynamic>?> getDocument(String collection, String docId) async {
+    final doc = await _firestore.collection(collection).doc(docId).get();
+    if (!doc.exists) return null;
+    return doc.data();
+  }
 }
 

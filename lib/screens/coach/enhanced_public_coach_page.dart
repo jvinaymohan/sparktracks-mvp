@@ -7,7 +7,11 @@ import '../../models/class_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
 import '../../widgets/coach_reviews_section.dart';
+import '../../widgets/quick_booking_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/children_provider.dart';
 
 /// Enhanced Public Coach Webpage (v3.0)
 /// SEO-optimized, beautiful marketing page for coaches
@@ -664,22 +668,108 @@ $url
     );
   }
 
-  void _bookTrial(CoachProfile profile) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Book Free Trial'),
-        content: const Text(
-          'This will open the enrollment form. Feature coming soon!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+  Future<void> _bookTrial(CoachProfile profile) async {
+    // Check if user is logged in
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    if (!authProvider.isLoggedIn) {
+      // Show login prompt
+      final shouldLogin = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+              SizedBox(width: 12),
+              Text('Login Required'),
+            ],
           ),
-        ],
-      ),
+          content: const Text(
+            'Please sign in to book a class. It only takes 30 seconds!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+              child: const Text('Sign In'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldLogin == true && mounted) {
+        // Navigate to login (will need to import go_router)
+        Navigator.of(context).pushNamed('/login');
+      }
+      return;
+    }
+
+    // Load children if not already loaded
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    if (childrenProvider.children.isEmpty) {
+      await childrenProvider.loadChildren(authProvider.currentUser?.id ?? '');
+    }
+
+    // Get the first class from this coach
+    final classes = await FirestoreService().getClasses(
+      profile.id,
+      userType: UserType.coach,
     );
+
+    final firstClass = classes.isNotEmpty ? classes.first : null;
+
+    if (firstClass == null) {
+      // Coach has no classes yet
+      if (mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('No Classes Available'),
+            content: const Text(
+              'This coach hasn\'t published any classes yet. Please check back soon or send them a message!',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
+      return;
+    }
+
+    // Show quick booking dialog
+    if (mounted) {
+      final booked = await showDialog<bool>(
+        context: context,
+        builder: (context) => QuickBookingDialog(
+          classItem: firstClass,
+          coachName: profile.name,
+        ),
+      );
+
+      if (booked == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('✅ Booking request sent!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _sendMessage(CoachProfile profile) {

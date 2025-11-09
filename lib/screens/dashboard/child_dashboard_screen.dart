@@ -11,6 +11,7 @@ import '../../models/class_model.dart';
 import '../../models/payment_model.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
+import '../../widgets/celebration_animation.dart';
 
 class ChildDashboardScreen extends StatefulWidget {
   const ChildDashboardScreen({super.key});
@@ -719,7 +720,7 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.pop(context);
                 
                 // Update task status using TasksProvider
@@ -732,11 +733,15 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
                   imageUrls: selectedImages.map((img) => img.path).toList(),
                 );
                 
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Task completed! ${selectedImages.length} photo(s) uploaded. Waiting for approval.'),
-                  ),
-                );
+                // Show celebration animation!
+                if (mounted) {
+                  await showCelebration(
+                    context: context,
+                    points: task.rewardAmount.toInt(),
+                    message: '🎉 Awesome!',
+                    showConfetti: true,
+                  );
+                }
               },
               child: const Text('Complete Task'),
             ),

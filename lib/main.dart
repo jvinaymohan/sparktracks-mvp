@@ -42,6 +42,7 @@ import 'screens/landing/landing_screen.dart';
 import 'screens/classes/create_class_wizard.dart';
 import 'screens/coach/coach_profile_screen.dart';
 import 'screens/coach/enhanced_coach_profile_wizard.dart';
+import 'screens/coach/quick_start_coach_wizard.dart';
 import 'screens/classes/intelligent_class_wizard.dart';
 import 'screens/students/student_grouping_screen.dart';
 import 'screens/coach/coach_financial_dashboard.dart';
@@ -196,6 +197,10 @@ class SparktracksMVP extends StatelessWidget {
         GoRoute(
           path: '/coach-dashboard',
           builder: (context, state) => const CoachDashboardScreen(),
+        ),
+        GoRoute(
+          path: '/coach-quick-start',
+          builder: (context, state) => const QuickStartCoachWizard(),
         ),
         GoRoute(
           path: '/notification-settings',
