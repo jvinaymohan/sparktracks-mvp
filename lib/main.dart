@@ -406,33 +406,34 @@ class SparktracksMVP extends StatelessWidget {
           return '/';
         }
         
-        // Check if user needs to see welcome screen (first time only)
-        if (isLoggedIn && currentUser != null && state.matchedLocation != '/welcome') {
+        // If logged in, handle welcome screen and redirects
+        if (isLoggedIn && currentUser != null) {
           final hasSeenWelcome = currentUser.preferences['hasSeenWelcome'] ?? false;
-          if (!hasSeenWelcome) {
+          
+          // First priority: if they haven't seen welcome, show it
+          if (!hasSeenWelcome && state.matchedLocation != '/welcome') {
             return '/welcome';
           }
-        }
-        
-        // Skip the old generic "/onboarding" screen - we use the good personalized welcome instead!
-        
-        // If logged in and on auth pages, redirect to appropriate dashboard
-        if (isLoggedIn && !isOnboarding) {
-          if (state.matchedLocation.startsWith('/login') || 
-              state.matchedLocation.startsWith('/register') ||
-              state.matchedLocation.startsWith('/email-verification')) {
-            final userType = authProvider.currentUser?.type;
-            switch (userType) {
-              case UserType.parent:
-                return '/parent-dashboard';
-              case UserType.child:
-                return '/child-dashboard';
-              case UserType.coach:
-                return '/coach-dashboard';
-              case UserType.admin:
-                return '/admin/dashboard';
-              default:
-                return '/onboarding';
+          
+          // If they're on homepage (/) or auth pages, redirect to their dashboard
+          if (hasSeenWelcome) {
+            if (state.matchedLocation == '/' ||
+                state.matchedLocation.startsWith('/login') || 
+                state.matchedLocation.startsWith('/register') ||
+                state.matchedLocation.startsWith('/email-verification')) {
+              final userType = authProvider.currentUser?.type;
+              switch (userType) {
+                case UserType.parent:
+                  return '/parent-dashboard';
+                case UserType.child:
+                  return '/child-dashboard';
+                case UserType.coach:
+                  return '/coach-dashboard';
+                case UserType.admin:
+                  return '/admin/dashboard';
+                default:
+                  return '/';
+              }
             }
           }
         }

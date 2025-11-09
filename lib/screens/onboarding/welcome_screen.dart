@@ -77,25 +77,67 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
   }
 
   Future<void> _markOnboardingComplete() async {
-    await _markWelcomeAsSeen();
-    
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.currentUser;
-    
-    // Navigate to appropriate dashboard (no more dialogs!)
+    // Show loading indicator
     if (mounted) {
-      switch (user?.type) {
-        case UserType.parent:
-          context.go('/parent-dashboard');
-          break;
-        case UserType.child:
-          context.go('/child-dashboard');
-          break;
-        case UserType.coach:
-          context.go('/coach-dashboard');
-          break;
-        default:
-          context.go('/');
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    try {
+      await _markWelcomeAsSeen();
+      
+      // Give Firestore a moment to propagate the change
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final user = authProvider.currentUser;
+      
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      // Navigate to appropriate dashboard
+      if (mounted) {
+        switch (user?.type) {
+          case UserType.parent:
+            context.go('/parent-dashboard');
+            break;
+          case UserType.child:
+            context.go('/child-dashboard');
+            break;
+          case UserType.coach:
+            context.go('/coach-dashboard');
+            break;
+          case UserType.admin:
+            context.go('/admin/dashboard');
+            break;
+          default:
+            context.go('/');
+        }
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+        
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: _markOnboardingComplete,
+            ),
+          ),
+        );
       }
     }
   }
@@ -380,6 +422,18 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                       const SizedBox(width: 12),
                       Icon(Icons.arrow_forward, size: 24),
                     ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              // Skip option
+              TextButton(
+                onPressed: _markOnboardingComplete,
+                child: Text(
+                  'Skip for now',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16,
                   ),
                 ),
               ),
