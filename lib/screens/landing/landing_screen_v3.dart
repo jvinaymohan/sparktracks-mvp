@@ -352,9 +352,9 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
           spacing: 20,
           runSpacing: 12,
           children: const [
-            _TrustBadge(icon: Icons.check_circle_rounded, text: 'Free Forever'),
-            _TrustBadge(icon: Icons.flash_on_rounded, text: '2 Min Setup'),
-            _TrustBadge(icon: Icons.lock_rounded, text: 'Secure & Private'),
+            _TrustBadge(icon: Icons.check_circle_rounded, text: 'No cost to start'),
+            _TrustBadge(icon: Icons.feedback_rounded, text: 'Give feedback'),
+            _TrustBadge(icon: Icons.flash_on_rounded, text: '2 min setup'),
           ],
         ),
       ],
@@ -445,34 +445,65 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
         horizontal: isMobile ? 24 : 80,
         vertical: isMobile ? 40 : 60,
       ),
-      color: Colors.white,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.white,
+            const Color(0xFFFFF5F7).withOpacity(0.3),
+          ],
+        ),
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 1200),
           child: Column(
             children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDCFCE7),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(color: const Color(0xFF10B981).withOpacity(0.3)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.feedback_rounded, color: Color(0xFF166534), size: 20),
+                    SizedBox(width: 10),
+                    Text(
+                      'Help Shape Sparktracks - Your Feedback Matters!',
+                      style: TextStyle(
+                        color: Color(0xFF166534),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: isMobile ? 28 : 36),
+              
               Text(
-                'Trusted by Families Everywhere',
+                'Join Our Beta Community',
                 style: TextStyle(
-                  fontSize: isMobile ? 16 : 18,
-                  color: const Color(0xFF6B7280),
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1,
+                  fontSize: isMobile ? 24 : 32,
+                  color: const Color(0xFF1F2937),
+                  fontWeight: FontWeight.w800,
                 ),
                 textAlign: TextAlign.center,
               ),
-              SizedBox(height: isMobile ? 24 : 32),
-              
-              Wrap(
-                spacing: isMobile ? 32 : 60,
-                runSpacing: 24,
-                alignment: WrapAlignment.center,
-                children: [
-                  _buildStatCard('250+', 'Active Families', Icons.people_rounded, const Color(0xFFFF6B9D)),
-                  _buildStatCard('1,200+', 'Tasks Completed', Icons.task_alt_rounded, const Color(0xFF10B981)),
-                  _buildStatCard('50+', 'Expert Coaches', Icons.school_rounded, const Color(0xFF8B5CF6)),
-                  _buildStatCard('4.9/5', 'Parent Rating', Icons.star_rounded, const Color(0xFFFFA500)),
-                ],
+              const SizedBox(height: 16),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Text(
+                  'Be among the first families to experience Sparktracks. Your input will directly influence how we grow!',
+                  style: TextStyle(
+                    fontSize: isMobile ? 16 : 18,
+                    color: const Color(0xFF6B7280),
+                    height: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
               ),
             ],
           ),
@@ -860,8 +891,8 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
               SizedBox(height: isMobile ? 40 : 56),
               
               _buildFAQItem(
-                'Is Sparktracks really free?',
-                'Yes! The core features are 100% free forever. No hidden fees, no credit card required. Just sign up and start using it immediately.',
+                'Is there any cost to join the beta?',
+                'No! The beta is completely free to join. We\'re looking for families to test and give feedback. No credit card required, no commitments.',
                 Icons.attach_money_rounded,
               ),
               _buildFAQItem(
@@ -1014,7 +1045,7 @@ class _LandingScreenV3State extends State<LandingScreenV3> with SingleTickerProv
                   Icon(Icons.check_circle_rounded, color: Color(0xFF10B981), size: 20),
                   SizedBox(width: 10),
                   Text(
-                    'Takes 2 minutes • Free forever • No card needed',
+                    'Takes 2 minutes • No cost to start • Give feedback',
                     style: TextStyle(
                       color: Color(0xFF6B7280),
                       fontSize: 16,

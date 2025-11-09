@@ -49,7 +49,7 @@ import 'screens/coach/coach_financial_dashboard.dart';
 import 'screens/communication/coach_updates_screen.dart';
 import 'screens/coach/enhanced_public_coach_page.dart';
 import 'screens/coach/manage_students_screen.dart';
-import 'screens/classes/browse_classes_screen.dart';
+import 'screens/classes/browse_classes_modern.dart';
 import 'screens/classes/class_detail_screen.dart';
 import 'screens/attendance/mark_attendance_screen.dart';
 import 'screens/payments/payment_dashboard_screen.dart';
@@ -324,7 +324,7 @@ class SparktracksMVP extends StatelessWidget {
         // Class Management Routes
         GoRoute(
           path: '/browse-classes',
-          builder: (context, state) => const BrowseClassesScreen(),
+          builder: (context, state) => const BrowseClassesModern(),
         ),
         GoRoute(
           path: '/marketplace',
