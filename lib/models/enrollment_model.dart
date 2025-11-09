@@ -11,6 +11,8 @@ enum EnrollmentStatus {
   completed,
   @JsonValue('cancelled')
   cancelled,
+  @JsonValue('rejected')
+  rejected,
   @JsonValue('waitlist')
   waitlist,
 }

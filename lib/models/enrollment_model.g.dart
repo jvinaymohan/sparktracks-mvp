@@ -66,5 +66,6 @@ const _$EnrollmentStatusEnumMap = {
   EnrollmentStatus.active: 'active',
   EnrollmentStatus.completed: 'completed',
   EnrollmentStatus.cancelled: 'cancelled',
+  EnrollmentStatus.rejected: 'rejected',
   EnrollmentStatus.waitlist: 'waitlist',
 };
