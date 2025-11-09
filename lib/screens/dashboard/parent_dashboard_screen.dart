@@ -17,6 +17,7 @@ import '../../screens/children/add_edit_child_screen.dart';
 import '../../screens/children/quick_add_child_dialog.dart';
 import '../../screens/tasks/create_task_wizard.dart';
 import '../../screens/tasks/quick_create_task_dialog.dart';
+import '../../screens/classes/browse_classes_modern.dart';
 import '../../widgets/bulk_task_creation_dialog.dart';
 import '../../widgets/quick_booking_dialog.dart';
 import '../../widgets/edit_task_dialog.dart';
@@ -55,14 +56,24 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Future<void> _loadAllData() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
-    final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
-    final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
-    final parentId = authProvider.currentUser?.id;
-    
-    if (parentId != null) {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
+      final parentId = authProvider.currentUser?.id;
+      
+      if (parentId == null) {
+        print('❌ No parent ID found, cannot load data');
+        return;
+      }
+      
       print('🔄 Loading all data for parent: $parentId');
+      
+      // Clear existing data to force fresh load
+      childrenProvider.clearAllChildren();
+      tasksProvider.clearAllTasks();
+      classesProvider.clearAllClasses();
       
       // Load children
       await childrenProvider.loadChildren(parentId);
@@ -75,6 +86,28 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
       // Load all classes (for browse/enroll)
       await classesProvider.loadClasses();
       print('✅ Loaded ${classesProvider.classes.length} classes');
+      
+      // Force UI update
+      if (mounted) {
+        setState(() {});
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error loading data: $e');
+      print('📍 Stack trace: $stackTrace');
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading data: $e'),
+            backgroundColor: AppTheme.errorColor,
+            action: SnackBarAction(
+              label: 'Retry',
+              textColor: Colors.white,
+              onPressed: () => _loadAllData(),
+            ),
+          ),
+        );
+      }
     }
   }
 
@@ -785,60 +818,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildClassesTab() {
-    return Consumer<ClassesProvider>(
-      builder: (context, classesProvider, _) {
-        final availableClasses = classesProvider.classes
-            .where((c) => c.isPublic == true)
-            .toList();
-        
-        if (availableClasses.isEmpty) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(48),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.school_outlined, size: 80, color: Color(0xFF9CA3AF)),
-                  const SizedBox(height: 24),
-                  const Text(
-                    'No Classes Available Yet',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Check back soon! Coaches are creating amazing classes.',
-                    style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () => context.go('/browse-classes'),
-                    icon: const Icon(Icons.explore),
-                    label: const Text('Browse All Classes'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-        
-        return GridView.builder(
-          padding: const EdgeInsets.all(20),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
-            childAspectRatio: 1.2,
-          ),
-          itemCount: availableClasses.length,
-          itemBuilder: (context, index) => _buildDetailedClassCard(availableClasses[index]),
-        );
-      },
-    );
+    // Use the same marketplace view for consistency!
+    return const BrowseClassesModern();
   }
 
   Widget _buildDetailedClassCard(Class classItem) {
@@ -1386,6 +1367,97 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
 
   String _formatTime(DateTime date) {
     return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<void> _cloneTask(Task task) async {
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final tasksProvider = Provider.of<TasksProvider>(context, listen: false);
+      
+      // Create new task based on existing one
+      final newTask = Task(
+        id: 'task_${DateTime.now().millisecondsSinceEpoch}',
+        title: '${task.title} (Copy)',
+        description: task.description,
+        childId: task.childId,
+        parentId: authProvider.currentUser?.id ?? '',
+        status: TaskStatus.pending,
+        dueDate: DateTime.now().add(const Duration(days: 1)), // Tomorrow
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+        rewardAmount: task.rewardAmount,
+        priority: task.priority,
+        category: task.category,
+        isRecurring: task.isRecurring,
+        recurringPattern: task.recurringPattern,
+        metadata: task.metadata,
+        tags: task.tags,
+      );
+      
+      await tasksProvider.addTask(newTask);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('✅ Task cloned! Edit the copy as needed.'),
+            backgroundColor: AppTheme.successColor,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error cloning task: $e'),
+            backgroundColor: AppTheme.errorColor,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteTask(Task task) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Task?'),
+        content: Text('Are you sure you want to delete "${task.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await FirebaseFirestore.instance.collection('tasks').doc(task.id).delete();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('✅ Task deleted'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: $e'),
+              backgroundColor: AppTheme.errorColor,
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _showCreateTaskDialog() {
