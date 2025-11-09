@@ -74,10 +74,15 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
   double _cancellationFeePercent = 50;
   
   // Step 7: Schedule & Publish
-  ClassType _classType = ClassType.weekly;
-  List<int> _selectedWeekDays = [];
-  int? _dayOfMonth;
-  TimeOfDay _classTime = const TimeOfDay(hour: 15, minute: 0);
+  DateTime _startDate = DateTime.now().add(const Duration(days: 1));
+  TimeOfDay _startTime = const TimeOfDay(hour: 15, minute: 0);
+  TimeOfDay _endTime = const TimeOfDay(hour: 16, minute: 0);
+  bool _isRecurring = true;
+  String _recurringPattern = 'weekly'; // weekly, biweekly, monthly, custom
+  List<int> _selectedWeekDays = [1]; // Monday by default
+  DateTime? _seriesEndDate;
+  bool _hasEndDate = false;
+  int _numberOfSessions = 8;
   bool _isPublic = true;
   
   @override
@@ -143,7 +148,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
   }
 
   Widget _buildProgressIndicator() {
-    final progress = (_currentStep + 1) / 7;
+    final progress = (_currentStep + 1) / 8;
     final stepNames = [
       'Category',
       'AI Suggestions',
@@ -151,6 +156,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       'Location',
       'Pricing',
       'Materials',
+      'Schedule',
       'Review'
     ];
     
@@ -169,7 +175,7 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Step ${_currentStep + 1} of 7',
+                    'Step ${_currentStep + 1} of 8',
                     style: AppTheme.headline6,
                   ),
                   Text(
@@ -226,7 +232,9 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       case 5:
         return _buildStep6Materials();
       case 6:
-        return _buildStep7Review();
+        return _buildStep7Schedule();
+      case 7:
+        return _buildStep8Review();
       default:
         return Container();
     }
@@ -1474,7 +1482,342 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
     );
   }
 
-  Widget _buildStep7Review() {
+  Widget _buildStep7Schedule() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Schedule Your Class', style: AppTheme.headline3),
+          const SizedBox(height: 8),
+          Text(
+            'Set up when your class meets',
+            style: AppTheme.bodyMedium.copyWith(color: AppTheme.neutral600),
+          ),
+          const SizedBox(height: 32),
+          
+          // Recurring vs One-Time
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Class Type', style: AppTheme.headline6),
+                  const SizedBox(height: 12),
+                  SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(value: true, label: Text('Recurring'), icon: Icon(Icons.repeat)),
+                      ButtonSegment(value: false, label: Text('One-Time'), icon: Icon(Icons.event)),
+                    ],
+                    selected: {_isRecurring},
+                    onSelectionChanged: (Set<bool> selection) {
+                      setState(() => _isRecurring = selection.first);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Start Date
+          Card(
+            child: ListTile(
+              leading: const Icon(Icons.calendar_today, color: AppTheme.primaryColor),
+              title: const Text('Start Date'),
+              subtitle: Text(
+                '${_startDate.month}/${_startDate.day}/${_startDate.year}',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+              onTap: () async {
+                final date = await showDatePicker(
+                  context: context,
+                  initialDate: _startDate,
+                  firstDate: DateTime.now(),
+                  lastDate: DateTime.now().add(const Duration(days: 365)),
+                );
+                if (date != null) {
+                  setState(() => _startDate = date);
+                }
+              },
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Time Range
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Class Time', style: AppTheme.headline6),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: _startTime,
+                            );
+                            if (time != null) {
+                              setState(() => _startTime = time);
+                            }
+                          },
+                          icon: const Icon(Icons.access_time),
+                          label: Text(
+                            'Start: ${_startTime.format(context)}',
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.arrow_forward, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: OutlinedButton.icon(
+                          onPressed: () async {
+                            final time = await showTimePicker(
+                              context: context,
+                              initialTime: _endTime,
+                            );
+                            if (time != null) {
+                              setState(() => _endTime = time);
+                            }
+                          },
+                          icon: const Icon(Icons.access_time),
+                          label: Text(
+                            'End: ${_endTime.format(context)}',
+                            style: const TextStyle(fontSize: 15),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Duration: ${_calculateDuration()} minutes',
+                    style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Recurring Options
+          if (_isRecurring) ...[
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Recurring Pattern', style: AppTheme.headline6),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: _recurringPattern,
+                      decoration: const InputDecoration(
+                        labelText: 'Repeat',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.repeat),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'weekly', child: Text('Every week')),
+                        DropdownMenuItem(value: 'biweekly', child: Text('Every 2 weeks')),
+                        DropdownMenuItem(value: 'monthly', child: Text('Monthly')),
+                      ],
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _recurringPattern = value);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Days of Week Selection
+                    if (_recurringPattern == 'weekly' || _recurringPattern == 'biweekly') ...[
+                      Text('Meets on:', style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          _buildDayChip('Mon', 1),
+                          _buildDayChip('Tue', 2),
+                          _buildDayChip('Wed', 3),
+                          _buildDayChip('Thu', 4),
+                          _buildDayChip('Fri', 5),
+                          _buildDayChip('Sat', 6),
+                          _buildDayChip('Sun', 7),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            // Series End
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Series Duration', style: AppTheme.headline6),
+                    const SizedBox(height: 12),
+                    SwitchListTile(
+                      value: _hasEndDate,
+                      onChanged: (v) => setState(() => _hasEndDate = v),
+                      title: const Text('Set end date'),
+                      contentPadding: EdgeInsets.zero,
+                    ),
+                    if (_hasEndDate) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          final date = await showDatePicker(
+                            context: context,
+                            initialDate: _seriesEndDate ?? _startDate.add(const Duration(days: 60)),
+                            firstDate: _startDate.add(const Duration(days: 1)),
+                            lastDate: DateTime.now().add(const Duration(days: 365)),
+                          );
+                          if (date != null) {
+                            setState(() => _seriesEndDate = date);
+                          }
+                        },
+                        icon: const Icon(Icons.event),
+                        label: Text(
+                          _seriesEndDate != null
+                              ? 'Ends: ${_seriesEndDate!.month}/${_seriesEndDate!.day}/${_seriesEndDate!.year}'
+                              : 'Select end date',
+                        ),
+                      ),
+                    ] else ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        initialValue: _numberOfSessions.toString(),
+                        decoration: const InputDecoration(
+                          labelText: 'Number of Sessions',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.format_list_numbered),
+                          suffix: Text('sessions'),
+                        ),
+                        keyboardType: TextInputType.number,
+                        onChanged: (value) {
+                          final num = int.tryParse(value);
+                          if (num != null && num > 0) {
+                            setState(() => _numberOfSessions = num);
+                          }
+                        },
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          
+          // Public/Private Toggle
+          Card(
+            child: SwitchListTile(
+              value: _isPublic,
+              onChanged: (v) => setState(() => _isPublic = v),
+              title: const Text('Make class public'),
+              subtitle: Text(
+                _isPublic 
+                    ? 'Visible in marketplace for parents to discover'
+                    : 'Private - only you can invite students',
+                style: AppTheme.bodySmall,
+              ),
+              secondary: Icon(
+                _isPublic ? Icons.public : Icons.lock,
+                color: AppTheme.primaryColor,
+              ),
+            ),
+          ),
+          
+          // Schedule Summary
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.info_outline, size: 20, color: AppTheme.primaryColor),
+                    const SizedBox(width: 8),
+                    Text('Schedule Summary', style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(_getScheduleSummary(), style: AppTheme.bodyMedium),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDayChip(String label, int day) {
+    final isSelected = _selectedWeekDays.contains(day);
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          if (selected) {
+            _selectedWeekDays.add(day);
+          } else {
+            _selectedWeekDays.remove(day);
+          }
+          _selectedWeekDays.sort();
+        });
+      },
+      selectedColor: AppTheme.primaryColor.withOpacity(0.2),
+      checkmarkColor: AppTheme.primaryColor,
+    );
+  }
+
+  int _calculateDuration() {
+    final start = _startTime.hour * 60 + _startTime.minute;
+    final end = _endTime.hour * 60 + _endTime.minute;
+    return end - start;
+  }
+
+  String _getScheduleSummary() {
+    if (!_isRecurring) {
+      return 'One-time class on ${_startDate.month}/${_startDate.day}/${_startDate.year} from ${_startTime.format(context)} to ${_endTime.format(context)}';
+    }
+    
+    String pattern = _recurringPattern == 'weekly' ? 'every week' : 
+                    _recurringPattern == 'biweekly' ? 'every 2 weeks' : 'monthly';
+    String days = _selectedWeekDays.isEmpty ? 'no days selected' : _selectedWeekDays.map((d) => 
+      ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][d - 1]
+    ).join(', ');
+    
+    String duration = _hasEndDate && _seriesEndDate != null
+        ? 'until ${_seriesEndDate!.month}/${_seriesEndDate!.day}/${_seriesEndDate!.year}'
+        : 'for $_numberOfSessions sessions';
+    
+    return 'Meets $pattern on $days from ${_startTime.format(context)} to ${_endTime.format(context)}, starting ${_startDate.month}/${_startDate.day}/${_startDate.year} $duration.';
+  }
+
+  Widget _buildStep8Review() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -1595,11 +1938,11 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
           Expanded(
             flex: 2,
             child: ElevatedButton.icon(
-              onPressed: _currentStep == 6 ? _publishClass : _nextStep,
-              icon: Icon(_currentStep == 6 ? Icons.publish : Icons.arrow_forward),
-              label: Text(_currentStep == 6 ? 'Publish Class' : 'Continue'),
+              onPressed: _currentStep == 7 ? _publishClass : _nextStep,
+              icon: Icon(_currentStep == 7 ? Icons.publish : Icons.arrow_forward),
+              label: Text(_currentStep == 7 ? 'Publish Class' : 'Continue'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: _currentStep == 6 
+                backgroundColor: _currentStep == 7 
                     ? AppTheme.successColor 
                     : AppTheme.primaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
@@ -1640,27 +1983,41 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
       final classesProvider = Provider.of<ClassesProvider>(context, listen: false);
       
       final now = DateTime.now();
-      final startTime = DateTime(
-        now.year,
-        now.month,
-        now.day,
-        _classTime.hour,
-        _classTime.minute,
+      
+      // Create proper start and end DateTime from our scheduling fields
+      final startDateTime = DateTime(
+        _startDate.year,
+        _startDate.month,
+        _startDate.day,
+        _startTime.hour,
+        _startTime.minute,
       );
+      
+      final endDateTime = DateTime(
+        _startDate.year,
+        _startDate.month,
+        _startDate.day,
+        _endTime.hour,
+        _endTime.minute,
+      );
+      
+      final durationMinutes = _calculateDuration();
       
       final newClass = Class(
         id: widget.existingClass?.id ?? 'class_${now.millisecondsSinceEpoch}',
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
         coachId: authProvider.currentUser?.id ?? '',
-        type: _classType,
+        type: _isRecurring 
+            ? (_recurringPattern == 'monthly' ? ClassType.monthly : ClassType.weekly)
+            : ClassType.oneTime,
         locationType: _locationOption == ClassLocationOption.online 
             ? LocationType.online 
             : LocationType.inPerson,
         location: _getLocationString(),
-        startTime: startTime,
-        endTime: startTime.add(Duration(minutes: _duration)),
-        durationMinutes: _duration,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        durationMinutes: durationMinutes,
         price: _sessionPrice,
         currency: _currency,
         maxStudents: _maxStudents,
@@ -1702,7 +2059,6 @@ class _IntelligentClassWizardState extends State<IntelligentClassWizard> {
         cancellationHoursNotice: _cancellationHours,
         cancellationFeePercent: _cancellationFeePercent,
         recurringWeekDays: _selectedWeekDays,
-        dayOfMonth: _dayOfMonth,
       );
 
       if (widget.existingClass == null) {
