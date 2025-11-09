@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../models/coach_profile_model.dart';
@@ -157,6 +158,10 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
       final userId = authProvider.currentUser?.id ?? '';
       final userName = authProvider.currentUser?.name ?? '';
 
+      // Generate URL-friendly slug from name
+      final slug = _generateSlug(userName);
+      print('📝 Generated slug: $slug');
+      
       // Create coach profile
       final profile = CoachProfile(
         id: userId,
@@ -191,7 +196,7 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
         isVerified: false,
         totalStudents: 0,
         totalClasses: 1,
-        preferences: {'quickStartCompleted': true},
+        preferences: {'quickStartCompleted': true, 'profileSlug': slug},
       );
 
       // Save coach profile with detailed error logging
@@ -333,7 +338,19 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
     }
   }
 
+  String _generateSlug(String name) {
+    return name.toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9\s-]'), '') // Remove special chars
+        .trim()
+        .replaceAll(RegExp(r'\s+'), '-'); // Replace spaces with hyphens
+  }
+
   void _showSuccessDialog(String coachId) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final coachName = authProvider.currentUser?.name ?? '';
+    final slug = _generateSlug(coachName);
+    final profileUrl = 'https://sparktracks-mvp.web.app/coach/$slug';
+    
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -378,32 +395,82 @@ class _QuickStartCoachWizardState extends State<QuickStartCoachWizard> {
                 ],
               ),
             ),
+            const SizedBox(height: 20),
+            const Text(
+              '🔗 Your Shareable Profile Link:',
+              style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: const Color(0xFFD1D5DB)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: SelectableText(
+                      profileUrl,
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        color: Color(0xFF6366F1),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.copy_rounded, size: 20),
+                    tooltip: 'Copy Link',
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: profileUrl));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Row(
+                            children: [
+                              Icon(Icons.check_circle, color: Colors.white),
+                              SizedBox(width: 12),
+                              Text('✅ Profile link copied!'),
+                            ],
+                          ),
+                          backgroundColor: Color(0xFF10B981),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
             const SizedBox(height: 16),
             const Text(
               'What\'s next?',
               style: TextStyle(fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 8),
-            const Text('• Complete your full profile (add bio, certifications, gallery)'),
+            const Text('• Share this link with parents'),
+            const Text('• Complete your full profile'),
             const Text('• Add more classes'),
-            const Text('• Share your profile link with parents'),
           ],
         ),
         actions: [
-          OutlinedButton(
+          OutlinedButton.icon(
             onPressed: () {
               Navigator.pop(context);
-              context.go('/coach/$coachId');
+              context.go('/coach/$slug');
             },
-            child: const Text('View Public Profile'),
+            icon: const Icon(Icons.visibility_rounded),
+            label: const Text('View Public Profile'),
           ),
-          ElevatedButton(
+          ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context);
               context.go('/coach-dashboard');
             },
+            icon: const Icon(Icons.dashboard_rounded),
+            label: const Text('Go to Dashboard'),
             style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
-            child: const Text('Go to Dashboard'),
           ),
         ],
       ),

@@ -175,10 +175,27 @@ class FirestoreService {
     await _firestore.collection('coachProfiles').doc(profile.id).set(profile.toJson());
   }
   
-  Future<CoachProfile?> getCoachProfile(String coachId) async {
-    final doc = await _firestore.collection('coachProfiles').doc(coachId).get();
-    if (!doc.exists) return null;
-    return CoachProfile.fromJson(doc.data()!);
+  /// Get coach profile by ID or slug (friendly URL name)
+  /// Tries slug lookup first, then falls back to ID lookup
+  Future<CoachProfile?> getCoachProfile(String coachIdOrSlug) async {
+    // First, try direct ID lookup (faster)
+    final directDoc = await _firestore.collection('coachProfiles').doc(coachIdOrSlug).get();
+    if (directDoc.exists) {
+      return CoachProfile.fromJson(directDoc.data()!);
+    }
+    
+    // If not found, try slug-based lookup
+    final querySnapshot = await _firestore
+        .collection('coachProfiles')
+        .where('preferences.profileSlug', isEqualTo: coachIdOrSlug)
+        .limit(1)
+        .get();
+    
+    if (querySnapshot.docs.isNotEmpty) {
+      return CoachProfile.fromJson(querySnapshot.docs.first.data());
+    }
+    
+    return null;
   }
   
   Future<void> updateCoachProfile(CoachProfile profile) async {
