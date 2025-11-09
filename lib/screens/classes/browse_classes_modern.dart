@@ -294,258 +294,343 @@ class _BrowseClassesModernState extends State<BrowseClassesModern> with SingleTi
         return GridView.builder(
           padding: EdgeInsets.all(isMobile ? 16 : 24),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: isMobile ? 1 : (MediaQuery.of(context).size.width > 1200 ? 3 : 2),
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
-            childAspectRatio: isMobile ? 1.1 : 0.85,
+            crossAxisCount: isMobile ? 1 : (MediaQuery.of(context).size.width > 1200 ? 4 : 3),
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: isMobile ? 1.3 : 1.15,
           ),
           itemCount: classes.length,
-          itemBuilder: (context, index) => _buildModernClassCard(classes[index], isMobile),
+          itemBuilder: (context, index) => _buildCompactClassCard(classes[index], isMobile),
         );
       },
     );
   }
 
-  Widget _buildModernClassCard(Class classItem, bool isMobile) {
+  Widget _buildCompactClassCard(Class classItem, bool isMobile) {
+    final spotsLeft = classItem.maxStudents - classItem.enrolledStudentIds.length;
+    final isFull = spotsLeft <= 0;
+    
     return FutureBuilder<String>(
       future: _getCoachName(classItem.coachId),
       builder: (context, snapshot) {
-        final coachName = snapshot.data ?? 'Loading...';
+        final coachName = snapshot.data ?? 'Coach';
         
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ClassDetailScreen(classItem: classItem),
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
               ),
-            );
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Image/Header Section
-                Container(
-                  height: 140,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        _getCategoryColor(classItem.category),
-                        _getCategoryColor(classItem.category).withOpacity(0.7),
-                      ],
-                    ),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Compact Header with Category
+              Container(
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getCategoryColor(classItem.category),
+                      _getCategoryColor(classItem.category).withOpacity(0.7),
+                    ],
                   ),
-                  child: Stack(
-                    children: [
-                      // Category Badge
-                      Positioned(
-                        top: 12,
-                        left: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            classItem.category ?? 'Class',
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF1F2937),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Stack(
+                  children: [
+                    // Category + Location
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      right: 10,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.95),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              classItem.category ?? 'Class',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F2937),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                      
-                      // Location Badge
-                      Positioned(
-                        top: 12,
-                        right: 12,
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: classItem.locationType == LocationType.online
-                                ? const Color(0xFF10B981)
-                                : const Color(0xFF3B82F6),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                classItem.locationType == LocationType.online
-                                    ? Icons.computer_rounded
-                                    : Icons.location_on_rounded,
-                                size: 14,
-                                color: Colors.white,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                classItem.locationType == LocationType.online ? 'Online' : 'In-Person',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      
-                      // Class Type Indicator
-                      Center(
-                        child: Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.25),
-                            shape: BoxShape.circle,
-                          ),
-                          child: Icon(
-                            _getCategoryIcon(classItem.category),
-                            size: 48,
+                          Icon(
+                            classItem.locationType == LocationType.online
+                                ? Icons.computer_rounded
+                                : Icons.location_on_rounded,
+                            size: 18,
                             color: Colors.white,
                           ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Enrolled Count Badge
+                    Positioned(
+                      bottom: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.95),
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.people_rounded, size: 14, color: Color(0xFF3B82F6)),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${classItem.enrolledStudentIds.length}/${classItem.maxStudents}',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Compact Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        classItem.title,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1F2937),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      
+                      // Coach
+                      Text(
+                        'by $coachName',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      
+                      const Spacer(),
+                      
+                      // Price & Actions Row
+                      Row(
+                        children: [
+                          // Price
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text(
+                                  '\$',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                                Text(
+                                  classItem.price.toStringAsFixed(0),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          
+                          // Enroll or Waitlist Button
+                          if (!isFull)
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ClassDetailScreen(classItem: classItem),
+                                  ),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFFFF6B9D),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.add_circle_rounded, size: 16),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Enroll',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          else
+                            OutlinedButton(
+                              onPressed: () {
+                                // Show waitlist dialog
+                                _showWaitlistDialog(context, classItem);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: const Color(0xFFF59E0B),
+                                side: const BorderSide(color: Color(0xFFF59E0B), width: 1.5),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.queue_rounded, size: 16),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    'Waitlist',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                
-                // Content Section
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Title
-                        Text(
-                          classItem.title,
-                          style: const TextStyle(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF1F2937),
-                            height: 1.2,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        
-                        // Coach Name
-                        Row(
-                          children: [
-                            const Icon(Icons.person_rounded, size: 16, color: Color(0xFF6B7280)),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                'by $coachName',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Color(0xFF6B7280),
-                                  fontWeight: FontWeight.w600,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Description
-                        Expanded(
-                          child: Text(
-                            classItem.description,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF6B7280),
-                              height: 1.4,
-                            ),
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        
-                        // Footer Info
-                        Row(
-                          children: [
-                            // Price
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF10B981).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.attach_money_rounded, size: 16, color: Color(0xFF10B981)),
-                                  Text(
-                                    '${classItem.price.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF10B981),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Spacer(),
-                            
-                            // Spots Available
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF3B82F6).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(Icons.people_rounded, size: 14, color: Color(0xFF3B82F6)),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    '${classItem.maxStudents - classItem.enrolledStudentIds.length} spots',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF3B82F6),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  void _showWaitlistDialog(BuildContext context, Class classItem) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.queue_rounded, color: Color(0xFFF59E0B)),
+            SizedBox(width: 12),
+            Text('Join Waitlist'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'This class is currently full, but you can join the waitlist!',
+              style: const TextStyle(fontSize: 16, height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFF59E0B).withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    classItem.title,
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('Full: ${classItem.maxStudents} spots taken'),
+                  const SizedBox(height: 12),
+                  const Text(
+                    '✅ You\'ll be notified when a spot opens\n✅ Priority access to next session\n✅ No commitment required',
+                    style: TextStyle(fontSize: 14, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Implement actual waitlist functionality
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Row(
+                    children: [
+                      Icon(Icons.check_circle_rounded, color: Colors.white),
+                      SizedBox(width: 12),
+                      Text('✅ Added to waitlist! We\'ll notify you when a spot opens.'),
+                    ],
+                  ),
+                  backgroundColor: Color(0xFF10B981),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFF59E0B),
+            ),
+            child: const Text('Join Waitlist'),
+          ),
+        ],
+      ),
     );
   }
 
