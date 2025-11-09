@@ -555,7 +555,20 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               colorCode: _selectedColorCode,
             );
             
-            childrenProvider.addChild(studentWithFirebaseId);
+            print('🔵 Creating child with:');
+            print('   Child ID: $childId');
+            print('   User ID (Firebase): ${result['userId']}');
+            print('   Parent ID: $parentId');
+            print('   Child Name: ${_nameController.text}');
+            print('   Child Email: $childEmail');
+            
+            await childrenProvider.addChild(studentWithFirebaseId);
+            
+            print('✅ Child added to provider');
+            
+            // Force reload children to ensure fresh data
+            await childrenProvider.loadChildren(parentId);
+            print('✅ Reloaded children list');
             
             // Re-authenticate parent after creating child account
             print('Re-authenticating parent');

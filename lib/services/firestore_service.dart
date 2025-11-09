@@ -32,10 +32,36 @@ class FirestoreService {
   }
   
   Future<List<Student>> getChildren(String parentId) async {
+    print('🔍 FirestoreService.getChildren() called with parentId: $parentId');
+    
     final snapshot = await _firestore
         .collection('children')
         .where('parentId', isEqualTo: parentId)
         .get();
+    
+    print('🔍 Query returned ${snapshot.docs.length} children');
+    
+    // Log each child document
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      print('   📄 Child doc: ${doc.id}');
+      print('      - name: ${data['name']}');
+      print('      - parentId: ${data['parentId']}');
+      print('      - userId: ${data['userId']}');
+    }
+    
+    // Also check if there are ANY children in collection (debug)
+    final allChildren = await _firestore.collection('children').get();
+    print('🔍 Total children in Firestore: ${allChildren.docs.length}');
+    
+    if (allChildren.docs.length > snapshot.docs.length) {
+      print('⚠️ WARNING: Found ${allChildren.docs.length - snapshot.docs.length} children with DIFFERENT parentId!');
+      for (final doc in allChildren.docs) {
+        if (doc.data()['parentId'] != parentId) {
+          print('   ❌ Orphan: ${doc.data()['name']} has parentId: ${doc.data()['parentId']}');
+        }
+      }
+    }
     
     return snapshot.docs
         .map((doc) => Student.fromJson(doc.data()))
