@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/classes_provider.dart';
 import '../../providers/children_provider.dart';
@@ -14,6 +15,7 @@ import '../../utils/app_theme.dart';
 import '../../utils/navigation_helper.dart';
 import '../coach/coach_financial_dashboard.dart';
 import '../communication/coach_updates_screen.dart';
+import '../classes/class_management_detail_screen.dart';
 import '../../widgets/post_update_dialog.dart';
 
 class CoachDashboardScreen extends StatefulWidget {
@@ -325,42 +327,52 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
             style: AppTheme.headline6,
           ),
           const SizedBox(height: AppTheme.spacingM),
-          GridView.count(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 2.5,
-            children: [
-              _buildQuickActionCard(
-                'Enrollment Requests',
-                Icons.pending_actions,
-                AppTheme.warningColor,
-                () => context.go('/coach-enrollments'),
-              ),
-              _buildQuickActionCard(
-                'My Students',
-                Icons.people,
-                AppTheme.primaryColor,
-                () => context.go('/coach-students'),
-              ),
-              _buildQuickActionCard(
-                'Manage Reviews',
-                Icons.star,
-                AppTheme.accentColor,
-                () => context.go('/coach-reviews'),
-              ),
-              _buildQuickActionCard(
-                'Post Update',
-                Icons.campaign,
-                AppTheme.successColor,
-                () => showDialog(
-                  context: context,
-                  builder: (context) => const PostUpdateDialog(),
-                ),
-              ),
-            ],
+          FutureBuilder<Map<String, int>>(
+            future: _getQuickActionCounts(currentCoachId),
+            builder: (context, snapshot) {
+              final counts = snapshot.data ?? {};
+              
+              return GridView.count(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                crossAxisCount: 2,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 2.5,
+                children: [
+                  _buildQuickActionCard(
+                    'Enrollment Requests',
+                    Icons.pending_actions,
+                    AppTheme.warningColor,
+                    () => context.go('/coach-enrollments'),
+                    count: counts['pending'],
+                  ),
+                  _buildQuickActionCard(
+                    'My Students',
+                    Icons.people,
+                    AppTheme.primaryColor,
+                    () => context.go('/coach-students'),
+                    count: counts['students'],
+                  ),
+                  _buildQuickActionCard(
+                    'Manage Reviews',
+                    Icons.star,
+                    AppTheme.accentColor,
+                    () => context.go('/coach-reviews'),
+                    count: counts['reviews'],
+                  ),
+                  _buildQuickActionCard(
+                    'Post Update',
+                    Icons.campaign,
+                    AppTheme.successColor,
+                    () => showDialog(
+                      context: context,
+                      builder: (context) => const PostUpdateDialog(),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: AppTheme.spacingXL),
           
@@ -876,7 +888,7 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
     );
   }
 
-  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildQuickActionCard(String title, IconData icon, Color color, VoidCallback onTap, {int? count}) {
     return Card(
       elevation: 2,
       child: InkWell(
@@ -886,19 +898,58 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: color, size: 24),
+              Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 24),
+                  ),
+                  if (count != null && count > 0)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: Text(
+                          count > 99 ? '99+' : count.toString(),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: Text(
-                  title,
-                  style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                    if (count != null)
+                      Text(
+                        count == 0 ? 'None' : count.toString(),
+                        style: AppTheme.bodySmall.copyWith(
+                          color: count > 0 ? color : AppTheme.neutral600,
+                          fontWeight: count > 0 ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                  ],
                 ),
               ),
               Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.neutral400),
@@ -909,17 +960,138 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
     );
   }
 
+  Future<Map<String, int>> _getQuickActionCounts(String coachId) async {
+    try {
+      // Get all classes for this coach
+      final classesSnapshot = await FirebaseFirestore.instance
+          .collection('classes')
+          .where('coachId', isEqualTo: coachId)
+          .get();
+      
+      final classIds = classesSnapshot.docs.map((doc) => doc.id).toList();
+      
+      if (classIds.isEmpty) {
+        return {'pending': 0, 'students': 0, 'reviews': 0};
+      }
+      
+      // Get pending enrollments
+      final pendingSnapshot = await FirebaseFirestore.instance
+          .collection('enrollments')
+          .where('classId', whereIn: classIds)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      
+      // Get active enrollments (unique students)
+      final activeSnapshot = await FirebaseFirestore.instance
+          .collection('enrollments')
+          .where('classId', whereIn: classIds)
+          .where('status', isEqualTo: 'active')
+          .get();
+      
+      final uniqueStudents = activeSnapshot.docs
+          .map((doc) => (doc.data()['studentId'] as String))
+          .toSet()
+          .length;
+      
+      // Get pending reviews
+      final reviewsSnapshot = await FirebaseFirestore.instance
+          .collection('reviews')
+          .where('coachId', isEqualTo: coachId)
+          .where('status', isEqualTo: 'pending')
+          .get();
+      
+      return {
+        'pending': pendingSnapshot.docs.length,
+        'students': uniqueStudents,
+        'reviews': reviewsSnapshot.docs.length,
+      };
+    } catch (e) {
+      print('Error fetching counts: $e');
+      return {'pending': 0, 'students': 0, 'reviews': 0};
+    }
+  }
+
   Widget _buildClassCard(Class classItem) {
+    final enrolledCount = classItem.enrolledStudentIds.length;
+    final spotsLeft = classItem.maxStudents - enrolledCount;
+    
     return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppTheme.primaryColor,
-          child: const Icon(Icons.school, color: Colors.white),
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ClassManagementDetailScreen(classItem: classItem),
+            ),
+          );
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              // Icon with gradient
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: AppTheme.primaryGradient,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.school, color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 16),
+              // Class info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      classItem.title,
+                      style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Icons.people, size: 16, color: AppTheme.primaryColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$enrolledCount/${classItem.maxStudents}',
+                          style: AppTheme.bodySmall.copyWith(
+                            color: AppTheme.primaryColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(Icons.event_seat, size: 16, color: spotsLeft > 0 ? AppTheme.successColor : AppTheme.errorColor),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$spotsLeft left',
+                          style: AppTheme.bodySmall.copyWith(
+                            color: spotsLeft > 0 ? AppTheme.successColor : AppTheme.errorColor,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Icon(Icons.access_time, size: 16, color: AppTheme.neutral600),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatTime(classItem.startTime),
+                          style: AppTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              // Arrow
+              Icon(Icons.arrow_forward_ios, size: 16, color: AppTheme.neutral400),
+            ],
+          ),
         ),
-        title: Text(classItem.title),
-        subtitle: Text('${classItem.enrolledStudentIds.length} students enrolled'),
-        trailing: Text(_formatTime(classItem.startTime)),
       ),
     );
   }
