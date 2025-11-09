@@ -156,6 +156,8 @@ class _AdminOverviewTabState extends State<AdminOverviewTab> {
   
   Future<Map<String, int>> _getRealTimeStats() async {
     try {
+      print('📊 Fetching admin stats...');
+      
       // Get real counts from Firestore
       final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
       final childrenSnapshot = await FirebaseFirestore.instance.collection('children').get();
@@ -163,31 +165,69 @@ class _AdminOverviewTabState extends State<AdminOverviewTab> {
       final classesSnapshot = await FirebaseFirestore.instance.collection('classes').get();
       
       final users = usersSnapshot.docs;
-      final parents = users.where((doc) => doc.data()['type'] == 'parent').length;
-      final coaches = users.where((doc) => doc.data()['type'] == 'coach').length;
+      
+      print('📊 Total documents: Users=${users.length}, Children=${childrenSnapshot.docs.length}, Tasks=${tasksSnapshot.docs.length}, Classes=${classesSnapshot.docs.length}');
+      
+      // Count by type - handle both string and enum formats
+      int parents = 0;
+      int coaches = 0;
+      int admins = 0;
+      
+      for (final doc in users) {
+        final data = doc.data();
+        final type = data['type'];
+        
+        if (type == null) continue;
+        
+        // Handle string type
+        if (type is String) {
+          if (type.toLowerCase() == 'parent') parents++;
+          else if (type.toLowerCase() == 'coach') coaches++;
+          else if (type.toLowerCase() == 'admin') admins++;
+        }
+        // Handle enum type (e.g., "UserType.parent")
+        else if (type.toString().contains('parent')) parents++;
+        else if (type.toString().contains('coach')) coaches++;
+        else if (type.toString().contains('admin')) admins++;
+      }
+      
+      print('📊 User breakdown: Parents=$parents, Coaches=$coaches, Admins=$admins');
+      
       final children = childrenSnapshot.docs.length;
       
       // Calculate "new this week" (users created in last 7 days)
       final oneWeekAgo = DateTime.now().subtract(const Duration(days: 7));
-      final newThisWeek = users.where((doc) {
+      int newThisWeek = 0;
+      
+      for (final doc in users) {
         final createdAt = doc.data()['createdAt'];
         if (createdAt is Timestamp) {
-          return createdAt.toDate().isAfter(oneWeekAgo);
+          if (createdAt.toDate().isAfter(oneWeekAgo)) {
+            newThisWeek++;
+          }
         }
-        return false;
-      }).length;
+      }
       
       // Calculate "active today" (any activity today)
       final todayStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
-      final activeToday = users.where((doc) {
-        final lastActive = doc.data()['lastActive'];
-        if (lastActive is Timestamp) {
-          return lastActive.toDate().isAfter(todayStart);
-        }
-        return false;
-      }).length;
+      int activeToday = 0;
       
-      return {
+      for (final doc in users) {
+        final data = doc.data();
+        // Check multiple fields for activity
+        final lastActive = data['lastActive'];
+        final updatedAt = data['updatedAt'];
+        
+        if (lastActive is Timestamp && lastActive.toDate().isAfter(todayStart)) {
+          activeToday++;
+        } else if (updatedAt is Timestamp && updatedAt.toDate().isAfter(todayStart)) {
+          activeToday++;
+        }
+      }
+      
+      print('📊 Activity: NewThisWeek=$newThisWeek, ActiveToday=$activeToday');
+      
+      final stats = {
         'totalUsers': users.length,
         'parents': parents,
         'coaches': coaches,
@@ -197,8 +237,13 @@ class _AdminOverviewTabState extends State<AdminOverviewTab> {
         'activeToday': activeToday,
         'newThisWeek': newThisWeek,
       };
-    } catch (e) {
-      print('Error fetching admin stats: $e');
+      
+      print('📊 Final stats: $stats');
+      
+      return stats;
+    } catch (e, stackTrace) {
+      print('❌ Error fetching admin stats: $e');
+      print('📍 Stack trace: $stackTrace');
       return {
         'totalUsers': 0,
         'parents': 0,
