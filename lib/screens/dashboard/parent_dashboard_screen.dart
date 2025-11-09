@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../providers/tasks_provider.dart';
+import '../../providers/classes_provider.dart';
+import '../../providers/enrollment_provider.dart';
 import '../../models/student_model.dart';
 import '../../models/task_model.dart';
 import '../../models/class_model.dart';
@@ -15,6 +17,9 @@ import '../../screens/children/quick_add_child_dialog.dart';
 import '../../screens/tasks/create_task_wizard.dart';
 import '../../screens/tasks/quick_create_task_dialog.dart';
 import '../../widgets/bulk_task_creation_dialog.dart';
+import '../../widgets/quick_booking_dialog.dart';
+import '../../services/firestore_service.dart';
+import 'package:intl/intl.dart';
 
 class ParentDashboardScreen extends StatefulWidget {
   const ParentDashboardScreen({super.key});
@@ -758,40 +763,425 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
   }
 
   Widget _buildClassesTab() {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
-      itemCount: _upcomingClasses.length,
-      itemBuilder: (context, index) {
-        final classItem = _upcomingClasses[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: AppTheme.primaryColor,
-              child: const Icon(Icons.school, color: Colors.white),
+    return Consumer<ClassesProvider>(
+      builder: (context, classesProvider, _) {
+        final availableClasses = classesProvider.classes
+            .where((c) => c.isPublic == true)
+            .toList();
+        
+        if (availableClasses.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.school_outlined, size: 80, color: Color(0xFF9CA3AF)),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'No Classes Available Yet',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: Color(0xFF1F2937)),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Check back soon! Coaches are creating amazing classes.',
+                    style: TextStyle(fontSize: 16, color: Color(0xFF6B7280)),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  ElevatedButton.icon(
+                    onPressed: () => context.go('/browse-classes'),
+                    icon: const Icon(Icons.explore),
+                    label: const Text('Browse All Classes'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            title: Text(classItem.title),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(classItem.description),
-                const SizedBox(height: 4),
-                Row(
+          );
+        }
+        
+        return GridView.builder(
+          padding: const EdgeInsets.all(20),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 20,
+            mainAxisSpacing: 20,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: availableClasses.length,
+          itemBuilder: (context, index) => _buildDetailedClassCard(availableClasses[index]),
+        );
+      },
+    );
+  }
+
+  Widget _buildDetailedClassCard(Class classItem) {
+    final spotsLeft = classItem.maxStudents - classItem.enrolledStudentIds.length;
+    final isFull = spotsLeft <= 0;
+    
+    return FutureBuilder<String>(
+      future: _getCoachName(classItem.coachId),
+      builder: (context, snapshot) {
+        final coachName = snapshot.data ?? 'Coach';
+        
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with gradient
+              Container(
+                height: 100,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      _getCategoryColor(classItem.category),
+                      _getCategoryColor(classItem.category).withOpacity(0.7),
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.only(
+                    topLeft: Radius.circular(16),
+                    topRight: Radius.circular(16),
+                  ),
+                ),
+                child: Stack(
                   children: [
-                    Icon(Icons.location_on, size: 16, color: AppTheme.neutral600),
-                    Text(classItem.location ?? 'Online'),
-                    const SizedBox(width: 16),
-                    Icon(Icons.schedule, size: 16, color: AppTheme.neutral600),
-                    Text(_formatTime(classItem.startTime)),
+                    // Category & Location Badges
+                    Positioned(
+                      top: 12,
+                      left: 12,
+                      right: 12,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              classItem.category ?? 'Class',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1F2937),
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: classItem.locationType == LocationType.online
+                                  ? const Color(0xFF10B981)
+                                  : const Color(0xFF3B82F6),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  classItem.locationType == LocationType.online
+                                      ? Icons.computer_rounded
+                                      : Icons.location_on_rounded,
+                                  size: 12,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  classItem.locationType == LocationType.online ? 'Online' : 'In-Person',
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Enrollment Count
+                    Positioned(
+                      bottom: 12,
+                      left: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              blurRadius: 8,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isFull ? Icons.people : Icons.people_outline_rounded,
+                              size: 16,
+                              color: isFull ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              '$spotsLeft/${classItem.maxStudents} open',
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w800,
+                                color: isFull ? const Color(0xFFF59E0B) : const Color(0xFF10B981),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ],
-            ),
-            trailing: Text('\$${classItem.price.toStringAsFixed(2)}'),
+              ),
+              
+              // Content
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Title
+                      Text(
+                        classItem.title,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1F2937),
+                          height: 1.2,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      
+                      // Coach
+                      Row(
+                        children: [
+                          const Icon(Icons.person_rounded, size: 14, color: Color(0xFF6B7280)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              coachName,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      
+                      // Date & Time
+                      Row(
+                        children: [
+                          const Icon(Icons.calendar_today_rounded, size: 14, color: Color(0xFF8B5CF6)),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              DateFormat('MMM d, y').format(classItem.startTime),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF6B7280),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          const Icon(Icons.access_time_rounded, size: 14, color: Color(0xFF8B5CF6)),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${DateFormat('h:mm a').format(classItem.startTime)} - ${DateFormat('h:mm a').format(classItem.endTime)}',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Color(0xFF6B7280),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      
+                      if (classItem.location != null && classItem.locationType == LocationType.inPerson) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          children: [
+                            const Icon(Icons.location_on_rounded, size: 14, color: Color(0xFF8B5CF6)),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                classItem.location!,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                      
+                      const Spacer(),
+                      
+                      // Price & Action
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF10B981).withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(Icons.attach_money_rounded, size: 14, color: Color(0xFF10B981)),
+                                Text(
+                                  classItem.price.toStringAsFixed(0),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w900,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Spacer(),
+                          
+                          ElevatedButton(
+                            onPressed: () async {
+                              await _showQuickBooking(classItem, coachName);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFFF6B9D),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.add_circle_rounded, size: 16),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Book',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
     );
+  }
+
+  Future<String> _getCoachName(String coachId) async {
+    try {
+      final user = await FirestoreService().getUser(coachId);
+      return user?.name ?? 'Coach';
+    } catch (e) {
+      return 'Coach';
+    }
+  }
+
+  Color _getCategoryColor(String? category) {
+    switch (category?.toLowerCase()) {
+      case 'sports':
+        return const Color(0xFF10B981);
+      case 'music':
+        return const Color(0xFF8B5CF6);
+      case 'arts':
+        return const Color(0xFFFF6B9D);
+      case 'stem':
+        return const Color(0xFF3B82F6);
+      case 'academic':
+        return const Color(0xFFF59E0B);
+      default:
+        return const Color(0xFF6366F1);
+    }
+  }
+
+  Future<void> _showQuickBooking(Class classItem, String coachName) async {
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final parentId = authProvider.currentUser?.id ?? '';
+    
+    if (childrenProvider.children.isEmpty) {
+      await childrenProvider.loadChildren(parentId);
+    }
+
+    if (mounted) {
+      final booked = await showDialog<bool>(
+        context: context,
+        builder: (context) => QuickBookingDialog(
+          classItem: classItem,
+          coachName: coachName,
+        ),
+      );
+
+      if (booked == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle_rounded, color: Colors.white),
+                SizedBox(width: 12),
+                Text('✅ Booking successful! Check your email for details.'),
+              ],
+            ),
+            backgroundColor: Color(0xFF10B981),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
