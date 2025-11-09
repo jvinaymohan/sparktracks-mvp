@@ -112,17 +112,35 @@ class ClassesProvider with ChangeNotifier {
     }
   }
 
-  void updateClass(Class updatedClass) {
-    final index = _classes.indexWhere((cls) => cls.id == updatedClass.id);
-    if (index != -1) {
-      _classes[index] = updatedClass;
+  Future<void> updateClass(Class updatedClass) async {
+    try {
+      await _firestore.collection('classes').doc(updatedClass.id).update(updatedClass.toJson());
+      final index = _classes.indexWhere((cls) => cls.id == updatedClass.id);
+      if (index != -1) {
+        _classes[index] = updatedClass;
+      } else {
+        _classes.add(updatedClass);
+      }
       notifyListeners();
+    } catch (e) {
+      print('Error updating class: $e');
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
     }
   }
 
-  void deleteClass(String classId) {
-    _classes.removeWhere((cls) => cls.id == classId);
-    notifyListeners();
+  Future<void> deleteClass(String classId) async {
+    try {
+      await _firestore.collection('classes').doc(classId).delete();
+      _classes.removeWhere((cls) => cls.id == classId);
+      notifyListeners();
+    } catch (e) {
+      print('Error deleting class: $e');
+      _error = e.toString();
+      notifyListeners();
+      rethrow;
+    }
   }
 
   Class? getClassById(String id) {
@@ -134,11 +152,68 @@ class ClassesProvider with ChangeNotifier {
   }
   
   // Enroll a student in a class
-  void enrollStudent(String classId, String studentId) {
+  Future<void> enrollStudent(String classId, String studentId) async {
     final index = _classes.indexWhere((cls) => cls.id == classId);
     if (index != -1) {
       if (!_classes[index].enrolledStudentIds.contains(studentId)) {
         final updatedIds = [..._classes[index].enrolledStudentIds, studentId];
+        
+        try {
+          // Update Firestore
+          await _firestore.collection('classes').doc(classId).update({
+            'enrolledStudentIds': updatedIds,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          
+          // Update local state
+          _classes[index] = Class(
+            id: _classes[index].id,
+            title: _classes[index].title,
+            description: _classes[index].description,
+            coachId: _classes[index].coachId,
+            type: _classes[index].type,
+            locationType: _classes[index].locationType,
+            location: _classes[index].location,
+            startTime: _classes[index].startTime,
+            endTime: _classes[index].endTime,
+            durationMinutes: _classes[index].durationMinutes,
+            price: _classes[index].price,
+            currency: _classes[index].currency,
+            maxStudents: _classes[index].maxStudents,
+            enrolledStudentIds: updatedIds,
+            createdAt: _classes[index].createdAt,
+            updatedAt: DateTime.now(),
+            isPublic: _classes[index].isPublic,
+            isGroupClass: _classes[index].isGroupClass,
+            paymentSchedule: _classes[index].paymentSchedule,
+            makeUpClassesAllowed: _classes[index].makeUpClassesAllowed,
+            shareableLink: _classes[index].shareableLink,
+          );
+          notifyListeners();
+        } catch (e) {
+          print('Error enrolling student: $e');
+          _error = e.toString();
+          notifyListeners();
+          rethrow;
+        }
+      }
+    }
+  }
+  
+  // Unenroll a student from a class
+  Future<void> unenrollStudent(String classId, String studentId) async {
+    final index = _classes.indexWhere((cls) => cls.id == classId);
+    if (index != -1) {
+      final updatedIds = _classes[index].enrolledStudentIds.where((id) => id != studentId).toList();
+      
+      try {
+        // Update Firestore
+        await _firestore.collection('classes').doc(classId).update({
+          'enrolledStudentIds': updatedIds,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        
+        // Update local state
         _classes[index] = Class(
           id: _classes[index].id,
           title: _classes[index].title,
@@ -163,39 +238,12 @@ class ClassesProvider with ChangeNotifier {
           shareableLink: _classes[index].shareableLink,
         );
         notifyListeners();
+      } catch (e) {
+        print('Error unenrolling student: $e');
+        _error = e.toString();
+        notifyListeners();
+        rethrow;
       }
-    }
-  }
-  
-  // Unenroll a student from a class
-  void unenrollStudent(String classId, String studentId) {
-    final index = _classes.indexWhere((cls) => cls.id == classId);
-    if (index != -1) {
-      final updatedIds = _classes[index].enrolledStudentIds.where((id) => id != studentId).toList();
-      _classes[index] = Class(
-        id: _classes[index].id,
-        title: _classes[index].title,
-        description: _classes[index].description,
-        coachId: _classes[index].coachId,
-        type: _classes[index].type,
-        locationType: _classes[index].locationType,
-        location: _classes[index].location,
-        startTime: _classes[index].startTime,
-        endTime: _classes[index].endTime,
-        durationMinutes: _classes[index].durationMinutes,
-        price: _classes[index].price,
-        currency: _classes[index].currency,
-        maxStudents: _classes[index].maxStudents,
-        enrolledStudentIds: updatedIds,
-        createdAt: _classes[index].createdAt,
-        updatedAt: DateTime.now(),
-        isPublic: _classes[index].isPublic,
-        isGroupClass: _classes[index].isGroupClass,
-        paymentSchedule: _classes[index].paymentSchedule,
-        makeUpClassesAllowed: _classes[index].makeUpClassesAllowed,
-        shareableLink: _classes[index].shareableLink,
-      );
-      notifyListeners();
     }
   }
 }

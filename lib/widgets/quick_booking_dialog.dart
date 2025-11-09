@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/class_model.dart';
 import '../models/student_model.dart';
 import '../providers/auth_provider.dart';
@@ -120,27 +121,31 @@ class _QuickBookingDialogState extends State<QuickBookingDialog> {
       
       final child = childrenProvider.children.firstWhere((c) => c.id == _selectedChildId);
       
-      // Create booking/enrollment
-      final bookingData = {
+      // Create enrollment record (required for student roster)
+      final enrollmentData = {
+        'id': 'enrollment_${DateTime.now().millisecondsSinceEpoch}',
         'classId': widget.classItem.id,
-        'className': widget.classItem.title,
-        'coachId': widget.classItem.coachId,
-        'coachName': widget.coachName,
         'studentId': child.id,
-        'studentName': child.name,
         'parentId': authProvider.currentUser?.id ?? '',
-        'parentName': authProvider.currentUser?.name ?? '',
-        'bookingDate': _selectedDate ?? DateTime.now(),
-        'bookingTime': _selectedTime != null 
-          ? '${_selectedTime!.hour}:${_selectedTime!.minute.toString().padLeft(2, '0')}'
-          : null,
+        'status': 'pending', // Coach needs to approve
+        'amountPaid': 0.0,
+        'amountDue': widget.classItem.price,
+        'enrolledAt': FieldValue.serverTimestamp(),
+        'createdAt': FieldValue.serverTimestamp(),
         'notes': _notesController.text.trim(),
-        'status': 'pending',
-        'createdAt': DateTime.now().toIso8601String(),
       };
 
-      // Save to Firestore
-      await FirestoreService().addDocument('bookings', bookingData);
+      // Save enrollment to Firestore
+      await FirestoreService().addDocument('enrollments', enrollmentData);
+
+      // Also update the class's enrolledStudentIds (for roster)
+      await FirebaseFirestore.instance
+          .collection('classes')
+          .doc(widget.classItem.id)
+          .update({
+        'enrolledStudentIds': FieldValue.arrayUnion([child.id]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
       if (mounted) {
         Navigator.of(context).pop(true); // Return success
