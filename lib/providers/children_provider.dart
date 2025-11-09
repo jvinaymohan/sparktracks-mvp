@@ -13,6 +13,7 @@ class ChildrenProvider extends ChangeNotifier {
   // Load children from Firebase for a parent
   Future<void> loadChildren(String parentId) async {
     try {
+      print('👶 Loading children for parent: $parentId');
       _isLoading = true;
       notifyListeners();
       
@@ -20,9 +21,20 @@ class ChildrenProvider extends ChangeNotifier {
       _children.clear();
       _children.addAll(loadedChildren);
       
-      print('✓ Loaded ${loadedChildren.length} children for parent $parentId');
-    } catch (e) {
-      print('Error loading children: $e');
+      print('✅ Loaded ${loadedChildren.length} children for parent $parentId');
+      
+      // Log each child for debugging
+      for (final child in loadedChildren) {
+        print('   👶 Child: ${child.name} (ID: ${child.id}, ParentID: ${child.parentId})');
+      }
+      
+      if (loadedChildren.isEmpty) {
+        print('⚠️ WARNING: No children found for parent $parentId');
+        print('   Check Firestore children collection for parentId field!');
+      }
+    } catch (e, stackTrace) {
+      print('❌ Error loading children: $e');
+      print('📍 Stack trace: $stackTrace');
     } finally {
       _isLoading = false;
       notifyListeners();

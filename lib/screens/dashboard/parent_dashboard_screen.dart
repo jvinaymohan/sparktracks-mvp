@@ -587,7 +587,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                   ),
                   title: Text(childItem.name),
                   subtitle: Text(childItem.email),
-                  trailing: PopupMenuButton(
+                  trailing: PopupMenuButton<String>(
                     itemBuilder: (context) => [
                       const PopupMenuItem(
                         value: 'edit',
@@ -619,8 +619,19 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                           ],
                         ),
                       ),
+                      const PopupMenuDivider(),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete, size: 20, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text('Delete Child', style: TextStyle(color: Colors.red)),
+                          ],
+                        ),
+                      ),
                     ],
-                    onSelected: (value) {
+                    onSelected: (value) async {
                       if (value == 'edit') {
                         Navigator.push(
                           context,
@@ -628,6 +639,48 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                             builder: (context) => AddEditChildScreen(child: childItem),
                           ),
                         );
+                      } else if (value == 'delete') {
+                        final confirmed = await showDialog<bool>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Delete Child?'),
+                            content: Text('Are you sure you want to remove ${childItem.name} from your family? This will delete all their tasks and progress.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context, false),
+                                child: const Text('Cancel'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () => Navigator.pop(context, true),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmed == true) {
+                          try {
+                            await childrenProvider.deleteChild(childItem.id);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('${childItem.name} has been removed'),
+                                  backgroundColor: AppTheme.errorColor,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Error deleting child: $e'),
+                                  backgroundColor: AppTheme.errorColor,
+                                ),
+                              );
+                            }
+                          }
+                        }
                       }
                     },
                   ),

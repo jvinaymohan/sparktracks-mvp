@@ -218,6 +218,13 @@ class SparktracksMVP extends StatelessWidget {
           builder: (context, state) => const CoachCalendarScreen(),
         ),
         GoRoute(
+          path: '/notifications',
+          builder: (context, state) => Scaffold(
+            appBar: AppBar(title: const Text('Notifications')),
+            body: const Center(child: Text('Notifications feature coming soon!')),
+          ),
+        ),
+        GoRoute(
           path: '/feedback',
           builder: (context, state) => const FeedbackScreen(),
         ),
