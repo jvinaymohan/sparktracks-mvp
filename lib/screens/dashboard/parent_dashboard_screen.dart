@@ -785,8 +785,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                         ),
                       ],
                     ),
-                    trailing: task.status == TaskStatus.completed
-                        ? ElevatedButton.icon(
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (task.status == TaskStatus.completed)
+                          ElevatedButton.icon(
                             icon: const Icon(Icons.check, size: 18),
                             label: const Text('Approve'),
                             onPressed: () {
@@ -800,13 +803,64 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
                               foregroundColor: Colors.white,
                             ),
                           )
-                        : Chip(
+                        else
+                          Chip(
                             label: Text(
                               task.status.toString().split('.').last.toUpperCase(),
                               style: const TextStyle(fontSize: 10),
                             ),
                             backgroundColor: _getTaskStatusColor(task.status).withOpacity(0.2),
                           ),
+                        PopupMenuButton<String>(
+                          icon: const Icon(Icons.more_vert),
+                          onSelected: (value) async {
+                            if (value == 'edit') {
+                              final result = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => EditTaskDialog(task: task),
+                              );
+                            } else if (value == 'clone') {
+                              await _cloneTask(task);
+                            } else if (value == 'delete') {
+                              await _deleteTask(task);
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            const PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit, size: 20),
+                                  SizedBox(width: 12),
+                                  Text('Edit Task'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuItem(
+                              value: 'clone',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.copy, size: 20),
+                                  SizedBox(width: 12),
+                                  Text('Clone Task'),
+                                ],
+                              ),
+                            ),
+                            const PopupMenuDivider(),
+                            const PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.delete, size: 20, color: Colors.red),
+                                  SizedBox(width: 12),
+                                  Text('Delete Task', style: TextStyle(color: Colors.red)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 )),
               ],

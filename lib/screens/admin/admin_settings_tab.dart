@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_provider.dart';
 import '../../utils/app_theme.dart';
+import 'admin_data_cleanup_dialog.dart';
 
 class AdminSettingsTab extends StatefulWidget {
   const AdminSettingsTab({super.key});
@@ -207,9 +208,14 @@ class _AdminSettingsTabState extends State<AdminSettingsTab> {
                       ),
                       const SizedBox(height: 16),
                       ElevatedButton.icon(
-                        onPressed: () => _clearAllData(),
-                        icon: const Icon(Icons.delete_forever),
-                        label: const Text('Clear All Test Data'),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => const AdminDataCleanupDialog(),
+                          );
+                        },
+                        icon: const Icon(Icons.delete_sweep),
+                        label: const Text('Clean Platform Data'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppTheme.errorColor,
                         ),
