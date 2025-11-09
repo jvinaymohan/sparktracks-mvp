@@ -440,6 +440,51 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
   }
 
   Widget _buildStudentsTab() {
+    if (_myStudents.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.people_outline, size: 80, color: AppTheme.neutral400),
+              const SizedBox(height: 24),
+              Text('No Students Yet', style: AppTheme.headline5),
+              const SizedBox(height: 12),
+              Text(
+                'Students will appear here when they enroll in your classes.\n\nYou can also add students manually.',
+                style: AppTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => context.push('/manage-students'),
+                icon: const Icon(Icons.person_add),
+                label: const Text('Manage Students'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('💡 Tip: When parents enroll their kids in your classes, they\'ll appear here automatically!'),
+                      duration: Duration(seconds: 4),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.info_outline),
+                label: const Text('How do students get added?'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     return ListView.builder(
       padding: const EdgeInsets.all(AppTheme.spacingL),
       itemCount: _myStudents.length,

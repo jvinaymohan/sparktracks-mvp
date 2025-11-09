@@ -9,6 +9,8 @@ import '../../models/class_model.dart';
 import '../../models/enrollment_model.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
+import '../../widgets/quick_booking_dialog.dart';
+import '../../services/firestore_service.dart';
 
 class ClassDetailScreen extends StatelessWidget {
   final Class classItem;
@@ -247,19 +249,79 @@ class ClassDetailScreen extends StatelessWidget {
                   
                   const SizedBox(height: AppTheme.spacingXL),
                   
-                  // Enroll button (for parents)
-                  if (isParent)
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () => _showEnrollDialog(context),
-                        icon: const Icon(Icons.person_add),
-                        label: const Text('Enroll a Child'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
-                          backgroundColor: AppTheme.primaryColor,
+                  // Enrollment buttons (for parents)
+                  if (isParent) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton.icon(
+                            onPressed: () => _showQuickBooking(context),
+                            icon: const Icon(Icons.flash_on),
+                            label: const Text('Quick Book'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
+                              backgroundColor: AppTheme.successColor,
+                            ),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            onPressed: () => _showEnrollDialog(context),
+                            icon: const Icon(Icons.person_add),
+                            label: const Text('Full Enroll'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      '💡 Use "Quick Book" for fastest enrollment (60 seconds!)',
+                      style: AppTheme.bodySmall.copyWith(
+                        color: AppTheme.neutral600,
+                        fontStyle: FontStyle.italic,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                  
+                  // For non-logged-in users
+                  if (!authProvider.isLoggedIn)
+                    Column(
+                      children: [
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text('Please sign in to enroll in classes'),
+                                  action: SnackBarAction(
+                                    label: 'Sign In',
+                                    textColor: Colors.white,
+                                    onPressed: () => context.go('/login'),
+                                  ),
+                                ),
+                              );
+                              context.go('/login');
+                            },
+                            icon: const Icon(Icons.login),
+                            label: const Text('Sign In to Enroll'),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingL),
+                              backgroundColor: AppTheme.primaryColor,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Create a free account in 30 seconds!',
+                          style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600),
+                        ),
+                      ],
                     ),
                 ],
               ),
@@ -439,6 +501,55 @@ class ClassDetailScreen extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _showQuickBooking(BuildContext context) async {
+    // Get coach name
+    String coachName = 'Coach';
+    try {
+      final coach = await FirestoreService().getUser(classItem.coachId);
+      if (coach != null) {
+        coachName = coach.name;
+      }
+    } catch (e) {
+      // Use default if can't fetch
+    }
+
+    // Load children if not loaded
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final parentId = authProvider.currentUser?.id ?? '';
+    
+    if (childrenProvider.children.isEmpty) {
+      await childrenProvider.loadChildren(parentId);
+    }
+
+    // Show quick booking dialog
+    if (context.mounted) {
+      final booked = await showDialog<bool>(
+        context: context,
+        builder: (context) => QuickBookingDialog(
+          classItem: classItem,
+          coachName: coachName,
+        ),
+      );
+
+      if (booked == true && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 12),
+                Text('✅ Booking request sent to coach!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   void _enrollChild(BuildContext context, String childId, EnrollmentProvider enrollmentProvider, String parentId) {

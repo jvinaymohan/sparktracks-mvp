@@ -135,6 +135,11 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
             child: _buildFeaturesSection(isMobile),
           ),
           
+          // Kids Experience Section
+          SliverToBoxAdapter(
+            child: _buildKidsExperienceSection(isMobile),
+          ),
+          
           // Marketplace Preview
           SliverToBoxAdapter(
             child: _buildMarketplaceSection(isMobile),
@@ -162,43 +167,42 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
           colors: [
-            const Color(0xFF6366F1).withOpacity(0.05),
-            const Color(0xFF8B5CF6).withOpacity(0.05),
-            const Color(0xFFA855F7).withOpacity(0.05),
+            const Color(0xFFFFFBF5), // Warm cream
+            const Color(0xFFFEFCE8), // Warm yellow-cream
+            Colors.white,
           ],
         ),
       ),
       child: Column(
         children: [
-          // Badge
+          // Badge - Parent-Focused
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: const Color(0xFF6366F1).withOpacity(0.3),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFDCFCE7), Color(0xFFBFDBFE)],
               ),
+              borderRadius: BorderRadius.circular(30),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF22C55E).withOpacity(0.15),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFF10B981),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  '🚀 Early Access Now Available',
+              children: const [
+                Text('👨‍👩‍👧‍👦', style: TextStyle(fontSize: 16)),
+                SizedBox(width: 8),
+                Text(
+                  'Built by a parent, perfected for families',
                   style: TextStyle(
-                    color: Color(0xFF6366F1),
+                    color: Color(0xFF166534),
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -206,99 +210,119 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
               ],
             ),
           ),
-          SizedBox(height: isMobile ? 24 : 32),
+          SizedBox(height: isMobile ? 28 : 40),
           
-          // Main Headline
+          // Main Headline - Emotional & Clear
           Text(
-            'Learning Made Fun,',
+            'Finally, everything in',
             style: TextStyle(
-              fontSize: isMobile ? 36 : 56,
-              fontWeight: FontWeight.w900,
-              color: const Color(0xFF1F2937),
-              height: 1.1,
+              fontSize: isMobile ? 32 : 52,
+              fontWeight: FontWeight.w800,
+              color: const Color(0xFF374151),
+              height: 1.2,
             ),
             textAlign: TextAlign.center,
           ),
           Text(
-            'Progress Made Easy',
+            'one place',
             style: TextStyle(
-              fontSize: isMobile ? 36 : 56,
-              fontWeight: FontWeight.w900,
-              height: 1.1,
+              fontSize: isMobile ? 32 : 52,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
               foreground: Paint()
                 ..shader = const LinearGradient(
-                  colors: [Color(0xFF6366F1), Color(0xFF8B5CF6), Color(0xFFA855F7)],
-                ).createShader(const Rect.fromLTWH(0, 0, 400, 70)),
+                  colors: [Color(0xFFEF4444), Color(0xFFF59E0B), Color(0xFF10B981)],
+                ).createShader(const Rect.fromLTWH(0, 0, 300, 70)),
             ),
             textAlign: TextAlign.center,
           ),
-          SizedBox(height: isMobile ? 16 : 24),
+          SizedBox(height: isMobile ? 16 : 20),
           
-          // Subtitle
+          // Subtitle - Parent Benefits
           ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 600),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: Text(
-              'Connect parents, kids, and coaches in one powerful platform. '
-              'Track tasks, earn rewards, and celebrate achievements together.',
+              'Manage tasks, track progress, discover activities, and book classes.\n'
+              'Save hours every week. Less stress, more family time. 💛',
               style: TextStyle(
-                fontSize: isMobile ? 16 : 20,
-                color: const Color(0xFF6B7280),
-                height: 1.6,
+                fontSize: isMobile ? 17 : 21,
+                color: const Color(0xFF4B5563),
+                height: 1.7,
+                fontWeight: FontWeight.w400,
               ),
               textAlign: TextAlign.center,
             ),
           ),
           SizedBox(height: isMobile ? 32 : 48),
           
-          // CTA Buttons
+          // CTA Buttons - Friendly & Clear
           Wrap(
             spacing: 16,
             runSpacing: 16,
             alignment: WrapAlignment.center,
             children: [
               ElevatedButton(
-                  onPressed: () => context.go('/register'),
+                onPressed: () => context.go('/register'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: const Color(0xFF10B981), // Friendlier green
                   foregroundColor: Colors.white,
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 32 : 40,
-                    vertical: isMobile ? 16 : 20,
+                    horizontal: isMobile ? 36 : 48,
+                    vertical: isMobile ? 18 : 22,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
-                  elevation: 0,
+                  elevation: 4,
+                  shadowColor: const Color(0xFF10B981).withOpacity(0.4),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text(
-                      'Claim Your Spot',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  children: const [
+                    Text(
+                      'Get Started Free',
+                      style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward, size: 20),
+                    SizedBox(width: 8),
+                    Icon(Icons.arrow_forward, size: 22),
                   ],
                 ),
               ),
               OutlinedButton.icon(
                 onPressed: () => context.go('/browse-classes'),
-                icon: const Icon(Icons.school, size: 20),
+                icon: const Icon(Icons.explore, size: 22),
                 label: const Text(
-                  'Browse Classes',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  'Explore Activities',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w600),
                 ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF6366F1),
                   side: const BorderSide(color: Color(0xFF6366F1), width: 2),
                   padding: EdgeInsets.symmetric(
-                    horizontal: isMobile ? 24 : 32,
-                    vertical: isMobile ? 16 : 20,
+                    horizontal: isMobile ? 28 : 36,
+                    vertical: isMobile ? 18 : 22,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: isMobile ? 16 : 20),
+          
+          // Trust Signal
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.check_circle, color: Color(0xFF10B981), size: 18),
+              SizedBox(width: 8),
+              Text(
+                'Free to start • No credit card needed • Cancel anytime',
+                style: TextStyle(
+                  color: Color(0xFF6B7280),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -407,11 +431,11 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
         horizontal: isMobile ? 20 : 60,
         vertical: isMobile ? 60 : 80,
       ),
-      color: const Color(0xFFFAFAFA),
+      color: const Color(0xFFFFFBF5),
       child: Column(
         children: [
           Text(
-            'Everything You Need',
+            'How Sparktracks Helps Parents',
             style: TextStyle(
               fontSize: isMobile ? 28 : 40,
               fontWeight: FontWeight.w900,
@@ -420,15 +444,19 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Text(
-            'Powerful features designed for modern families',
-            style: TextStyle(
-              fontSize: isMobile ? 16 : 18,
-              color: const Color(0xFF6B7280),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 600),
+            child: Text(
+              'Less chaos, more control. Finally, tools that actually save you time.',
+              style: TextStyle(
+                fontSize: isMobile ? 17 : 20,
+                color: const Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
           ),
-          SizedBox(height: isMobile ? 32 : 48),
+          SizedBox(height: isMobile ? 36 : 52),
           
           Wrap(
             spacing: isMobile ? 16 : 24,
@@ -436,44 +464,44 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
             alignment: WrapAlignment.center,
             children: [
               _buildFeatureCard(
-                '📝',
-                'Smart Tasks',
-                'Create and manage tasks with rewards, deadlines, and recurring schedules.',
-                const Color(0xFF3B82F6),
-                isMobile,
-              ),
-              _buildFeatureCard(
-                '⭐',
-                'Points System',
-                'Motivate with a flexible points system that converts to real rewards.',
-                const Color(0xFFF59E0B),
-                isMobile,
-              ),
-              _buildFeatureCard(
-                '📊',
-                'Live Progress',
-                'Track achievements and progress in beautiful, real-time dashboards.',
+                '✅',
+                'See Everything',
+                'All your kids\' tasks, classes, and schedules in one view. No more sticky notes or forgotten activities.',
                 const Color(0xFF10B981),
                 isMobile,
               ),
               _buildFeatureCard(
-                '🎓',
-                'Class Hub',
-                'Browse and book classes from certified coaches in your area.',
+                '⚡',
+                'Save Hours',
+                'Bulk create tasks for multiple kids. Book classes in 60 seconds. No more endless back-and-forth messages.',
+                const Color(0xFFF59E0B),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '💙',
+                'Kids Love It',
+                'Fun celebrations and rewards keep kids motivated. They actually want to complete tasks!',
+                const Color(0xFF3B82F6),
+                isMobile,
+              ),
+              _buildFeatureCard(
+                '🎯',
+                'Instant Discovery',
+                'Find vetted coaches and classes nearby. Read real reviews. Enroll instantly.',
                 const Color(0xFFEC4899),
                 isMobile,
               ),
               _buildFeatureCard(
-                '💰',
-                'Finance Tools',
-                'Manage payments, invoices, and family finances effortlessly.',
+                '🔒',
+                'Peace of Mind',
+                'Safe, secure platform. You control everything. Monitor progress in real-time.',
                 const Color(0xFF8B5CF6),
                 isMobile,
               ),
               _buildFeatureCard(
-                '🏆',
-                'Achievements',
-                'Celebrate milestones with badges, streaks, and leaderboards.',
+                '🌍',
+                'Works Everywhere',
+                'Phone, tablet, computer — same experience. Works globally in 35+ countries.',
                 const Color(0xFF6366F1),
                 isMobile,
               ),
@@ -528,6 +556,119 @@ class _LandingScreenState extends State<LandingScreen> with SingleTickerProvider
               color: Color(0xFF6B7280),
               height: 1.5,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKidsExperienceSection(bool isMobile) {
+    return Container(
+      padding: EdgeInsets.symmetric(
+        horizontal: isMobile ? 20 : 60,
+        vertical: isMobile ? 60 : 80,
+      ),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFFDCFCE7),
+            const Color(0xFFBFDBFE),
+            const Color(0xFFFEF3C7),
+          ],
+        ),
+      ),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 1000),
+          child: Column(
+            children: [
+              Text(
+                '🎉',
+                style: TextStyle(fontSize: isMobile ? 48 : 64),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Kids Actually WANT to Complete Tasks',
+                style: TextStyle(
+                  fontSize: isMobile ? 28 : 40,
+                  fontWeight: FontWeight.w900,
+                  color: const Color(0xFF1F2937),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 700),
+                child: Text(
+                  'With fun animations, instant rewards, and progress tracking they can see, '
+                  'your kids stay motivated and engaged.',
+                  style: TextStyle(
+                    fontSize: isMobile ? 17 : 20,
+                    color: const Color(0xFF374151),
+                    height: 1.6,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              SizedBox(height: isMobile ? 36 : 48),
+              
+              Wrap(
+                spacing: isMobile ? 16 : 32,
+                runSpacing: isMobile ? 16 : 32,
+                alignment: WrapAlignment.center,
+                children: [
+                  _buildKidFeature('🎊', 'Celebration Animations', 'Confetti & cheers when tasks are done!', isMobile),
+                  _buildKidFeature('⭐', 'Earn Points', 'Every task = points toward rewards', isMobile),
+                  _buildKidFeature('🏆', 'Unlock Achievements', 'Badges, streaks, and milestones', isMobile),
+                  _buildKidFeature('📈', 'See Progress', 'Charts and visuals kids understand', isMobile),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKidFeature(String emoji, String title, String description, bool isMobile) {
+    return Container(
+      width: isMobile ? double.infinity : 220,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.9),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 40)),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1F2937),
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: const TextStyle(
+              fontSize: 14,
+              color: Color(0xFF6B7280),
+              height: 1.4,
+            ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
