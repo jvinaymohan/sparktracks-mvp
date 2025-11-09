@@ -502,23 +502,66 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
   }
 
   Widget _buildAnalyticsTab() {
+    // TODO: Replace with real data from Firestore
+    // For now, show honest empty state with getting started guide
+    
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text('Business Analytics', style: AppTheme.headline4),
+          const SizedBox(height: 8),
+          Text(
+            'Track your coaching business growth and performance',
+            style: AppTheme.bodyLarge.copyWith(color: AppTheme.neutral600),
+          ),
           const SizedBox(height: 24),
           
-          // Growth Metrics
+          // Beta Notice
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.infoColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.infoColor.withOpacity(0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: AppTheme.infoColor, size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Analytics Coming Soon!',
+                        style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Once you have students enrolled and classes running, we\'ll show detailed analytics here: student growth, revenue trends, class performance, and more.',
+                        style: AppTheme.bodyMedium,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          // Current Metrics (Real Data)
+          Text('Current Metrics', style: AppTheme.headline5),
+          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
-                child: _buildGrowthCard('Total Students', '45', '+5', Icons.people),
+                child: _buildRealMetricCard('Total Students', '0', 'Enroll your first student', Icons.people),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildGrowthCard('Active Classes', '8', '+2', Icons.class_),
+                child: _buildRealMetricCard('Active Classes', '0', 'Create your first class', Icons.class_),
               ),
             ],
           ),
@@ -526,18 +569,18 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
           Row(
             children: [
               Expanded(
-                child: _buildGrowthCard('Sessions This Month', '120', '+12', Icons.event),
+                child: _buildRealMetricCard('Total Revenue', '\$0', 'Revenue will appear here', Icons.attach_money),
               ),
               const SizedBox(width: 16),
               Expanded(
-                child: _buildGrowthCard('Avg Attendance', '88%', '+3%', Icons.check_circle),
+                child: _buildRealMetricCard('This Month', '\$0', 'Track monthly earnings', Icons.calendar_today),
               ),
             ],
           ),
           const SizedBox(height: 32),
           
-          // Growth Trends
-          Text('Growth Trends', style: AppTheme.headline5),
+          // What You'll See Here
+          Text('What You\'ll See Here', style: AppTheme.headline5),
           const SizedBox(height: 16),
           Card(
             child: Padding(
@@ -545,24 +588,98 @@ class _CoachFinancialDashboardState extends State<CoachFinancialDashboard> with 
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildTrendRow(Icons.trending_up, 'Students', '12% month-over-month', AppTheme.successColor),
-                  _buildTrendRow(Icons.attach_money, 'Revenue', '15% increase', AppTheme.successColor),
-                  _buildTrendRow(Icons.loyalty, 'Retention', '95% (Excellent!)', AppTheme.successColor),
-                  _buildTrendRow(Icons.star, 'Avg Rating', '4.9/5.0', AppTheme.accentColor),
+                  _buildFeatureRow(Icons.trending_up, 'Student Growth', 'Track enrollment trends over time'),
+                  const Divider(height: 32),
+                  _buildFeatureRow(Icons.attach_money, 'Revenue Analytics', 'See income breakdown and trends'),
+                  const Divider(height: 32),
+                  _buildFeatureRow(Icons.school, 'Class Performance', 'Identify your top performing classes'),
+                  const Divider(height: 32),
+                  _buildFeatureRow(Icons.people, 'Student Retention', 'Monitor student engagement and retention rates'),
+                  const Divider(height: 32),
+                  _buildFeatureRow(Icons.star, 'Rating Trends', 'Track your ratings and reviews over time'),
                 ],
               ),
             ),
           ),
           const SizedBox(height: 32),
           
-          // Top Performing Classes
-          Text('Top Performing Classes', style: AppTheme.headline5),
+          // Quick Actions
+          Text('Quick Actions', style: AppTheme.headline5),
           const SizedBox(height: 16),
-          _buildClassPerformanceCard('Beginner Tennis', 12, 'Waitlist', AppTheme.successColor),
-          _buildClassPerformanceCard('Advanced Piano', 4, 'Premium', Colors.purple),
-          _buildClassPerformanceCard('Chess Club', 15, 'Popular', AppTheme.primaryColor),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/coach/class-wizard'),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Create Class'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => context.go('/coach-profile-wizard'),
+                  icon: const Icon(Icons.person),
+                  label: const Text('Complete Profile'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
+    );
+  }
+  
+  Widget _buildRealMetricCard(String label, String value, String subtitle, IconData icon) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, color: AppTheme.primaryColor, size: 28),
+            const SizedBox(height: 12),
+            Text(value, style: AppTheme.headline4),
+            Text(label, style: AppTheme.bodySmall.copyWith(fontWeight: FontWeight.w600)),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: AppTheme.bodySmall.copyWith(color: AppTheme.neutral600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildFeatureRow(IconData icon, String title, String description) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: AppTheme.primaryColor, size: 24),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600)),
+              Text(description, style: AppTheme.bodyMedium.copyWith(color: AppTheme.neutral600)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

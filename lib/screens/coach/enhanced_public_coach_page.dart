@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/user_model.dart';
 import '../../models/coach_profile_model.dart';
 import '../../models/class_model.dart';
@@ -790,22 +791,81 @@ $url
     );
   }
 
-  void _enrollInClass(Class classItem) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Enroll in ${classItem.title}'),
-        content: const Text(
-          'This will open the enrollment form. Feature coming soon!',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+  Future<void> _enrollInClass(Class classItem) async {
+    // Check if user is logged in
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    if (!authProvider.isLoggedIn) {
+      // Show login prompt
+      final shouldLogin = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.lock_outline, color: AppTheme.primaryColor),
+              SizedBox(width: 12),
+              Text('Login Required'),
+            ],
           ),
-        ],
-      ),
-    );
+          content: const Text(
+            'Please sign in to enroll in this class. It only takes 30 seconds!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor),
+              child: const Text('Sign In'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldLogin == true && mounted) {
+        context.go('/login');
+      }
+      return;
+    }
+
+    // Load children if not already loaded
+    final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
+    if (childrenProvider.children.isEmpty) {
+      await childrenProvider.loadChildren(authProvider.currentUser?.id ?? '');
+    }
+
+    // Get coach name
+    final coachProfile = await FirestoreService().getCoachProfile(classItem.coachId);
+    final coachName = coachProfile?.name ?? 'Coach';
+
+    // Show quick booking dialog
+    if (mounted) {
+      final booked = await showDialog<bool>(
+        context: context,
+        builder: (context) => QuickBookingDialog(
+          classItem: classItem,
+          coachName: coachName,
+        ),
+      );
+
+      if (booked == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Text('✅ Enrolled in ${classItem.title}!'),
+              ],
+            ),
+            backgroundColor: AppTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   int _calculateProfileCompletion(User coach) {
