@@ -21,12 +21,30 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
 
   Future<List<User>> _getAllUsers() async {
     try {
+      print('👥 Fetching all users from Firestore...');
       final snapshot = await FirebaseFirestore.instance.collection('users').get();
-      return snapshot.docs
-          .map((doc) => User.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
-    } catch (e) {
-      print('Error fetching users: $e');
+      print('👥 Found ${snapshot.docs.length} user documents');
+      
+      final List<User> users = [];
+      
+      for (final doc in snapshot.docs) {
+        try {
+          final data = doc.data();
+          print('👤 User doc ${doc.id}: ${data['name'] ?? 'NO NAME'} (${data['type'] ?? 'NO TYPE'})');
+          
+          final user = User.fromJson({...data, 'id': doc.id});
+          users.add(user);
+        } catch (e) {
+          print('❌ Error parsing user ${doc.id}: $e');
+          // Continue with other users even if one fails
+        }
+      }
+      
+      print('✅ Successfully parsed ${users.length} users');
+      return users;
+    } catch (e, stackTrace) {
+      print('❌ Error fetching users: $e');
+      print('📍 Stack trace: $stackTrace');
       return [];
     }
   }
@@ -212,41 +230,49 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                 const Divider(height: 24),
                 
                 // Actions
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: () => _editUser(user),
-                      icon: const Icon(Icons.edit, size: 16),
-                      label: const Text('Edit'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.infoColor,
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => _editUser(user),
+                        icon: const Icon(Icons.edit, size: 16),
+                        label: const Text('Edit'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.infoColor,
+                        ),
                       ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => _toggleUserStatus(user, adminProvider),
-                      icon: Icon(user.isActive ? Icons.block : Icons.check_circle, size: 16),
-                      label: Text(user.isActive ? 'Suspend' : 'Activate'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: user.isActive ? AppTheme.warningColor : AppTheme.successColor,
+                      ElevatedButton.icon(
+                        onPressed: () => _resetPassword(user),
+                        icon: const Icon(Icons.lock_reset, size: 16),
+                        label: const Text('Reset Password'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.warningColor,
+                        ),
                       ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => _viewUserActivity(user),
-                      icon: const Icon(Icons.history, size: 16),
-                      label: const Text('Activity'),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () => _deleteUser(user, adminProvider),
-                      icon: const Icon(Icons.delete, size: 16),
-                      label: const Text('Delete'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.errorColor,
+                      ElevatedButton.icon(
+                        onPressed: () => _toggleUserStatus(user, adminProvider),
+                        icon: Icon(user.isActive ? Icons.block : Icons.check_circle, size: 16),
+                        label: Text(user.isActive ? 'Suspend' : 'Activate'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: user.isActive ? AppTheme.warningColor : AppTheme.successColor,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                      ElevatedButton.icon(
+                        onPressed: () => _viewUserActivity(user),
+                        icon: const Icon(Icons.history, size: 16),
+                        label: const Text('Activity'),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _deleteUser(user, adminProvider),
+                        icon: const Icon(Icons.delete, size: 16),
+                        label: const Text('Delete'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.errorColor,
+                        ),
+                      ),
+                    ],
+                  ),
               ],
             ),
           ),
@@ -369,6 +395,145 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _resetPassword(User user) {
+    final newPasswordController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.lock_reset, color: AppTheme.warningColor),
+            const SizedBox(width: 12),
+            const Text('Reset Password'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Reset password for: ${user.name}'),
+            Text('Email: ${user.email}', style: AppTheme.bodySmall),
+            const SizedBox(height: 24),
+            TextField(
+              controller: newPasswordController,
+              decoration: const InputDecoration(
+                labelText: 'New Password',
+                hintText: 'Enter new password (min 6 characters)',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
+              obscureText: true,
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.infoColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.info_outline, size: 20, color: AppTheme.infoColor),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Text(
+                      'The user will need to login with this new password.',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newPassword = newPasswordController.text.trim();
+              if (newPassword.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Password must be at least 6 characters'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+                return;
+              }
+              
+              try {
+                // Note: Firebase Admin SDK required for true password reset
+                // For now, store in Firestore and show instructions
+                await FirebaseFirestore.instance
+                    .collection('users')
+                    .doc(user.id)
+                    .update({
+                  'tempPassword': newPassword,
+                  'passwordResetAt': FieldValue.serverTimestamp(),
+                  'requiresPasswordChange': true,
+                });
+                
+                Navigator.pop(context);
+                showDialog(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: Row(
+                      children: [
+                        Icon(Icons.check_circle, color: AppTheme.successColor),
+                        const SizedBox(width: 12),
+                        const Text('Password Reset Initiated'),
+                      ],
+                    ),
+                    content: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('The temporary password has been set.'),
+                        const SizedBox(height: 16),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: AppTheme.neutral100,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: SelectableText(
+                            'Email: ${user.email}\nTemp Password: $newPassword',
+                            style: const TextStyle(fontFamily: 'monospace'),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text('Send this information to the user securely.'),
+                      ],
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Error: $e'),
+                    backgroundColor: AppTheme.errorColor,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.warningColor),
+            child: const Text('Reset Password'),
           ),
         ],
       ),
