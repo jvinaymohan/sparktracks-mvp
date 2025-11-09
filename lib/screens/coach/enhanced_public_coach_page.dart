@@ -7,8 +7,8 @@ import '../../models/coach_profile_model.dart';
 import '../../models/class_model.dart';
 import '../../services/firestore_service.dart';
 import '../../utils/app_theme.dart';
-import '../../widgets/coach_reviews_section.dart';
 import '../../widgets/quick_booking_dialog.dart';
+import '../../widgets/submit_review_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -564,9 +564,90 @@ class _EnhancedPublicCoachPageState extends State<EnhancedPublicCoachPage> {
                 ],
               ),
               const SizedBox(height: 32),
-              CoachReviewsSection(
-                coachId: profile.id,
-                coachName: profile.name,
+              FutureBuilder<List<Map<String, dynamic>>>(
+                future: FirestoreService().getCoachReviews(profile.id),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Container(
+                      padding: const EdgeInsets.all(32),
+                      decoration: BoxDecoration(
+                        color: AppTheme.neutral100,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(Icons.rate_review_outlined, size: 48, color: AppTheme.neutral400),
+                          const SizedBox(height: 16),
+                          const Text('No reviews yet'),
+                          const SizedBox(height: 8),
+                          const Text('Be the first to review this coach!', textAlign: TextAlign.center),
+                          const SizedBox(height: 16),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) => SubmitReviewDialog(
+                                  coachId: profile.id,
+                                  coachName: profile.name,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.star),
+                            label: const Text('Write a Review'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final reviews = snapshot.data!;
+                  return Column(
+                    children: reviews.map((review) {
+                      final rating = (review['rating'] as num).toDouble();
+                      final comment = review['comment'] as String?;
+                      final parentName = review['parentName'] as String;
+                      
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 16),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  for (int i = 1; i <= 5; i++)
+                                    Icon(
+                                      i <= rating ? Icons.star : Icons.star_outline,
+                                      color: Colors.amber,
+                                      size: 20,
+                                    ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    rating.toStringAsFixed(1),
+                                    style: AppTheme.bodyLarge.copyWith(fontWeight: FontWeight.w600),
+                                  ),
+                                ],
+                              ),
+                              if (comment != null && comment.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                Text(comment, style: AppTheme.bodyMedium),
+                              ],
+                              const SizedBox(height: 8),
+                              Text(
+                                '- $parentName',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: AppTheme.neutral600,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
               ),
             ],
           ),

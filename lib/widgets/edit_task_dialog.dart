@@ -18,7 +18,7 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
   late TextEditingController _titleController;
   late TextEditingController _descriptionController;
   late double _rewardAmount;
-  late int _priority;
+  late TaskPriority _priority;
   late String _category;
   late DateTime _dueDate;
   late bool _isRecurring;
@@ -53,11 +53,15 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     _descriptionController = TextEditingController(text: widget.task.description);
     _rewardAmount = widget.task.rewardAmount;
     _priority = widget.task.priority;
-    _category = widget.task.category;
-    _dueDate = widget.task.dueDate;
+    _category = widget.task.category ?? 'household';
+    _dueDate = widget.task.dueDate ?? DateTime.now().add(const Duration(days: 1));
     _isRecurring = widget.task.isRecurring;
     _recurringPattern = widget.task.recurringPattern ?? 'daily';
-    _selectedWeekDays = widget.task.recurringWeekDays ?? [DateTime.now().weekday];
+    // Extract week days from metadata if available
+    final metadataWeekDays = widget.task.metadata['recurringWeekDays'];
+    _selectedWeekDays = metadataWeekDays is List
+        ? List<int>.from(metadataWeekDays)
+        : [DateTime.now().weekday];
   }
 
   @override
@@ -78,21 +82,25 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
     setState(() => _isSubmitting = true);
 
     try {
+      // Build metadata with recurring week days if applicable
+      final metadata = Map<String, dynamic>.from(widget.task.metadata);
+      if (_isRecurring && _recurringPattern == 'weekly') {
+        metadata['recurringWeekDays'] = _selectedWeekDays;
+      }
+      if (_recurringEndDate != null) {
+        metadata['recurringEndDate'] = Timestamp.fromDate(_recurringEndDate!);
+      }
+
       final updates = {
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
         'rewardAmount': _rewardAmount,
-        'priority': _priority,
+        'priority': _priority.toString().split('.').last,
         'category': _category,
         'dueDate': Timestamp.fromDate(_dueDate),
         'isRecurring': _isRecurring,
         'recurringPattern': _isRecurring ? _recurringPattern : null,
-        'recurringWeekDays': _isRecurring && _recurringPattern == 'weekly' 
-            ? _selectedWeekDays 
-            : null,
-        'recurringEndDate': _recurringEndDate != null 
-            ? Timestamp.fromDate(_recurringEndDate!) 
-            : null,
+        'metadata': metadata,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
@@ -215,16 +223,16 @@ class _EditTaskDialogState extends State<EditTaskDialog> {
                   const SizedBox(width: 16),
                   // Priority
                   Expanded(
-                    child: DropdownButtonFormField<int>(
+                    child: DropdownButtonFormField<TaskPriority>(
                       value: _priority,
                       decoration: const InputDecoration(
                         labelText: 'Priority',
                         border: OutlineInputBorder(),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 1, child: Text('Low')),
-                        DropdownMenuItem(value: 2, child: Text('Medium')),
-                        DropdownMenuItem(value: 3, child: Text('High')),
+                        DropdownMenuItem(value: TaskPriority.low, child: Text('Low')),
+                        DropdownMenuItem(value: TaskPriority.medium, child: Text('Medium')),
+                        DropdownMenuItem(value: TaskPriority.high, child: Text('High')),
                       ],
                       onChanged: (value) {
                         if (value != null) {

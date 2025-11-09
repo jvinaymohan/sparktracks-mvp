@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import '../models/class_model.dart';
 
 /// Service for handling scheduling conflicts and buffer time
@@ -193,9 +194,11 @@ class TimeSlot {
   
   @override
   String toString() {
-    final startTime = TimeOfDay.fromDateTime(start);
-    final endTime = TimeOfDay.fromDateTime(end);
-    return '${startTime.format(null as BuildContext)} - ${endTime.format(null as BuildContext)}';
+    final startHour = start.hour.toString().padLeft(2, '0');
+    final startMin = start.minute.toString().padLeft(2, '0');
+    final endHour = end.hour.toString().padLeft(2, '0');
+    final endMin = end.minute.toString().padLeft(2, '0');
+    return '$startHour:$startMin - $endHour:$endMin';
   }
 }
 

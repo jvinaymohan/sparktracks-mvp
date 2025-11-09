@@ -236,18 +236,16 @@ class FirestoreService {
     await _firestore.collection('reviews').doc(review.id).set(review.toJson());
   }
   
-  /// Get all reviews for a specific coach
-  Future<List<Review>> getCoachReviews(String coachId) async {
+  /// Get all approved reviews for a specific coach (for public display)
+  Future<List<Map<String, dynamic>>> getCoachReviews(String coachId) async {
     final snapshot = await _firestore
         .collection('reviews')
         .where('coachId', isEqualTo: coachId)
-        .where('isFlagged', isEqualTo: false) // Only show non-flagged reviews
+        .where('status', isEqualTo: 'approved')
         .orderBy('createdAt', descending: true)
         .get();
     
-    return snapshot.docs
-        .map((doc) => Review.fromJson(doc.data()))
-        .toList();
+    return snapshot.docs.map((doc) => doc.data()).toList();
   }
   
   /// Get reviews by a specific parent
@@ -307,23 +305,16 @@ class FirestoreService {
     });
   }
   
-  /// Calculate rating statistics for a coach
-  Future<CoachRatingStats> getCoachRatingStats(String coachId) async {
+  /// Get average rating for a coach
+  Future<double> getCoachAverageRating(String coachId) async {
     final reviews = await getCoachReviews(coachId);
-    return CoachRatingStats.fromReviews(coachId, reviews);
-  }
-  
-  /// Stream reviews for a coach (real-time updates)
-  Stream<List<Review>> watchCoachReviews(String coachId) {
-    return _firestore
-        .collection('reviews')
-        .where('coachId', isEqualTo: coachId)
-        .where('isFlagged', isEqualTo: false)
-        .orderBy('createdAt', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Review.fromJson(doc.data()))
-            .toList());
+    if (reviews.isEmpty) return 0.0;
+    
+    final total = reviews.fold<double>(
+      0.0,
+      (sum, review) => sum + (review['rating'] as num).toDouble(),
+    );
+    return total / reviews.length;
   }
   
   /// Get recent reviews across all coaches (for admin)

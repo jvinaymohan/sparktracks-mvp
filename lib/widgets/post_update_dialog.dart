@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../models/update_model.dart';
 import '../models/class_model.dart';
+import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../services/firestore_service.dart';
 import '../utils/app_theme.dart';

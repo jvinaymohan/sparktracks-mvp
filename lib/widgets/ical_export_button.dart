@@ -114,7 +114,7 @@ class ICalExportButton extends StatelessWidget {
       ..download = filename;
     
     // Trigger download
-    document.body?.append(anchor);
+    html.document.body?.append(anchor);
     anchor.click();
     anchor.remove();
     
