@@ -145,7 +145,13 @@ class _CoachDashboardScreenState extends State<CoachDashboardScreen> with Ticker
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Coach Dashboard'),
+        title: Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            final coachName = authProvider.currentUser?.name ?? 'Coach';
+            final firstName = coachName.split(' ').first;
+            return Text('Welcome, $firstName');
+          },
+        ),
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(

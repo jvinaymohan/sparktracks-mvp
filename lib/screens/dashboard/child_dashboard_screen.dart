@@ -56,7 +56,12 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Activities'),
+        title: Consumer<AuthProvider>(
+          builder: (context, authProvider, _) {
+            final childName = authProvider.currentUser?.name ?? 'Student';
+            return Text('Welcome back, $childName! 👋');
+          },
+        ),
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
@@ -132,7 +137,38 @@ class _ChildDashboardScreenState extends State<ChildDashboardScreen> with Ticker
           _buildAchievementsTab(),
         ],
       ),
+      floatingActionButton: _buildSmartFAB(),
     );
+  }
+
+  Widget _buildSmartFAB() {
+    // Context-aware FAB based on active tab
+    switch (_tabController.index) {
+      case 0: // Overview - Browse Classes
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/browse-classes'),
+          icon: const Icon(Icons.explore),
+          label: const Text('Find Classes'),
+          backgroundColor: AppTheme.primaryColor,
+        );
+      case 1: // Tasks - No FAB needed (can't create tasks)
+        return const SizedBox.shrink();
+      case 2: // Classes - Browse More
+        return FloatingActionButton.extended(
+          onPressed: () => context.go('/browse-classes'),
+          icon: const Icon(Icons.add),
+          label: const Text('Find More'),
+          backgroundColor: AppTheme.primaryColor,
+        );
+      case 3: // Achievements - View All
+        return FloatingActionButton(
+          onPressed: () => context.push('/achievements'),
+          child: const Icon(Icons.emoji_events),
+          backgroundColor: AppTheme.warningColor,
+        );
+      default:
+        return const SizedBox.shrink();
+    }
   }
 
   Widget _buildOverviewTab() {
