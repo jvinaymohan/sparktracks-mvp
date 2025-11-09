@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/tasks_provider.dart';
 import '../../providers/classes_provider.dart';
 import '../../utils/app_theme.dart';
 import 'admin_users_tab.dart';
+import 'admin_notifications_tab.dart';
+import 'admin_analytics_tab.dart';
 import 'admin_feedback_tab.dart';
 import 'admin_roadmap_tab.dart';
 import 'admin_release_notes_tab.dart';
@@ -25,6 +28,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final List<Widget> _screens = [
     const AdminOverviewTab(),
     const AdminUsersTab(),
+    const AdminNotificationsTab(),
+    const AdminAnalyticsTab(),
     const AdminFeedbackTab(),
     const AdminRoadmapTab(),
     const AdminReleaseNotesTab(),
@@ -103,6 +108,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 label: Text('Users'),
               ),
               NavigationRailDestination(
+                icon: Icon(Icons.notifications),
+                label: Text('Notifications'),
+              ),
+              NavigationRailDestination(
+                icon: Icon(Icons.bar_chart),
+                label: Text('Analytics'),
+              ),
+              NavigationRailDestination(
                 icon: Icon(Icons.feedback),
                 label: Text('Feedback'),
               ),
@@ -132,21 +145,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 }
 
 // Overview Tab
-class AdminOverviewTab extends StatelessWidget {
+class AdminOverviewTab extends StatefulWidget {
   const AdminOverviewTab({super.key});
 
   @override
+  State<AdminOverviewTab> createState() => _AdminOverviewTabState();
+}
+
+class _AdminOverviewTabState extends State<AdminOverviewTab> {
+  
+  Future<Map<String, int>> _getRealTimeStats() async {
+    try {
+      // Get real counts from Firestore
+      final usersSnapshot = await FirebaseFirestore.instance.collection('users').get();
+      final childrenSnapshot = await FirebaseFirestore.instance.collection('children').get();
+      final tasksSnapshot = await FirebaseFirestore.instance.collection('tasks').get();
+      final classesSnapshot = await FirebaseFirestore.instance.collection('classes').get();
+      
+      final users = usersSnapshot.docs;
+      final parents = users.where((doc) => doc.data()['type'] == 'parent').length;
+      final coaches = users.where((doc) => doc.data()['type'] == 'coach').length;
+      final children = childrenSnapshot.docs.length;
+      
+      // Calculate "new this week" (users created in last 7 days)
+      final oneWeekAgo = DateTime.now().subtract(const Duration(days: 7));
+      final newThisWeek = users.where((doc) {
+        final createdAt = doc.data()['createdAt'];
+        if (createdAt is Timestamp) {
+          return createdAt.toDate().isAfter(oneWeekAgo);
+        }
+        return false;
+      }).length;
+      
+      // Calculate "active today" (any activity today)
+      final todayStart = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day);
+      final activeToday = users.where((doc) {
+        final lastActive = doc.data()['lastActive'];
+        if (lastActive is Timestamp) {
+          return lastActive.toDate().isAfter(todayStart);
+        }
+        return false;
+      }).length;
+      
+      return {
+        'totalUsers': users.length,
+        'parents': parents,
+        'coaches': coaches,
+        'children': children,
+        'tasks': tasksSnapshot.docs.length,
+        'classes': classesSnapshot.docs.length,
+        'activeToday': activeToday,
+        'newThisWeek': newThisWeek,
+      };
+    } catch (e) {
+      print('Error fetching admin stats: $e');
+      return {
+        'totalUsers': 0,
+        'parents': 0,
+        'coaches': 0,
+        'children': 0,
+        'tasks': 0,
+        'classes': 0,
+        'activeToday': 0,
+        'newThisWeek': 0,
+      };
+    }
+  }
+  
+  @override
   Widget build(BuildContext context) {
-    return Consumer4<AdminProvider, UserProvider, TasksProvider, ClassesProvider>(
-      builder: (context, adminProvider, userProvider, tasksProvider, classesProvider, _) {
-        final stats = adminProvider.getUserStatistics();
+    return FutureBuilder<Map<String, int>>(
+      future: _getRealTimeStats(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final stats = snapshot.data ?? {};
         
         return SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('System Overview', style: AppTheme.headline4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('System Overview', style: AppTheme.headline4),
+                  IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () => setState(() {}),
+                    tooltip: 'Refresh Stats',
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
               
               // Statistics cards
@@ -160,7 +252,7 @@ class AdminOverviewTab extends StatelessWidget {
                 children: [
                   _buildStatCard(
                     'Total Users',
-                    stats['total']?.toString() ?? '0',
+                    stats['totalUsers']?.toString() ?? '0',
                     Icons.people,
                     AppTheme.primaryColor,
                   ),
@@ -184,25 +276,25 @@ class AdminOverviewTab extends StatelessWidget {
                   ),
                   _buildStatCard(
                     'Total Tasks',
-                    tasksProvider.tasks.length.toString(),
+                    stats['tasks']?.toString() ?? '0',
                     Icons.assignment,
                     AppTheme.primaryColor,
                   ),
                   _buildStatCard(
                     'Total Classes',
-                    classesProvider.classes.length.toString(),
+                    stats['classes']?.toString() ?? '0',
                     Icons.class_,
                     AppTheme.successColor,
                   ),
                   _buildStatCard(
                     'Active Today',
-                    '0',
+                    stats['activeToday']?.toString() ?? '0',
                     Icons.timeline,
                     AppTheme.warningColor,
                   ),
                   _buildStatCard(
                     'New This Week',
-                    '0',
+                    stats['newThisWeek']?.toString() ?? '0',
                     Icons.trending_up,
                     AppTheme.successColor,
                   ),

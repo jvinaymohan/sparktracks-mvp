@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/admin_provider.dart';
 import '../../providers/user_provider.dart';
 import '../../providers/children_provider.dart';
@@ -18,12 +19,28 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
   String _searchQuery = '';
   UserType? _filterType;
 
+  Future<List<User>> _getAllUsers() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance.collection('users').get();
+      return snapshot.docs
+          .map((doc) => User.fromJson({...doc.data(), 'id': doc.id}))
+          .toList();
+    } catch (e) {
+      print('Error fetching users: $e');
+      return [];
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Consumer3<AdminProvider, UserProvider, ChildrenProvider>(
-      builder: (context, adminProvider, userProvider, childrenProvider, _) {
-        // Combine regular users and children
-        final allUsers = <dynamic>[...adminProvider.allUsers];
+    return FutureBuilder<List<User>>(
+      future: _getAllUsers(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final allUsers = snapshot.data ?? [];
         
         // Apply filters
         var filteredUsers = allUsers.where((user) {
@@ -138,7 +155,11 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
                       itemCount: filteredUsers.length,
                       itemBuilder: (context, index) {
                         final user = filteredUsers[index];
-                        return _buildUserCard(user, adminProvider);
+                        return Consumer<AdminProvider>(
+                          builder: (context, adminProvider, _) {
+                            return _buildUserCard(user, adminProvider);
+                          },
+                        );
                       },
                     ),
             ),
