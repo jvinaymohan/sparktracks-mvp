@@ -514,8 +514,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                       
                       _buildQuickStartStep(
                         '1',
-                        'Add Your Children',
-                        'Create profiles for each of your children',
+                        'Add Your First Child',
+                        'Just name and age - takes 20 seconds!',
                         Icons.child_care,
                         Colors.blue,
                       ),
@@ -523,8 +523,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                       
                       _buildQuickStartStep(
                         '2',
-                        'Create Your First Task',
-                        'Assign tasks and set reward points',
+                        'Create a Quick Task',
+                        'Assign your first task in 30 seconds',
                         Icons.assignment,
                         Colors.purple,
                       ),
@@ -532,20 +532,32 @@ class _WelcomeScreenState extends State<WelcomeScreen> with TickerProviderStateM
                       
                       _buildQuickStartStep(
                         '3',
-                        'Track Progress',
-                        'Approve completed tasks and celebrate achievements',
-                        Icons.analytics,
+                        'You\'re All Set!',
+                        'Your child will see the task when they login',
+                        Icons.check_circle,
                         Colors.green,
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
                       
-                      _buildQuickStartStep(
-                        '4',
-                        'Browse Classes',
-                        'Find coaches and enroll your children in classes',
-                        Icons.school,
-                        Colors.orange,
-                        isOptional: true,
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: AppTheme.accentColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.accentColor.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.info_outline, color: AppTheme.accentColor, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                '⏱️ Total time: ~2 minutes to get started!',
+                                style: AppTheme.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
