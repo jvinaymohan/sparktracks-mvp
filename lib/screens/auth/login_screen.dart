@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/admin_provider.dart';
 import '../../models/user_model.dart';
 import '../../utils/app_theme.dart';
 
@@ -435,27 +436,47 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      // Check if this is an admin trying to login
       final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      
+      // Check if this is an admin login attempt
       if (email == 'admin@sparktracks.com') {
-        // Redirect to admin login page
-        if (mounted) {
+        // Try admin login directly
+        final adminProvider = Provider.of<AdminProvider>(context, listen: false);
+        final adminSuccess = await adminProvider.loginAdmin(email, password);
+        
+        if (adminSuccess && mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('⚠️ Admin users must use the Admin Portal login'),
-              backgroundColor: AppTheme.warningColor,
+              content: Row(
+                children: [
+                  Icon(Icons.admin_panel_settings, color: Colors.white),
+                  SizedBox(width: 12),
+                  Text('👑 Welcome, Admin!'),
+                ],
+              ),
+              backgroundColor: Color(0xFF8B5CF6),
+              behavior: SnackBarBehavior.floating,
             ),
           );
-          await Future.delayed(const Duration(seconds: 1));
+          await Future.delayed(const Duration(milliseconds: 500));
           if (mounted) {
-            context.go('/admin/login');
+            context.go('/admin/dashboard');
           }
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('❌ Invalid admin credentials'),
+              backgroundColor: Colors.red,
+            ),
+          );
         }
         return;
       }
       
+      // Normal user login
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      await authProvider.login(email, _passwordController.text);
+      await authProvider.login(email, password);
       
       if (authProvider.isLoggedIn) {
         if (mounted) {
@@ -464,9 +485,9 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
             SnackBar(
               content: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white),
+                  const Icon(Icons.check_circle, color: Colors.white),
                   const SizedBox(width: 12),
-                  Text('Welcome back! 🎉'),
+                  const Text('Welcome back! 🎉'),
                 ],
               ),
               backgroundColor: AppTheme.successColor,
@@ -488,6 +509,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                 break;
               case UserType.coach:
                 context.go('/coach-dashboard');
+                break;
+              case UserType.admin:
+                // If somehow an admin user is in regular users collection
+                context.go('/admin/dashboard');
                 break;
               default:
                 context.go('/parent-dashboard');

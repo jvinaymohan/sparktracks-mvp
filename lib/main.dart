@@ -407,8 +407,8 @@ class SparktracksMVP extends StatelessWidget {
         ),
       ],
       redirect: (context, state) {
-        // Skip all redirect logic for admin routes
-        if (state.matchedLocation.startsWith('/admin/')) {
+        // CRITICAL: Skip ALL redirect logic for admin routes FIRST
+        if (state.matchedLocation.startsWith('/admin')) {
           return null; // Allow admin routes to handle their own auth
         }
         
@@ -418,7 +418,7 @@ class SparktracksMVP extends StatelessWidget {
         final currentUser = authProvider.currentUser;
         
         // Allow landing page and auth pages for non-logged-in users
-        final publicPaths = ['/', '/login', '/register', '/forgot-password', '/email-verification', '/coach/', '/privacy', '/terms', '/about', '/timeline', '/browse-classes', '/marketplace'];
+        final publicPaths = ['/', '/login', '/register', '/forgot-password', '/email-verification', '/coach/', '/privacy', '/terms', '/about', '/timeline', '/browse-classes', '/marketplace', '/admin/login', '/admin/dashboard'];
         final isPublicPath = publicPaths.any((path) => state.matchedLocation.startsWith(path));
         
         // If not logged in and not on public pages, redirect to landing
