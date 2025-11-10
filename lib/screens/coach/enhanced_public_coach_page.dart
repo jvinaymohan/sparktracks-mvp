@@ -28,25 +28,163 @@ class EnhancedPublicCoachPage extends StatefulWidget {
 class _EnhancedPublicCoachPageState extends State<EnhancedPublicCoachPage> {
   @override
   Widget build(BuildContext context) {
+    print('🔍 Loading coach profile page for ID: ${widget.coachId}');
+    
     return FutureBuilder<CoachProfile?>(
       future: FirestoreService().getCoachProfile(widget.coachId),
       builder: (context, snapshot) {
+        print('📊 FutureBuilder state: ${snapshot.connectionState}');
+        
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
-
-        if (!snapshot.hasData) {
+          print('⏳ Loading coach profile...');
           return Scaffold(
+            backgroundColor: Colors.white,
             body: Center(
-              child: Text('Coach profile not found', style: AppTheme.headline5),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(color: AppTheme.primaryColor),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Loading coach profile...',
+                    style: AppTheme.bodyLarge.copyWith(color: AppTheme.neutral600),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
+        if (snapshot.hasError) {
+          print('❌ Error loading coach profile: ${snapshot.error}');
+          return _buildErrorPage(snapshot.error.toString());
+        }
+
+        if (!snapshot.hasData || snapshot.data == null) {
+          print('⚠️ Coach profile not found for ID: ${widget.coachId}');
+          return _buildNotFoundPage();
+        }
+
+        print('✅ Coach profile loaded: ${snapshot.data!.name}');
         return _buildCoachPage(snapshot.data!);
       },
+    );
+  }
+
+  Widget _buildErrorPage(String error) {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('SparkTracks'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 80, color: AppTheme.errorColor),
+              const SizedBox(height: 24),
+              Text(
+                'Oops! Something went wrong',
+                style: AppTheme.headline4.copyWith(color: AppTheme.neutral900),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'We couldn\'t load this coach profile. Please try again later.',
+                style: AppTheme.bodyLarge.copyWith(color: AppTheme.neutral600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Error: $error',
+                style: AppTheme.caption.copyWith(color: AppTheme.neutral500),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/browse-classes'),
+                icon: const Icon(Icons.explore),
+                label: const Text('Browse All Coaches'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => setState(() {}), // Trigger rebuild
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotFoundPage() {
+    return Scaffold(
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: const Text('SparkTracks'),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.go('/browse-classes'),
+        ),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.person_off_outlined, size: 80, color: AppTheme.neutral400),
+              const SizedBox(height: 24),
+              Text(
+                'Coach Not Found',
+                style: AppTheme.headline4.copyWith(color: AppTheme.neutral900),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'This coach profile doesn\'t exist or has been removed.',
+                style: AppTheme.bodyLarge.copyWith(color: AppTheme.neutral600),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Coach ID: ${widget.coachId}',
+                style: AppTheme.caption.copyWith(color: AppTheme.neutral500),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton.icon(
+                onPressed: () => context.go('/browse-classes'),
+                icon: const Icon(Icons.explore),
+                label: const Text('Browse All Coaches'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  backgroundColor: AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(height: 16),
+              OutlinedButton.icon(
+                onPressed: () => context.go('/'),
+                icon: const Icon(Icons.home),
+                label: const Text('Back to Home'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

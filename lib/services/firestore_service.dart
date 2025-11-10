@@ -204,24 +204,51 @@ class FirestoreService {
   /// Get coach profile by ID or slug (friendly URL name)
   /// Tries slug lookup first, then falls back to ID lookup
   Future<CoachProfile?> getCoachProfile(String coachIdOrSlug) async {
-    // First, try direct ID lookup (faster)
-    final directDoc = await _firestore.collection('coachProfiles').doc(coachIdOrSlug).get();
-    if (directDoc.exists) {
-      return CoachProfile.fromJson(directDoc.data()!);
+    print('🔍 FirestoreService.getCoachProfile() called with: $coachIdOrSlug');
+    
+    try {
+      // First, try direct ID lookup (faster)
+      print('   📄 Attempting direct ID lookup in coachProfiles collection...');
+      final directDoc = await _firestore.collection('coachProfiles').doc(coachIdOrSlug).get();
+      
+      if (directDoc.exists) {
+        print('   ✅ Found coach profile by ID!');
+        final data = directDoc.data()!;
+        print('   📊 Coach data: ${data['name']}');
+        return CoachProfile.fromJson(data);
+      }
+      print('   ⚠️ No direct ID match found');
+      
+      // If not found, try slug-based lookup
+      print('   📄 Attempting slug-based lookup...');
+      final querySnapshot = await _firestore
+          .collection('coachProfiles')
+          .where('preferences.profileSlug', isEqualTo: coachIdOrSlug)
+          .limit(1)
+          .get();
+      
+      if (querySnapshot.docs.isNotEmpty) {
+        print('   ✅ Found coach profile by slug!');
+        final data = querySnapshot.docs.first.data();
+        print('   📊 Coach data: ${data['name']}');
+        return CoachProfile.fromJson(data);
+      }
+      
+      print('   ❌ No coach profile found with ID or slug: $coachIdOrSlug');
+      
+      // Debug: List all coach profiles
+      final allCoaches = await _firestore.collection('coachProfiles').limit(5).get();
+      print('   🔍 Available coach profiles (first 5):');
+      for (final doc in allCoaches.docs) {
+        print('      - ID: ${doc.id}, Name: ${doc.data()['name']}');
+      }
+      
+      return null;
+    } catch (e, stackTrace) {
+      print('   ❌ Error in getCoachProfile: $e');
+      print('   📍 Stack trace: $stackTrace');
+      rethrow;
     }
-    
-    // If not found, try slug-based lookup
-    final querySnapshot = await _firestore
-        .collection('coachProfiles')
-        .where('preferences.profileSlug', isEqualTo: coachIdOrSlug)
-        .limit(1)
-        .get();
-    
-    if (querySnapshot.docs.isNotEmpty) {
-      return CoachProfile.fromJson(querySnapshot.docs.first.data());
-    }
-    
-    return null;
   }
   
   Future<void> updateCoachProfile(CoachProfile profile) async {
