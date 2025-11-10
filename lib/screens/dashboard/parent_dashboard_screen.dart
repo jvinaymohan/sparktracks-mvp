@@ -55,7 +55,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
     });
   }
 
-  Future<void> _loadAllData() async {
+  Future<void> _loadAllData({bool isRetry = false}) async {
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final childrenProvider = Provider.of<ChildrenProvider>(context, listen: false);
@@ -68,16 +68,37 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
         return;
       }
       
-      print('🔄 Loading all data for parent: $parentId');
+      print('🔄 Loading all data for parent: $parentId ${isRetry ? "(RETRY)" : ""}');
       
       // Clear existing data to force fresh load
       childrenProvider.clearAllChildren();
       tasksProvider.clearAllTasks();
       classesProvider.clearAllClasses();
       
-      // Load children
-      await childrenProvider.loadChildren(parentId);
-      print('✅ Loaded ${childrenProvider.children.length} children');
+      // Add small delay to ensure Firestore consistency (especially after writes)
+      if (isRetry) {
+        print('⏳ Waiting 1s before retry...');
+        await Future.delayed(const Duration(seconds: 1));
+      }
+      
+      // Load children with retry
+      int retryCount = 0;
+      while (retryCount < 3) {
+        try {
+          await childrenProvider.loadChildren(parentId);
+          print('✅ Loaded ${childrenProvider.children.length} children');
+          break;
+        } catch (e) {
+          retryCount++;
+          if (retryCount < 3) {
+            print('⚠️ Children load failed (attempt $retryCount/3), retrying...');
+            await Future.delayed(Duration(seconds: retryCount));
+          } else {
+            print('❌ Children load failed after 3 attempts: $e');
+            rethrow;
+          }
+        }
+      }
       
       // Load tasks
       await tasksProvider.loadTasksForParent(parentId);
@@ -91,6 +112,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
       if (mounted) {
         setState(() {});
       }
+      
+      print('✅ All data loaded successfully!');
     } catch (e, stackTrace) {
       print('❌ Error loading data: $e');
       print('📍 Stack trace: $stackTrace');
@@ -100,10 +123,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> with Tick
           SnackBar(
             content: Text('Error loading data: $e'),
             backgroundColor: AppTheme.errorColor,
+            duration: const Duration(seconds: 7),
             action: SnackBarAction(
               label: 'Retry',
               textColor: Colors.white,
-              onPressed: () => _loadAllData(),
+              onPressed: () => _loadAllData(isRetry: true),
             ),
           ),
         );

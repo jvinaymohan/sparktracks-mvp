@@ -19,6 +19,8 @@ import 'providers/admin_provider.dart';
 import 'models/user_model.dart';
 import 'models/task_model.dart';
 import 'models/class_model.dart';
+import 'models/coach_profile_model.dart';
+import 'services/firestore_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'screens/onboarding/welcome_screen.dart';
@@ -301,7 +303,41 @@ class SparktracksMVP extends StatelessWidget {
         ),
         GoRoute(
           path: '/coach-profile',
-          builder: (context, state) => const EnhancedCoachProfileWizard(),
+          builder: (context, state) {
+            // Load existing profile if coach is editing
+            return FutureBuilder<CoachProfile?>(
+              future: () async {
+                final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                final coachId = authProvider.currentUser?.id;
+                if (coachId == null) return null;
+                
+                print('🔍 Loading existing coach profile for: $coachId');
+                try {
+                  final profile = await FirestoreService().getCoachProfile(coachId);
+                  if (profile != null) {
+                    print('✅ Existing profile loaded: ${profile.name}');
+                  } else {
+                    print('⚠️ No existing profile found - creating new');
+                  }
+                  return profile;
+                } catch (e) {
+                  print('❌ Error loading profile: $e');
+                  return null;
+                }
+              }(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Scaffold(
+                    body: Center(child: CircularProgressIndicator()),
+                  );
+                }
+                
+                return EnhancedCoachProfileWizard(
+                  existingProfile: snapshot.data,
+                );
+              },
+            );
+          },
         ),
         GoRoute(
           path: '/coach-profile-old',

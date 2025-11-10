@@ -564,11 +564,41 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
             
             await childrenProvider.addChild(studentWithFirebaseId);
             
-            print('✅ Child added to provider');
+            print('✅ Child added to Firestore');
             
-            // Force reload children to ensure fresh data
-            await childrenProvider.loadChildren(parentId);
-            print('✅ Reloaded children list');
+            // CRITICAL: Wait for Firestore to propagate the write
+            // Firestore writes are eventually consistent, need to wait
+            print('⏳ Waiting for Firestore to propagate write...');
+            await Future.delayed(const Duration(seconds: 2));
+            
+            // Force reload children with retry logic
+            print('🔄 Attempting to reload children...');
+            int retryCount = 0;
+            bool childFound = false;
+            
+            while (retryCount < 5 && !childFound) {
+              await childrenProvider.loadChildren(parentId);
+              
+              // Check if our new child is in the list
+              final children = childrenProvider.children;
+              childFound = children.any((c) => c.id == childId || c.email == childEmail);
+              
+              if (childFound) {
+                print('✅ Child found in loaded list! (attempt ${retryCount + 1})');
+                break;
+              } else {
+                retryCount++;
+                print('⚠️ Child not found yet (attempt $retryCount/5), waiting 1s...');
+                if (retryCount < 5) {
+                  await Future.delayed(const Duration(seconds: 1));
+                }
+              }
+            }
+            
+            if (!childFound) {
+              print('⚠️ Child not immediately visible, but it was created successfully');
+              print('   The child will appear after a page refresh');
+            }
             
             // Re-authenticate parent after creating child account
             print('Re-authenticating parent');
