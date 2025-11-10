@@ -72,7 +72,7 @@ class _BrowseClassesModernState extends State<BrowseClassesModern> with SingleTi
 
   Widget _buildModernHeader(bool isMobile, AuthProvider authProvider) {
     return SliverAppBar(
-      expandedHeight: isMobile ? 160 : 200,
+      expandedHeight: isMobile ? 180 : 220,
       floating: false,
       pinned: true,
       elevation: 0,
@@ -90,7 +90,12 @@ class _BrowseClassesModernState extends State<BrowseClassesModern> with SingleTi
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+              padding: EdgeInsets.only(
+                left: 24,
+                right: 24,
+                top: 20,
+                bottom: isMobile ? 70 : 80, // Extra bottom padding to prevent overlap
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -101,6 +106,7 @@ class _BrowseClassesModernState extends State<BrowseClassesModern> with SingleTi
                       fontSize: isMobile ? 28 : 40,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
+                      height: 1.1, // Tighter line height
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -110,6 +116,7 @@ class _BrowseClassesModernState extends State<BrowseClassesModern> with SingleTi
                       fontSize: isMobile ? 15 : 18,
                       color: Colors.white.withOpacity(0.9),
                       fontWeight: FontWeight.w500,
+                      height: 1.2,
                     ),
                   ),
                 ],
