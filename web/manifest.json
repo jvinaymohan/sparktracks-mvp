@@ -1,13 +1,14 @@
 {
-    "name": "sparktracks_mvp",
-    "short_name": "sparktracks_mvp",
-    "start_url": ".",
+    "name": "Sparktracks",
+    "short_name": "Sparktracks",
+    "start_url": "/",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "background_color": "#6366F1",
+    "theme_color": "#6366F1",
+    "description": "Your child's growth, all in one place. Track tasks, discover classes, and celebrate wins.",
+    "orientation": "any",
     "prefer_related_applications": false,
+    "categories": ["education", "family", "productivity"],
     "icons": [
         {
             "src": "icons/Icon-192.png",
