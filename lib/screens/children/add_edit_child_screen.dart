@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../models/student_model.dart';
@@ -566,17 +567,54 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
             
             print('✅ Child added to Firestore');
             
-            // CRITICAL: Wait for Firestore to propagate the write
-            // Firestore writes are eventually consistent, need to wait
-            print('⏳ Waiting for Firestore to propagate write...');
-            await Future.delayed(const Duration(seconds: 2));
+            // EMERGENCY FIX: Verify child was written to Firestore directly
+            print('🔍 Verifying child exists in Firestore...');
+            await Future.delayed(const Duration(seconds: 1));
             
-            // Force reload children with retry logic
-            print('🔄 Attempting to reload children...');
+            // Direct Firestore verification (bypass provider)
+            final FirebaseFirestore firestore = FirebaseFirestore.instance;
+            bool verified = false;
+            int verifyAttempts = 0;
+            
+            while (verifyAttempts < 10 && !verified) {
+              try {
+                final doc = await firestore.collection('children').doc(childId).get();
+                if (doc.exists) {
+                  print('✅ VERIFIED: Child document exists in Firestore (attempt ${verifyAttempts + 1})');
+                  final data = doc.data();
+                  print('   Child name: ${data?['name']}');
+                  print('   Child parentId: ${data?['parentId']}');
+                  print('   Child email: ${data?['email']}');
+                  verified = true;
+                  break;
+                } else {
+                  verifyAttempts++;
+                  print('⚠️ Child not in Firestore yet (attempt $verifyAttempts/10), waiting 2s...');
+                  await Future.delayed(const Duration(seconds: 2));
+                }
+              } catch (e) {
+                verifyAttempts++;
+                print('❌ Error verifying child (attempt $verifyAttempts/10): $e');
+                await Future.delayed(const Duration(seconds: 2));
+              }
+            }
+            
+            if (!verified) {
+              print('❌ CRITICAL: Child not verified in Firestore after 10 attempts!');
+              throw Exception('Child creation verification failed. The account may have been created but is not visible yet. Please refresh the page.');
+            }
+            
+            // CRITICAL: Wait for Firestore to propagate the write globally
+            // Firestore writes are eventually consistent, need extra time
+            print('⏳ Waiting 3 seconds for Firestore global propagation...');
+            await Future.delayed(const Duration(seconds: 3));
+            
+            // Force reload children with aggressive retry logic
+            print('🔄 Attempting to reload children with retry logic...');
             int retryCount = 0;
             bool childFound = false;
             
-            while (retryCount < 5 && !childFound) {
+            while (retryCount < 10 && !childFound) {
               await childrenProvider.loadChildren(parentId);
               
               // Check if our new child is in the list
@@ -584,20 +622,25 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               childFound = children.any((c) => c.id == childId || c.email == childEmail);
               
               if (childFound) {
-                print('✅ Child found in loaded list! (attempt ${retryCount + 1})');
+                print('✅ SUCCESS: Child found in loaded list! (attempt ${retryCount + 1})');
+                print('   Total children loaded: ${children.length}');
                 break;
               } else {
                 retryCount++;
-                print('⚠️ Child not found yet (attempt $retryCount/5), waiting 1s...');
-                if (retryCount < 5) {
-                  await Future.delayed(const Duration(seconds: 1));
+                print('⚠️ Child not in provider yet (attempt $retryCount/10)');
+                print('   Current children count: ${children.length}');
+                print('   Looking for childId: $childId or email: $childEmail');
+                if (retryCount < 10) {
+                  print('   Waiting 2 seconds before retry...');
+                  await Future.delayed(const Duration(seconds: 2));
                 }
               }
             }
             
             if (!childFound) {
-              print('⚠️ Child not immediately visible, but it was created successfully');
-              print('   The child will appear after a page refresh');
+              print('⚠️ WARNING: Child verified in Firestore but not loading in UI');
+              print('   This is likely a query or parentId mismatch issue');
+              print('   Child was created successfully but may need page refresh to see');
             }
             
             // Re-authenticate parent after creating child account
