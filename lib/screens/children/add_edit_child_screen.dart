@@ -493,6 +493,13 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final parentId = authProvider.currentUser?.id ?? 'parent1';
         
+        print('🎯 ====== STARTING CHILD CREATION FLOW ======');
+        print('👤 Current User:');
+        print('   ID: $parentId');
+        print('   Name: ${authProvider.currentUser?.name}');
+        print('   Email: ${authProvider.currentUser?.email}');
+        print('   Type: ${authProvider.currentUser?.type}');
+        
         // Determine email and password (custom or auto-generated)
         final String childEmail;
         final String childPassword;
@@ -633,12 +640,25 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
               if (childFound) {
                 print('✅ SUCCESS: Child found in loaded list! (attempt ${retryCount + 1})');
                 print('   Total children loaded: ${children.length}');
+                print('📋 All loaded children:');
+                for (final child in children) {
+                  print('   - ${child.name} (ID: ${child.id}, ParentID: ${child.parentId}, Email: ${child.email})');
+                }
                 break;
               } else {
                 retryCount++;
                 print('⚠️ Child not in provider yet (attempt $retryCount/10)');
                 print('   Current children count: ${children.length}');
                 print('   Looking for childId: $childId or email: $childEmail');
+                if (children.isNotEmpty) {
+                  print('   📋 Current children in provider:');
+                  for (final child in children) {
+                    print('      - ${child.name} (ID: ${child.id}, ParentID: ${child.parentId})');
+                  }
+                  print('   🔍 MISMATCH CHECK:');
+                  print('      Expected parentId: $parentId');
+                  print('      Actual parentIds in children: ${children.map((c) => c.parentId).toSet()}');
+                }
                 if (retryCount < 10) {
                   print('   Waiting 2 seconds before retry...');
                   await Future.delayed(const Duration(seconds: 2));
