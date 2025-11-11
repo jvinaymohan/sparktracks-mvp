@@ -160,11 +160,20 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
                         decoration: const InputDecoration(
                           border: OutlineInputBorder(),
                           hintText: 'e.g., Emma Johnson',
+                          helperText: 'Enter only the name (no email address)',
                           prefixIcon: Icon(Icons.child_care),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
                             return 'Please enter child\'s name';
+                          }
+                          // Prevent email addresses in name field
+                          if (value.contains('@')) {
+                            return 'Please enter only the name, not an email address';
+                          }
+                          // Prevent URLs or domains
+                          if (value.contains('.com') || value.contains('.net') || value.contains('www.')) {
+                            return 'Please enter only the child\'s name';
                           }
                           return null;
                         },
