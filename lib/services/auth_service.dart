@@ -292,16 +292,16 @@ class AuthService {
         paymentProfile: PaymentProfile(),
       );
       
-      // Save to Firestore
+      // Save to Firestore users collection
       final userData = childUser.toJson();
       await _firestore.collection('users').doc(childUser.id).set(userData);
       
-      print('Child Firestore document created');
+      print('Child user document created in Firestore');
       
-      // Sign out the child account immediately
-      await _firebaseAuth.signOut();
-      
-      print('Signed out child account');
+      // CRITICAL FIX: DO NOT SIGN OUT YET!
+      // The calling code needs to create the children collection document
+      // while still authenticated. We'll return the auth context as-is.
+      print('⚠️ Child still signed in - caller must handle signout and parent re-auth');
       
       return {
         'userId': firebaseUser.uid,

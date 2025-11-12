@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../../providers/auth_provider.dart';
 import '../../providers/children_provider.dart';
 import '../../models/student_model.dart';
@@ -579,9 +580,21 @@ class _AddEditChildScreenState extends State<AddEditChildScreen> {
             print('   Child Name: ${_nameController.text}');
             print('   Child Email: $childEmail');
             
+            // CRITICAL FIX: Create child document while still authenticated (as child)
+            // The auth rules allow any authenticated user to create children documents
+            print('📝 Creating child document while authenticated...');
             await childrenProvider.addChild(studentWithFirebaseId);
             
-            print('✅ Child added to Firestore');
+            print('✅ Child document added to Firestore');
+            
+            // Now sign out the child account
+            print('🚪 Signing out child account...');
+            await firebase_auth.FirebaseAuth.instance.signOut();
+            print('✅ Child account signed out');
+            
+            // Re-authenticate as parent using saved credentials from provider
+            // This happens automatically when returning to parent dashboard
+            print('🔐 Parent will re-authenticate on dashboard');
             
             // EMERGENCY FIX: Verify child was written to Firestore directly
             print('🔍 Verifying child exists in Firestore...');
